@@ -180,9 +180,9 @@ export default function NewMemberPage() {
                     onSelect={(d) => update("dob", d)}
                     disabled={(date) => date > new Date()}
                     captionLayout="dropdown"
-                    fromYear={2005}
-                    toYear={new Date().getFullYear()}
-                    initialFocus
+                    startMonth={new Date(2005, 0, 1)}
+                    endMonth={new Date(new Date().getFullYear(), 11, 31)}
+                    autoFocus
                   />
                 </PopoverContent>
               </Popover>
@@ -191,7 +191,7 @@ export default function NewMemberPage() {
             <Field label="Gender">
               <Select
                 value={form.gender}
-                onValueChange={(v) => update("gender", v)}
+                onValueChange={(v) => update("gender", v ?? "")}
               >
                 <SelectTrigger className={triggerStyles}>
                   <SelectValue placeholder="Select gender" />
@@ -249,7 +249,7 @@ export default function NewMemberPage() {
             <Field label="Self-reported skill level">
               <Select
                 value={form.skillLevel}
-                onValueChange={(v) => update("skillLevel", v)}
+                onValueChange={(v) => update("skillLevel", v ?? "")}
               >
                 <SelectTrigger className={triggerStyles}>
                   <SelectValue placeholder="Select a starting point" />

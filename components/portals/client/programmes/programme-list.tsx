@@ -16,10 +16,11 @@ export function ProgrammeList({ programmes }: { programmes: Programme[] }) {
     if (!query) return true
 
     return (
-      programme.title?.toLowerCase().includes(query) ||
-      programme.description?.toLowerCase().includes(query) ||
-      programme.category?.toLowerCase().includes(query) ||
-      programme.ageGroup?.toLowerCase().includes(query)
+      programme.name.toLowerCase().includes(query) ||
+      programme.type.toLowerCase().includes(query) ||
+      programme.levelName.toLowerCase().includes(query) ||
+      programme.venueName.toLowerCase().includes(query) ||
+      programme.recurrenceRule.toLowerCase().includes(query)
     )
   })
 

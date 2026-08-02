@@ -65,7 +65,7 @@ export function EnrollPanel({
           {eligibleMembers.length > 0 ? (
             <Select
               value={selectedMemberId}
-              onValueChange={setSelectedMemberId}
+              onValueChange={(value) => setSelectedMemberId(value ?? "")}
             >
               <SelectTrigger id="member">
                 <SelectValue placeholder="Select a member" />

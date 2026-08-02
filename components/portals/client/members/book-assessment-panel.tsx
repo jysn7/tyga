@@ -111,7 +111,10 @@ export function BookAssessmentPanel({
       <div className="flex flex-col gap-6">
         <div className="flex flex-col">
           <Field label="Venue">
-            <Select value={venueId} onValueChange={setVenueId}>
+            <Select
+              value={venueId}
+              onValueChange={(value) => setVenueId(value ?? "")}
+            >
               <SelectTrigger className={triggerStyles}>
                 <SelectValue placeholder="Select a venue" />
               </SelectTrigger>
@@ -153,7 +156,7 @@ export function BookAssessmentPanel({
                   disabled={(date) =>
                     date < new Date(new Date().setHours(0, 0, 0, 0))
                   }
-                  initialFocus
+                  autoFocus
                 />
               </PopoverContent>
             </Popover>

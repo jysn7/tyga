@@ -104,7 +104,7 @@ export function EnrollmentSheet({
             <div className="space-y-2">
               <Select
                 value={selectedMemberId}
-                onValueChange={setSelectedMemberId}
+                onValueChange={(value) => setSelectedMemberId(value ?? "")}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Choose a member..." />
