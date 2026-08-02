@@ -4,8 +4,27 @@ import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
+
+function Field({
+  label,
+  children,
+}: {
+  label: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="flex flex-col gap-1.5 py-2">
+      <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+        {label}
+      </span>
+      {children}
+    </div>
+  )
+}
+
+const fieldStyles =
+  "h-auto border-none py-3 bg-background pl-2 shadow-none text-[15px] text-foreground active:ring active:ring-primary placeholder:text-muted-foreground/50"
 
 export default function SignupPage() {
   const [fullName, setFullName] = useState("")
@@ -14,26 +33,22 @@ export default function SignupPage() {
 
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle signup logic
   }
 
-  const handleGoogleAuth = () => {
-    // Handle Google OAuth
-  }
+  const handleGoogleAuth = () => {}
 
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center bg-background px-4 py-12">
+    <div className="flex min-h-svh flex-col items-center justify-center bg-secondary px-4 py-12">
       <div className="w-full max-w-sm space-y-8">
-        {/* Top Branding & Mode Switcher */}
         <div className="flex flex-col items-center space-y-4 text-center">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-foreground font-black tracking-tighter text-background">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">
             T
           </div>
           <div className="space-y-1">
-            <h1 className="text-xl font-medium tracking-tight text-foreground">
+            <h1 className="text-xl font-semibold tracking-tight text-foreground">
               Create an account
             </h1>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Get started with your TYGA account
             </p>
           </div>
@@ -46,19 +61,17 @@ export default function SignupPage() {
             >
               Sign In
             </Link>
-            <div className="flex-1 rounded-md bg-background py-1.5 text-center font-medium text-foreground shadow-sm">
+            <div className="flex-1 rounded-md bg-card py-1.5 text-center font-medium text-foreground shadow-sm">
               Create Account
             </div>
           </div>
         </div>
 
-        {/* Main Card */}
-        <div className="space-y-6 rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
-          {/* Google OAuth Button */}
+        <div className="flex flex-col gap-6">
           <Button
             type="button"
             variant="outline"
-            className="h-10 w-full gap-2.5 rounded-lg border-border/80 text-xs font-medium transition-colors hover:bg-secondary/60"
+            className="h-10 w-full gap-2.5 rounded-lg bg-secondary text-xs font-medium shadow"
             onClick={handleGoogleAuth}
           >
             <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24">
@@ -83,71 +96,53 @@ export default function SignupPage() {
           </Button>
 
           <div className="relative flex items-center justify-center">
-            <Separator className="w-full bg-border/50" />
-            <span className="absolute bg-card px-3 text-[10px] font-medium tracking-widest text-muted-foreground/80 uppercase">
+            <Separator className="w-full bg-border/60" />
+            <span className="absolute rounded-xl bg-background px-3 text-[10px] font-medium tracking-widest text-muted-foreground/70 uppercase">
               or
             </span>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSignup} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label
-                htmlFor="fullName"
-                className="text-xs font-medium text-foreground"
-              >
-                Full name
-              </Label>
+          <form onSubmit={handleSignup} className="flex flex-col">
+            <Field label="Full name">
               <Input
                 id="fullName"
                 type="text"
                 placeholder="John Doe"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="h-10 rounded-lg border-border/80 bg-background text-sm placeholder:text-muted-foreground/50 focus-visible:ring-1 focus-visible:ring-ring"
+                className={fieldStyles}
                 required
               />
-            </div>
+            </Field>
 
-            <div className="space-y-1.5">
-              <Label
-                htmlFor="email"
-                className="text-xs font-medium text-foreground"
-              >
-                Email address
-              </Label>
+            <Field label="Email address">
               <Input
                 id="email"
                 type="email"
                 placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="h-10 rounded-lg border-border/80 bg-background text-sm placeholder:text-muted-foreground/50 focus-visible:ring-1 focus-visible:ring-ring"
+                className={fieldStyles}
                 required
               />
-            </div>
+            </Field>
 
-            <div className="space-y-1.5">
-              <Label
-                htmlFor="password"
-                className="text-xs font-medium text-foreground"
-              >
-                Password
-              </Label>
+            <Field label="Password">
               <Input
                 id="password"
                 type="password"
                 placeholder="At least 8 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="h-10 rounded-lg border-border/80 bg-background text-sm placeholder:text-muted-foreground/50 focus-visible:ring-1 focus-visible:ring-ring"
+                className={fieldStyles}
                 required
               />
-            </div>
+            </Field>
 
             <Button
               type="submit"
-              className="h-10 w-full rounded-lg text-xs font-medium"
+              className="mt-6 h-10 w-full rounded-lg text-xs font-medium"
             >
               Create Account
             </Button>
@@ -156,8 +151,8 @@ export default function SignupPage() {
 
         {/* Footer info */}
         <p className="text-center font-mono text-[11px] text-muted-foreground/60">
-          TYGA Portal &bull; Press <kbd className="rounded border px-1">d</kbd>{" "}
-          for theme
+          TYGA Portal &bull; Press{" "}
+          <kbd className="rounded bg-muted px-1 py-0.5">d</kbd> for theme
         </p>
       </div>
     </div>

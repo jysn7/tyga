@@ -9,7 +9,6 @@ import {
   Calendar,
   CheckCircle2,
   Circle,
-  ChevronRight,
   MessageCircle,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -37,7 +36,6 @@ export function MyProgrammeDetails({ programme }: MyProgrammeDetailsProps) {
   const enrollmentPercentage =
     (programme.enrolledCount / programme.capacity) * 100
 
-  // Mock progress data - in real app this comes from the database
   const progressData = {
     attendance: 85,
     sessionsAttended: 8,

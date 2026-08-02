@@ -17,7 +17,7 @@ export function StatusPill({ label, variant = "neutral" }: StatusPillProps) {
         <Circle className="h-2.5 w-2.5 fill-amber-500 text-amber-500" />
       )}
       {variant === "danger" && (
-        <Circle className="h-2.5 w-2.5 fill-red-500 text-red-500" />
+        <Circle className="h-2.5 w-2.5 fill-rose-500 text-rose-500" />
       )}
       {variant === "neutral" && (
         <Circle className="h-2.5 w-2.5 fill-zinc-400 text-zinc-400" />
@@ -29,7 +29,7 @@ export function StatusPill({ label, variant = "neutral" }: StatusPillProps) {
             : variant === "warning"
               ? "text-amber-600"
               : variant === "danger"
-                ? "text-red-600"
+                ? "text-rose-600"
                 : "text-zinc-600"
         }`}
       >

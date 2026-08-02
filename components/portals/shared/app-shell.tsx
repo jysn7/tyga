@@ -1,6 +1,7 @@
 "use client"
 
 import { Sidebar } from "./sidebar"
+import { LayoutHeader } from "./layout-header"
 import { clientNav } from "@/config/nav-client"
 import { coachNav } from "@/config/nav-coach"
 import { adminNav } from "@/config/nav-admin"
@@ -23,9 +24,12 @@ export function AppShell({
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar items={nav} />
-      <main className="flex-1 overflow-y-auto bg-secondary p-6 pt-12">
-        {children}
-      </main>
+      <div className="flex flex-1 flex-col overflow-hidden p-2 shadow">
+        <LayoutHeader />
+        <main className="flex-1 overflow-y-auto bg-secondary p-6 pt-8">
+          {children}
+        </main>
+      </div>
     </div>
   )
 }

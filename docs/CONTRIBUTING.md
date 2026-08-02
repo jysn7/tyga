@@ -1,15 +1,16 @@
-# Contributing — Tyga
+﻿# Contributing â€” Tyga
 
 ## Before you start
-1. Pull the latest `dev`: `git checkout dev && git pull`
-2. Create your branch: `git checkout -b feature/your-feature-name`
+1. Pull the latest dev: git checkout dev && git pull 
+2. Create your branch: git checkout -b feature/your-feature-name 
+3. Review the developer docs in doc/README.md for current repository structure and conventions.
 
 ## While working
 - Commit often, following the convention in `NAMING_CONVENTIONS.md`
   (`type(scope): description`).
 - Keep PRs small and scoped to one feature/fix where possible.
 - If you're touching a shadcn component in `components/ui/`, make sure
-  you're intentionally customizing it to match Figma — not reverting
+  you're intentionally customizing it to match Figma â€” not reverting
   someone else's styling changes.
 
 ## Opening a PR

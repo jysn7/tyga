@@ -1,4 +1,4 @@
-# Tyga — Golf Academy Booking Platform
+﻿# Tyga â€” Golf Academy Booking Platform
 
 A booking platform for a golf academy client, split across three applications:
 a public marketing site, an authenticated customer portal, and an internal
@@ -33,7 +33,7 @@ npm install
 ### 3. Set up environment variables
 
 Copy the example file and fill in real values (ask a team member for the
-Supabase/Paystack credentials — never commit real keys):
+Supabase/Paystack credentials â€” never commit real keys):
 
 \`\`\`
 cp .env.example .env.local
@@ -49,37 +49,50 @@ Visit [http://localhost:3000](http://localhost:3000).
 
 ## Project Structure
 
-\`\`\`
+```
 tyga/
 ├── app/                    # Next.js App Router pages
-├── components/
-│   ├── ui/                 # shadcn primitives — customized to match Figma
-│   └── ...                 # custom app components (LessonCard, CoachCard, etc.)
-├── lib/
-│   └── supabaseClient.ts   # Supabase client setup
-├── docs/
+├── components/             # reusable app components and UI primitives
+│   ├── portals/            # route-specific layout and portal components
+│   ├── ui/                 # shadcn primitive wrappers and primitives
+│   └── theme-provider.tsx  # light/dark theme provider
+├── lib/                    # shared helper utilities
+│   └── utils.ts            # Tailwind class merge helper
+├── supabase/               # local Supabase config and migrations
+├── docs/                   # contributor and workflow documentation
 │   └── NAMING_CONVENTIONS.md
+├── doc/                    # developer-facing technical documentation
 └── .env.example
-\`\`\`
+```
 
 ## Branching & Workflow
 
-- `main` — production, protected, no direct pushes.
-- `dev` — integration branch, all features merge here first.
-- `feature/*`, `fix/*`, `docs/*`, `chore/*` — cut from `dev`.
+- `main` â€” production, protected, no direct pushes.
+- `dev` â€” integration branch, all features merge here first.
+- `feature/*`, `fix/*`, `docs/*`, `chore/*` â€” cut from `dev`.
 - Every PR needs **two approvals** before merging to `dev`.
 - See `docs/NAMING_CONVENTIONS.md` for full commit/branch/naming rules.
 
 ## Testing
 
-\`\`\`bash
+```bash
 npm run test        # Jest unit tests
-npm run test:e2e     # Playwright E2E tests
-\`\`\`
+```
+
+Playwright/E2E tests are not configured in this repository yet.
 
 ## Deployment
 
-Deployed via Vercel/Railway from the `main` branch. See
-`docs/TECHNICAL_SETUP_GUIDE.md` for environment variable setup and deployment
-steps (added in Week 9).
+Deployed via Vercel/Railway from the `main` branch. Current environment setup documentation is not included in this repository.
+
+## Developer Documentation
+
+This repository also includes developer-facing documentation in the `doc/` folder:
+
+- `doc/README.md`
+- `doc/folder-structure.md`
+- `doc/page-routing.md`
+- `doc/component-guidelines.md`
+- `doc/portals.md`
+- `doc/improvements.md`
 

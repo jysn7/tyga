@@ -4,8 +4,32 @@ import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
+
+function Field({
+  label,
+  action,
+  children,
+}: {
+  label: string
+  action?: React.ReactNode
+  children: React.ReactNode
+}) {
+  return (
+    <div className="flex flex-col gap-1.5 py-3">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          {label}
+        </span>
+        {action}
+      </div>
+      {children}
+    </div>
+  )
+}
+
+const fieldStyles =
+  "h-auto border-none bg-background active:ring active:ring-primary pl-2 py-3 shadow-none text-[15px] text-foreground placeholder:text-muted-foreground/50"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -13,33 +37,30 @@ export default function LoginPage() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle email/password sign-in logic
   }
 
-  const handleGoogleAuth = () => {
-    // Handle Google OAuth
-  }
+  const handleGoogleAuth = () => {}
 
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center bg-background px-4 py-12">
+    <div className="flex min-h-svh flex-col items-center justify-center bg-secondary px-4 py-12">
       <div className="w-full max-w-sm space-y-8">
         {/* Top Branding & Mode Switcher */}
         <div className="flex flex-col items-center space-y-4 text-center">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-foreground font-black tracking-tighter text-background">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">
             T
           </div>
           <div className="space-y-1">
-            <h1 className="text-xl font-medium tracking-tight text-foreground">
+            <h1 className="text-xl font-semibold tracking-tight text-foreground">
               Welcome back
             </h1>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Enter your credentials to access your portal
             </p>
           </div>
 
           {/* Segmented Auth Switcher */}
           <div className="flex w-full rounded-lg bg-muted p-1 text-xs">
-            <div className="flex-1 rounded-md bg-background py-1.5 text-center font-medium text-foreground shadow-sm">
+            <div className="flex-1 rounded-md bg-card py-1.5 text-center font-medium text-foreground shadow-sm">
               Sign In
             </div>
             <Link
@@ -51,13 +72,12 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Main Card */}
-        <div className="space-y-6 rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
-          {/* Google OAuth Button */}
+        {/* Main content — no card frame, just spacing */}
+        <div className="flex flex-col gap-6">
           <Button
             type="button"
             variant="outline"
-            className="h-10 w-full gap-2.5 rounded-lg border-border/80 text-xs font-medium transition-colors hover:bg-secondary/60"
+            className="h-10 w-full gap-2.5 rounded-lg bg-secondary text-xs font-medium shadow"
             onClick={handleGoogleAuth}
           >
             <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24">
@@ -82,61 +102,51 @@ export default function LoginPage() {
           </Button>
 
           <div className="relative flex items-center justify-center">
-            <Separator className="w-full bg-border/50" />
-            <span className="absolute bg-card px-3 text-[10px] font-medium tracking-widest text-muted-foreground/80 uppercase">
+            <Separator className="w-full bg-border/60" />
+            <span className="absolute bg-background px-3 text-[10px] font-medium tracking-widest text-muted-foreground/70 uppercase">
               or
             </span>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label
-                htmlFor="email"
-                className="text-xs font-medium text-foreground"
-              >
-                Email address
-              </Label>
+          <form onSubmit={handleLogin} className="flex flex-col">
+            <Field label="Email address">
               <Input
                 id="email"
                 type="email"
                 placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="h-10 rounded-lg border-border/80 bg-background text-sm placeholder:text-muted-foreground/50 focus-visible:ring-1 focus-visible:ring-ring"
+                className={fieldStyles}
                 required
               />
-            </div>
+            </Field>
 
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Label
-                  htmlFor="password"
-                  className="text-xs font-medium text-foreground"
-                >
-                  Password
-                </Label>
+            <Field
+              label="Password"
+              action={
                 <Link
                   href="/forgot-password"
                   className="text-xs text-muted-foreground transition-colors hover:text-foreground"
                 >
                   Forgot password?
                 </Link>
-              </div>
+              }
+            >
               <Input
                 id="password"
                 type="password"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="h-10 rounded-lg border-border/80 bg-background text-sm placeholder:text-muted-foreground/50 focus-visible:ring-1 focus-visible:ring-ring"
+                className={fieldStyles}
                 required
               />
-            </div>
+            </Field>
 
             <Button
               type="submit"
-              className="h-10 w-full rounded-lg text-xs font-medium"
+              className="mt-6 h-10 w-full rounded-lg text-xs font-medium"
             >
               Sign In
             </Button>
@@ -145,8 +155,8 @@ export default function LoginPage() {
 
         {/* Footer info */}
         <p className="text-center font-mono text-[11px] text-muted-foreground/60">
-          TYGA Portal &bull; Press <kbd className="rounded border px-1">d</kbd>{" "}
-          for theme
+          TYGA Portal &bull; Press{" "}
+          <kbd className="rounded bg-muted px-1 py-0.5">d</kbd> for theme
         </p>
       </div>
     </div>

@@ -1,12 +1,4 @@
-import {
-  MapPin,
-  Clock,
-  Users,
-  ExternalLink,
-  Mail,
-  Phone,
-  Calendar,
-} from "lucide-react"
+import { MapPin, Clock, Users, ExternalLink, Mail, Phone } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
 import { EnrollmentSheet } from "@/components/portals/client/programmes/enrollment-sheet"
@@ -41,7 +33,6 @@ export function ProgrammeSidebar({
 
         <Separator className="bg-border/60" />
 
-        {/* Notion-style Property List */}
         <div className="space-y-2.5">
           <div className="flex items-start gap-2.5 text-foreground">
             <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -68,7 +59,6 @@ export function ProgrammeSidebar({
 
         <Separator className="bg-border/60" />
 
-        {/* Enrollment Progress Section */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs">
             <span className="text-muted-foreground">Enrollment</span>
@@ -115,7 +105,6 @@ export function ProgrammeSidebar({
         <EnrollmentSheet programme={programme} fullWidthTrigger />
       </div>
 
-      {/* Map Link Block */}
       {programme.venueMap && (
         <a
           href={programme.venueMap}

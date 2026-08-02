@@ -15,7 +15,6 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Separator } from "@/components/ui/separator"
 import {
   Select,
   SelectContent,
@@ -81,10 +80,10 @@ export function EnrollmentSheet({
 
       <SheetContent
         side="right"
-        className="flex w-full flex-col gap-0 p-0 sm:max-w-md"
+        className="flex w-full flex-col gap-0 p-0 sm:max-w-xl"
       >
-        <SheetHeader className="bg-tertiary/40 space-y-2 border-b border-border px-6 py-4 text-left">
-          <span className="bg-tertiary inline-flex w-fit items-center rounded-md border border-border px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+        <SheetHeader className="space-y-1.5 border-b border-border/60 px-6 py-4 text-left">
+          <span className="text-[11px] font-medium tracking-wide text-muted-foreground">
             {programme.levelName}
           </span>
           <div>
@@ -97,7 +96,7 @@ export function EnrollmentSheet({
           </div>
         </SheetHeader>
 
-        <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
+        <div className="flex-1 space-y-6 overflow-y-auto px-6 py-5">
           <div className="space-y-2.5">
             <h4 className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
               Select a member to enroll
@@ -107,15 +106,15 @@ export function EnrollmentSheet({
                 value={selectedMemberId}
                 onValueChange={setSelectedMemberId}
               >
-                <SelectTrigger className="w-full rounded-md border-border bg-background">
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Choose a member..." />
                 </SelectTrigger>
-                <SelectContent className="rounded-md border-border">
+                <SelectContent>
                   {mockMembers.map((member) => (
                     <SelectItem key={member.id} value={member.id}>
                       <div className="flex items-center gap-2.5">
                         <Avatar className="h-6 w-6">
-                          <AvatarFallback className="bg-tertiary text-[10px] text-foreground">
+                          <AvatarFallback className="bg-muted text-[10px] text-muted-foreground">
                             {member.name
                               .split(" ")
                               .map((n) => n[0])
@@ -137,8 +136,8 @@ export function EnrollmentSheet({
               </Select>
 
               {selectedMember && (
-                <div className="bg-tertiary/60 flex items-center gap-2 rounded-md border border-border px-3 py-2 text-xs">
-                  <CheckCircle2 className="h-4 w-4 text-foreground" />
+                <div className="flex items-center gap-2 pt-1 text-xs">
+                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                   <div>
                     <span className="font-medium text-foreground">
                       {selectedMember.name}
@@ -164,26 +163,24 @@ export function EnrollmentSheet({
               <h4 className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
                 Member details
               </h4>
-              <div className="bg-tertiary/30 space-y-1.5 rounded-md border border-border p-3 text-xs">
-                <div className="flex justify-between">
+              <div className="flex flex-col divide-y divide-border/60 text-xs">
+                <div className="flex justify-between py-2">
                   <span className="text-muted-foreground">Full name</span>
-                  <span className="font-medium text-foreground">
-                    {selectedMember.name}
-                  </span>
+                  <span className="text-foreground">{selectedMember.name}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between py-2">
                   <span className="text-muted-foreground">Age</span>
                   <span className="text-foreground">
                     {selectedMember.age} years
                   </span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between py-2">
                   <span className="text-muted-foreground">Gender</span>
                   <span className="text-foreground">
                     {selectedMember.gender}
                   </span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between py-2">
                   <span className="text-muted-foreground">Current level</span>
                   <span className="text-foreground">
                     {selectedMember.level}
@@ -208,22 +205,19 @@ export function EnrollmentSheet({
               value={medicalNotes}
               onChange={(e) => setMedicalNotes(e.target.value)}
               placeholder="Allergies, medication, or details for the coach"
-              className="min-h-20 resize-none rounded-md border-border text-xs"
+              className="min-h-20 resize-none text-xs"
             />
           </div>
 
-          <Separator className="bg-border" />
-
-          <div className="bg-tertiary/40 space-y-1 rounded-md border border-border p-3 text-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Programme fee</span>
+          <div className="flex items-center justify-between border-t border-border/60 pt-4 text-xs">
+            <span className="text-muted-foreground">Programme fee</span>
+            <div className="text-right">
               <span className="font-medium text-foreground">
                 R{programme.price}
               </span>
-            </div>
-            <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-              <span>Billed</span>
-              <span>per term</span>
+              <span className="ml-1 text-[11px] text-muted-foreground">
+                per term
+              </span>
             </div>
           </div>
 
@@ -231,7 +225,7 @@ export function EnrollmentSheet({
             <Checkbox
               checked={agreed}
               onCheckedChange={(v) => setAgreed(v === true)}
-              className="mt-0.5 rounded border-border"
+              className="mt-0.5"
             />
             <span>
               I confirm the participant meets the age and eligibility
@@ -240,7 +234,7 @@ export function EnrollmentSheet({
           </label>
         </div>
 
-        <SheetFooter className="flex-row items-center justify-between gap-3 border-t border-border px-6 py-3.5">
+        <SheetFooter className="flex-row items-center justify-between gap-3 border-t border-border/60 px-6 py-3.5">
           <div className="text-left">
             <div className="text-base font-semibold text-foreground">
               R{programme.price}
@@ -252,7 +246,7 @@ export function EnrollmentSheet({
               <Button
                 variant="ghost"
                 size="sm"
-                className="hover:bg-tertiary h-8 rounded-md text-xs text-muted-foreground hover:text-foreground"
+                className="h-8 text-xs text-muted-foreground hover:text-foreground"
               >
                 Cancel
               </Button>
