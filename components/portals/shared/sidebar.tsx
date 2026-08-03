@@ -112,7 +112,7 @@ export function Sidebar({ items }: { items: NavItem[] }) {
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-8 w-full rounded-md border border-border bg-background pr-3 pl-8 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+                className="h-8 w-full rounded-md border border-secondary bg-secondary pr-3 pl-8 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none active:border-primary"
               />
             </div>
           </div>

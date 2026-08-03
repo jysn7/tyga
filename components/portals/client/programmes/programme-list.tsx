@@ -43,7 +43,7 @@ export function ProgrammeList({ programmes }: { programmes: Programme[] }) {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search programmes..."
-          className="w-full rounded-md border border-border bg-background py-2 pr-9 pl-9 text-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+          className="w-full rounded-md border border-border bg-secondary py-2 pr-9 pl-9 text-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
         />
         {searchQuery && (
           <button

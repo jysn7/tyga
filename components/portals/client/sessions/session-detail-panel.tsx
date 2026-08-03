@@ -1,6 +1,7 @@
 "use client"
 
 import { SidePanel } from "@/components/portals/shared/side-sheet"
+import { dotColor } from "@/lib/schedule"
 import type { SessionEvent } from "@/components/portals/client/sessions/schedule-calendar"
 
 function Field({
@@ -11,19 +12,13 @@ function Field({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex flex-col gap-1.5 border-b border-neutral-100 py-3">
-      <span className="text-xs font-medium tracking-wide text-neutral-400 uppercase">
+    <div className="flex flex-col gap-1.5 border-b border-border py-3 last:border-b-0">
+      <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
         {label}
       </span>
       {children}
     </div>
   )
-}
-
-function statusDotColor(status: SessionEvent["status"]) {
-  if (status === "completed") return "bg-neutral-900"
-  if (status === "cancelled") return "bg-neutral-300"
-  return "bg-neutral-400"
 }
 
 function statusLabel(status: SessionEvent["status"]) {
@@ -66,29 +61,25 @@ export function SessionDetailPanel({
     >
       <div className="flex flex-col">
         <Field label="Status">
-          <div className="flex items-center gap-2 text-[15px] text-neutral-900">
+          <div className="flex items-center gap-2 text-sm text-foreground">
             <span
-              className={`h-1.5 w-1.5 rounded-full ${statusDotColor(session.status)}`}
+              className={`h-1.5 w-1.5 rounded-full ${dotColor(session.status)}`}
             />
             {statusLabel(session.status)}
           </div>
         </Field>
 
         <Field label="Member">
-          <span className="text-[15px] text-neutral-900">
-            {session.memberName}
-          </span>
+          <span className="text-sm text-foreground">{session.memberName}</span>
         </Field>
 
         <Field label="Venue">
-          <span className="text-[15px] text-neutral-900">
-            {session.venueName}
-          </span>
+          <span className="text-sm text-foreground">{session.venueName}</span>
         </Field>
 
         {session.status === "completed" && (
           <Field label="Attendance">
-            <span className="text-[15px] text-neutral-900">
+            <span className="text-sm text-foreground">
               {attendanceLabel(session.attendanceStatus)}
             </span>
           </Field>
@@ -100,9 +91,9 @@ export function SessionDetailPanel({
               {session.curriculumCovered.map((item) => (
                 <li
                   key={item}
-                  className="flex items-start gap-2 text-[15px] text-neutral-900"
+                  className="flex items-start gap-2 text-sm text-foreground"
                 >
-                  <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-neutral-300" />
+                  <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-muted-foreground/40" />
                   {item}
                 </li>
               ))}
@@ -112,11 +103,11 @@ export function SessionDetailPanel({
 
         <Field label="Coach notes">
           {session.coachNotes ? (
-            <p className="text-[15px] leading-relaxed text-neutral-900">
+            <p className="text-sm leading-relaxed text-foreground">
               {session.coachNotes}
             </p>
           ) : (
-            <span className="text-[15px] text-neutral-300">
+            <span className="text-sm text-muted-foreground">
               {session.status === "completed"
                 ? "No notes posted for this session."
                 : "Notes will appear after the session."}

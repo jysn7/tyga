@@ -54,7 +54,7 @@ export function MemberTile({
     <>
       <div
         onClick={() => clickable && setDetailOpen(true)}
-        className={`group flex flex-col gap-4 rounded-xl p-4 transition-colors hover:bg-accent/40 ${
+        className={`group flex flex-col gap-4 rounded-xl bg-secondary p-4 shadow transition-colors hover:bg-accent/40 ${
           clickable ? "cursor-pointer" : ""
         }`}
       >

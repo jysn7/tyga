@@ -10,7 +10,7 @@ import type { ProgrammeDetail } from "@/lib/data/programmes"
 
 export function ProgrammeDetail({ programme }: { programme: ProgrammeDetail }) {
   return (
-    <div className="mx-auto max-w-6xl space-y-8 px-6 py-8">
+    <div className="mx-auto space-y-8 py-8">
       <ProgrammeHero programme={programme} />
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">

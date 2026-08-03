@@ -20,7 +20,7 @@ export function CalendarWeekView({
 
         return (
           <div key={day.toISOString()} className="flex flex-col gap-2">
-            <div className="flex items-baseline justify-between border-b border-border/60 pb-2">
+            <div className="flex items-baseline justify-between border-b border-border pb-2">
               <span className="text-xs tracking-wide text-muted-foreground uppercase">
                 {format(day, "EEE")}
               </span>
@@ -38,13 +38,13 @@ export function CalendarWeekView({
                   <button
                     key={s.id}
                     onClick={() => onSelectSession(s)}
-                    className="flex flex-col gap-0.5 rounded-md bg-muted/50 p-2 text-left transition-colors hover:bg-accent/60"
+                    className="flex flex-col gap-0.5 rounded-md bg-blue p-2 text-left transition-colors hover:bg-accent/60"
                   >
                     <div className="flex items-center gap-1.5">
                       <span
                         className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotColor(s.status)}`}
                       />
-                      <span className="text-xs font-medium text-foreground">
+                      <span className="text-xs font-medium text-primary-foreground">
                         {s.startTime}
                       </span>
                     </div>

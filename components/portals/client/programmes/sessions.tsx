@@ -1,5 +1,6 @@
 import { Calendar } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import Link from "next/link"
 
 export interface ProgrammeSession {
   date: string
@@ -11,9 +12,14 @@ export interface ProgrammeSession {
 export function SessionsList({ sessions }: { sessions: ProgrammeSession[] }) {
   return (
     <div className="space-y-4">
-      <h2 className="text-sm font-semibold text-foreground">
-        Upcoming Sessions
-      </h2>
+      <div className="flex justify-between">
+        <h2 className="text-sm font-semibold text-foreground">
+          Upcoming Sessions
+        </h2>
+        <Link className="text-sm text-foreground underline" href="/schedule">
+          See all
+        </Link>
+      </div>
       <div className="space-y-2">
         {sessions.slice(0, 5).map((session) => (
           <div

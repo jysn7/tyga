@@ -20,7 +20,7 @@ export type ViewMode = "month" | "week" | "list"
 
 export function dotColor(status: SessionEvent["status"]) {
   if (status === "completed") return "bg-primary"
-  if (status === "cancelled") return "bg-muted-foreground/30"
+  if (status === "cancelled") return "bg-destructive"
   return "bg-muted-foreground"
 }
 

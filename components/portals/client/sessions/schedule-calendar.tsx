@@ -8,6 +8,7 @@ import {
   getVisibleDays,
   type ViewMode,
 } from "@/lib/schedule"
+import { exportScheduleToCsv } from "@/lib/export-schedule"
 import { CalendarToolbar } from "@/components/portals/client/sessions/calendar-toolbar"
 import { CalendarMonthView } from "@/components/portals/client/sessions/calendar-month-view"
 import { CalendarWeekView } from "@/components/portals/client/sessions/calendar-week-view"
@@ -53,6 +54,7 @@ export function ScheduleCalendar({ sessions }: { sessions: SessionEvent[] }) {
         onPrev={() => setCursorDate((d) => getPrevDate(view, d))}
         onNext={() => setCursorDate((d) => getNextDate(view, d))}
         onToday={() => setCursorDate(new Date())}
+        onExport={() => exportScheduleToCsv(sessions)}
       />
 
       {view === "month" && (

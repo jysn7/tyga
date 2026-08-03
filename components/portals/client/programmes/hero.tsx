@@ -93,11 +93,16 @@ export function ProgrammeHero({ programme }: { programme: ProgrammeDetail }) {
           {programme.description}
         </p>
         {programme.stageGoal && (
-          <div className="mt-4 rounded-lg border border-border bg-foreground p-4">
+          <div className="relative mt-4 overflow-hidden rounded-lg bg-secondary p-4 shadow">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute right-9 -bottom-6 h-12 w-12 rotate-45 rounded-lg bg-card"
+            />
+
             <p className="text-xs font-medium tracking-wider text-primary uppercase">
               Goal
             </p>
-            <p className="text-sm text-secondary">{programme.stageGoal}</p>
+            <p className="text-sm text-foreground">{programme.stageGoal}</p>
           </div>
         )}
       </div>

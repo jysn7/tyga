@@ -41,7 +41,7 @@ export function ProgrammeCard({ programme }: { programme: Programme }) {
     (programme.enrolledCount / programme.capacity) * 100
 
   return (
-    <div className="group flex h-full flex-col gap-3 rounded-xl bg-accent/50 p-4 transition-colors hover:bg-accent/10">
+    <div className="group flex h-full flex-col gap-3 rounded-lg bg-card p-4 shadow transition-colors hover:bg-accent/10">
       <div className="flex items-center justify-between">
         <span className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
           {typeLabels[programme.type]}

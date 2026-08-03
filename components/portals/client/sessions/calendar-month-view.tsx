@@ -19,8 +19,8 @@ export function CalendarMonthView({
   onSelectSession: (session: SessionEvent) => void
 }) {
   return (
-    <div className="overflow-hidden rounded-lg border border-border/60">
-      <div className="grid grid-cols-7 border-b border-border/60">
+    <div className="overflow-hidden rounded-lg bg-secondary shadow">
+      <div className="grid grid-cols-7 border-b border-border">
         {WEEKDAY_LABELS.map((d) => (
           <div
             key={d}

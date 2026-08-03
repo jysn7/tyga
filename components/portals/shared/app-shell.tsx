@@ -26,7 +26,7 @@ export function AppShell({
       <Sidebar items={nav} />
       <div className="flex flex-1 flex-col overflow-hidden p-2 shadow">
         <LayoutHeader />
-        <main className="flex-1 overflow-y-auto bg-secondary p-6 pt-8">
+        <main className="flex-1 overflow-y-auto bg-background p-6 pt-8">
           {children}
         </main>
       </div>

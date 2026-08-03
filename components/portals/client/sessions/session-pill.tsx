@@ -16,7 +16,7 @@ export function SessionPill({
         e.stopPropagation()
         onClick()
       }}
-      className="flex w-full items-center gap-1.5 truncate rounded px-1.5 py-1 text-left text-xs text-foreground transition-colors hover:bg-accent/40"
+      className="flex w-full items-center gap-1.5 truncate rounded bg-blue px-1.5 py-2 text-left text-xs text-primary-foreground transition-colors hover:bg-accent/40 hover:text-foreground"
     >
       <span
         className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotColor(session.status)}`}
