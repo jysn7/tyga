@@ -1,56 +1,28 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useAppStore } from "@/stores/useAppStore"
-import {
-  ChevronsUpDown,
-  Check,
-  PlusCircle,
-  Search,
-  PanelLeftClose,
-} from "lucide-react"
+import { Search, PanelLeftClose } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
+import type { User } from "@supabase/supabase-js"
 
 type NavItem = { label: string; href: string; icon: LucideIcon }
 
-const mockMembers = [
-  { id: "1", name: "James Doe", role: "Parent / Primary", initials: "JD" },
-  { id: "2", name: "Emma Doe", role: "Child", initials: "ED" },
-  { id: "3", name: "Liam Johnson", role: "Child", initials: "LJ" },
-]
-
-export function Sidebar({ items }: { items: NavItem[] }) {
+export function Sidebar({
+  items,
+  user,
+}: {
+  items: NavItem[]
+  user: User | null
+}) {
   const pathname = usePathname()
   const sidebarOpen = useAppStore((s) => s.sidebarOpen)
   const toggleSidebar = useAppStore((s) => s.toggleSidebar)
 
-  const [isOpen, setIsOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedMember, setSelectedMember] = useState(mockMembers[0])
-  const dropdownRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (window.innerWidth < 768) {
-      useAppStore.setState({ sidebarOpen: false })
-    }
-  }, [])
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
 
   const filteredItems = items.filter((item) =>
     item.label.toLowerCase().includes(searchQuery.toLowerCase())
@@ -88,7 +60,7 @@ export function Sidebar({ items }: { items: NavItem[] }) {
                   TYGA
                 </span>
                 <span className="text-[10px] text-muted-foreground">
-                  Portal
+                  {user ? user.email || "Member" : "Portal"}
                 </span>
               </div>
             </div>
@@ -154,85 +126,6 @@ export function Sidebar({ items }: { items: NavItem[] }) {
               )
             })}
           </nav>
-
-          {/* Member Selector Footer */}
-          <div className="relative shrink-0 p-2" ref={dropdownRef}>
-            {isOpen && (
-              <div className="absolute right-2 bottom-full left-2 z-50 mb-2 rounded-md bg-secondary p-1 shadow">
-                <div className="px-2 py-1 text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
-                  Switch Member
-                </div>
-                <div className="my-1 h-px bg-border" />
-                <div className="flex flex-col gap-0.5">
-                  {mockMembers.map((member) => {
-                    const isSelected = member.id === selectedMember.id
-                    return (
-                      <button
-                        key={member.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedMember(member)
-                          setIsOpen(false)
-                        }}
-                        className="flex w-full items-center justify-between gap-2 rounded-sm px-2 py-1.5 text-left text-xs transition-colors hover:bg-accent hover:text-accent-foreground"
-                      >
-                        <div className="flex items-center gap-2 overflow-hidden">
-                          <Avatar className="h-6 w-6 shrink-0 rounded-md border border-border">
-                            <AvatarFallback className="bg-secondary text-[10px] font-medium text-foreground">
-                              {member.initials}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex flex-col truncate">
-                            <span className="truncate font-medium">
-                              {member.name}
-                            </span>
-                            <span className="truncate text-[10px] text-muted-foreground">
-                              {member.role}
-                            </span>
-                          </div>
-                        </div>
-                        {isSelected && (
-                          <Check className="h-3.5 w-3.5 shrink-0 text-primary" />
-                        )}
-                      </button>
-                    )
-                  })}
-                </div>
-                <div className="my-1 h-px bg-border" />
-                <button
-                  type="button"
-                  onClick={() => setIsOpen(false)}
-                  className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-                >
-                  <PlusCircle className="h-3.5 w-3.5" />
-                  <span>Add new member</span>
-                </button>
-              </div>
-            )}
-
-            <button
-              type="button"
-              onClick={() => setIsOpen(!isOpen)}
-              className="flex w-full items-center justify-between rounded-md bg-secondary p-2 shadow transition-colors outline-none hover:bg-secondary"
-            >
-              <div className="flex items-center gap-2.5 overflow-hidden">
-                <Avatar className="h-6 w-6 shrink-0 rounded-md border border-border">
-                  <AvatarFallback className="bg-primary/10 text-xs font-medium text-primary">
-                    {selectedMember.initials}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col truncate text-left">
-                  <span className="truncate text-xs font-medium text-foreground">
-                    {selectedMember.name}
-                  </span>
-                  <span className="truncate text-[10px] text-muted-foreground">
-                    {selectedMember.role}
-                  </span>
-                </div>
-              </div>
-              <ChevronsUpDown className="ml-1 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            </button>
-          </div>
         </div>
       </aside>
     </>

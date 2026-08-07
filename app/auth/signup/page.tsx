@@ -2,9 +2,11 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
+import { createClient } from "@/utils/supabase/client"
 
 function Field({
   label,
@@ -27,18 +29,79 @@ const fieldStyles =
   "h-auto border-none py-3 bg-background pl-2 shadow-none text-[15px] text-foreground active:ring active:ring-primary placeholder:text-muted-foreground/50"
 
 export default function SignupPage() {
+  const router = useRouter()
+  const supabase = createClient()
+
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
+    setLoading(true)
+    setError(null)
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          },
+        },
+      })
+
+      if (error) throw error
+
+      // Check if email confirmation is required
+      if (data.user?.identities?.length === 0) {
+        setError("This email is already registered. Please sign in instead.")
+        return
+      }
+
+      // Success - redirect to confirmation page or dashboard
+      router.push("/auth/verify-email?email=" + encodeURIComponent(email))
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "An error occurred during sign up"
+      setError(message)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleGoogleAuth = () => {}
+  const handleGoogleAuth = async () => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      })
+
+      if (error) throw error
+
+      setLoading(false)
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "An error occurred with Google sign in"
+      setError(message)
+      setLoading(false)
+    }
+  }
 
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center bg-secondary px-4 py-12">
+    <div className="flex min-h-svh flex-col items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-sm space-y-8">
         <div className="flex flex-col items-center space-y-4 text-center">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">
@@ -67,12 +130,19 @@ export default function SignupPage() {
           </div>
         </div>
 
+        {error && (
+          <div className="rounded-lg bg-destructive/10 px-4 py-2 text-sm text-destructive">
+            {error}
+          </div>
+        )}
+
         <div className="flex flex-col gap-6">
           <Button
             type="button"
             variant="outline"
             className="h-10 w-full gap-2.5 rounded-lg bg-secondary text-xs font-medium shadow"
             onClick={handleGoogleAuth}
+            disabled={loading}
           >
             <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24">
               <path
@@ -97,7 +167,7 @@ export default function SignupPage() {
 
           <div className="relative flex items-center justify-center">
             <Separator className="w-full bg-border/60" />
-            <span className="absolute rounded-xl bg-background px-3 text-[10px] font-medium tracking-widest text-muted-foreground/70 uppercase">
+            <span className="absolute rounded-full bg-muted px-3 text-[10px] font-medium tracking-widest text-muted-foreground/70 uppercase">
               or
             </span>
           </div>
@@ -108,11 +178,12 @@ export default function SignupPage() {
               <Input
                 id="fullName"
                 type="text"
-                placeholder="John Doe"
+                placeholder="Sarah Conner"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 className={fieldStyles}
                 required
+                disabled={loading}
               />
             </Field>
 
@@ -125,6 +196,7 @@ export default function SignupPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 className={fieldStyles}
                 required
+                disabled={loading}
               />
             </Field>
 
@@ -137,14 +209,17 @@ export default function SignupPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 className={fieldStyles}
                 required
+                disabled={loading}
+                minLength={8}
               />
             </Field>
 
             <Button
               type="submit"
               className="mt-6 h-10 w-full rounded-lg text-xs font-medium"
+              disabled={loading}
             >
-              Create Account
+              {loading ? "Creating account..." : "Create Account"}
             </Button>
           </form>
         </div>

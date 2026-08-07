@@ -2,9 +2,12 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
+import { createClient } from "@/utils/supabase/client"
+import { toast } from "@/components/ui/toast"
 
 function Field({
   label,
@@ -32,17 +35,89 @@ const fieldStyles =
   "h-auto border-none bg-background active:ring active:ring-primary pl-2 py-3 shadow-none text-[15px] text-foreground placeholder:text-muted-foreground/50"
 
 export default function LoginPage() {
+  const router = useRouter()
+  const supabase = createClient()
+
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [loading, setLoading] = useState(false)
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    setLoading(true)
+
+    const loadingToast = toast.add({
+      title: "Signing in...",
+      description: "Please wait",
+      type: "loading",
+    })
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (error) throw error
+
+      toast.close(loadingToast)
+      router.push("/dashboard?toast=auth-success")
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Invalid email or password"
+
+      toast.update(loadingToast, {
+        title: "Sign in failed",
+        description: message,
+        type: "error",
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleGoogleAuth = () => {}
+  const handleGoogleAuth = async () => {
+    setLoading(true)
+
+    const toastId = "google-auth-status"
+
+    toast.add({
+      id: toastId,
+      title: "Redirecting to Google...",
+      description: "Please wait",
+      type: "loading",
+      timeout: 0,
+    })
+
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      })
+
+      if (error) throw error
+
+      toast.close(toastId)
+      setLoading(false)
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "An error occurred"
+
+      toast.add({
+        id: toastId, // same id = upserts the loading toast into the error state
+        title: "Google sign in failed",
+        description: message,
+        type: "error",
+        timeout: 100,
+      })
+      setLoading(false)
+    }
+  }
 
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center bg-secondary px-4 py-12">
+    <div className="flex min-h-svh flex-col items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-sm space-y-8">
         {/* Top Branding & Mode Switcher */}
         <div className="flex flex-col items-center space-y-4 text-center">
@@ -79,6 +154,7 @@ export default function LoginPage() {
             variant="outline"
             className="h-10 w-full gap-2.5 rounded-lg bg-secondary text-xs font-medium shadow"
             onClick={handleGoogleAuth}
+            disabled={loading}
           >
             <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24">
               <path
@@ -103,7 +179,7 @@ export default function LoginPage() {
 
           <div className="relative flex items-center justify-center">
             <Separator className="w-full bg-border/60" />
-            <span className="absolute bg-background px-3 text-[10px] font-medium tracking-widest text-muted-foreground/70 uppercase">
+            <span className="absolute rounded-full bg-muted px-3 text-[10px] font-medium tracking-widest text-muted-foreground/70 uppercase">
               or
             </span>
           </div>
@@ -119,6 +195,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 className={fieldStyles}
                 required
+                disabled={loading}
               />
             </Field>
 
@@ -126,7 +203,7 @@ export default function LoginPage() {
               label="Password"
               action={
                 <Link
-                  href="/forgot-password"
+                  href="/auth/forgot-password"
                   className="text-xs text-muted-foreground transition-colors hover:text-foreground"
                 >
                   Forgot password?
@@ -141,14 +218,16 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 className={fieldStyles}
                 required
+                disabled={loading}
               />
             </Field>
 
             <Button
               type="submit"
               className="mt-6 h-10 w-full rounded-lg text-xs font-medium"
+              disabled={loading}
             >
-              Sign In
+              {loading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
         </div>

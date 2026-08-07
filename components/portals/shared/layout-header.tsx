@@ -5,23 +5,16 @@ import {
   PanelLeftOpen,
   User,
   Users,
-  UserCog,
-  Settings,
-  Plug,
-  Receipt,
   SunMoon,
   Sun,
   Moon,
   Monitor,
-  Flag,
-  HelpCircle,
-  Command,
   LogOut,
   ExternalLink,
 } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useAppStore } from "@/stores/useAppStore"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,13 +29,10 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-
-// Sample data — replace with the account row fetched in the layout
-// (`select * from accounts where id = auth.uid()`) and passed down as a prop.
-const account = {
-  fullName: "Thandiwe Mokoena",
-  email: "thandiwe@example.com",
-}
+import { createClient } from "@/utils/supabase/client"
+import { useRouter } from "next/navigation"
+import { toast } from "@/components/ui/toast"
+import type { User as SupabaseUser } from "@supabase/supabase-js"
 
 function getInitials(name: string) {
   return name
@@ -50,12 +40,37 @@ function getInitials(name: string) {
     .map((n) => n[0])
     .slice(0, 2)
     .join("")
+    .toUpperCase()
 }
 
-export function LayoutHeader() {
+export function LayoutHeader({ user }: { user: SupabaseUser | null }) {
+  const router = useRouter()
+  const supabase = createClient()
   const sidebarOpen = useAppStore((s) => s.sidebarOpen)
   const toggleSidebar = useAppStore((s) => s.toggleSidebar)
   const { theme, setTheme } = useTheme()
+
+  const fullName = user?.user_metadata?.full_name || user?.email || "User"
+  const email = user?.email || ""
+
+  const handleSignOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
+      router.push("/auth/signin")
+      toast.add({
+        title: "Signed out",
+        description: "You have been signed out successfully.",
+        type: "success",
+      })
+    } catch {
+      toast.add({
+        title: "Error",
+        description: "Failed to sign out.",
+        type: "error",
+      })
+    }
+  }
 
   return (
     <header className="sticky top-0 z-20 flex h-18 shrink-0 items-center justify-between rounded-t-xl bg-background px-4 sm:px-6">
@@ -88,8 +103,13 @@ export function LayoutHeader() {
             className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-accent"
           >
             <Avatar className="h-10 w-10">
-              <AvatarFallback className="bg-pink text-primary-foreground">
-                <User className="h-4.5 w-4.5" />
+              <AvatarImage src={user?.user_metadata?.avatar_url} />
+              <AvatarFallback className="bg-primary text-primary-foreground">
+                {fullName ? (
+                  getInitials(fullName)
+                ) : (
+                  <User className="h-4.5 w-4.5" />
+                )}
               </AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>
@@ -102,16 +122,21 @@ export function LayoutHeader() {
 
               <div className="flex items-center gap-3 px-2 py-4">
                 <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-pink text-primary-foreground">
-                    {getInitials(account.fullName)}
+                  <AvatarImage src={user?.user_metadata?.avatar_url} />
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    {fullName ? (
+                      getInitials(fullName)
+                    ) : (
+                      <User className="h-4 w-4" />
+                    )}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col overflow-hidden">
                   <span className="truncate text-sm font-medium text-foreground">
-                    {account.fullName}
+                    {fullName}
                   </span>
                   <span className="truncate text-xs text-muted-foreground">
-                    {account.email}
+                    {email}
                   </span>
                 </div>
               </div>
@@ -179,7 +204,10 @@ export function LayoutHeader() {
 
             <DropdownMenuSeparator className="my-2" />
 
-            <DropdownMenuItem>Log out</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleSignOut}>
+              <LogOut className="h-4 w-4 text-muted-foreground" />
+              Log out
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
