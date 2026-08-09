@@ -1,6 +1,6 @@
-﻿# Tyga â€” Golf Academy Booking Platform
+﻿# Thipe Youth Golf Academy Platform
 
-A booking platform for a golf academy client, split across three applications:
+A booking and enrollment platform for a golf academy client, split across three applications:
 a public marketing site, an authenticated customer portal, and an internal
 admin application.
 
