@@ -1,9 +1,12 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
+import { toast } from "@/components/ui/toast"
+import { saveAccountSettings } from "@/lib/functions/save-account-settings"
 
 function Field({
   label,
@@ -28,10 +31,11 @@ function Field({
 }
 
 const fieldStyles =
-  "border-none bg-background pl-2 shadow-none text-[15px] text-foreground focus-visible:ring-0 placeholder:text-muted-foreground/50"
+  "border-none bg-muted/80 pl-2 shadow-none text-[15px] text-foreground focus-visible:ring-0 placeholder:text-muted-foreground/50"
 
 const NOTIFICATION_TYPES: { key: string; label: string }[] = [
   { key: "session_reminder", label: "Session reminders" },
+  { key: "gear_due", label: "Gear due" },
   { key: "payment_due", label: "Payment due" },
   { key: "level_upgrade", label: "Level upgrades" },
   {
@@ -51,28 +55,68 @@ export type AccountSettings = {
 }
 
 export function SettingsForm({ account }: { account: AccountSettings }) {
+  const router = useRouter()
   const [fullName, setFullName] = useState(account.fullName)
   const [phone, setPhone] = useState(account.phone)
   const [address, setAddress] = useState(account.address)
   const [prefs, setPrefs] = useState(account.preferences)
+  const [changedPrefKeys, setChangedPrefKeys] = useState<Set<string>>(new Set())
   const [isSaving, setIsSaving] = useState(false)
   const [savedAt, setSavedAt] = useState<number | null>(null)
 
   function togglePref(key: string) {
     setPrefs((prev) => ({ ...prev, [key]: !prev[key] }))
+    setChangedPrefKeys((prev) => new Set(prev).add(key))
   }
 
   async function handleSave() {
     setIsSaving(true)
+    const toastId = "settings-save-status"
 
-    await new Promise((r) => setTimeout(r, 500))
-    setIsSaving(false)
-    setSavedAt(Date.now())
+    toast.add({
+      id: toastId,
+      title: "Saving changes...",
+      description: "Please wait",
+      type: "loading",
+      timeout: 0,
+    })
+
+    try {
+      const changedPrefs = Object.fromEntries(
+        Array.from(changedPrefKeys).map((key) => [key, prefs[key]])
+      )
+
+      await saveAccountSettings({ fullName, phone, address, changedPrefs })
+
+      toast.add({
+        id: toastId,
+        title: "Settings saved",
+        type: "success",
+        timeout: 4000,
+      })
+
+      setChangedPrefKeys(new Set())
+      setSavedAt(Date.now())
+      router.refresh()
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Something went wrong"
+
+      toast.add({
+        id: toastId,
+        title: "Save failed",
+        description: message,
+        type: "error",
+        timeout: 5000,
+      })
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
     <div className="flex flex-col gap-10">
-      <section>
+      <section className="rounded-xl bg-secondary p-4 shadow">
         <h2 className="pb-1 text-sm font-medium text-foreground">Profile</h2>
         <div className="flex flex-col">
           <Field label="Full name">
@@ -104,7 +148,7 @@ export function SettingsForm({ account }: { account: AccountSettings }) {
         </div>
       </section>
 
-      <section>
+      <section className="rounded-xl bg-secondary p-4 shadow">
         <h2 className="pb-1 text-sm font-medium text-foreground">
           Notifications
         </h2>

@@ -15,7 +15,7 @@ export function InvoiceList({ invoices }: { invoices: Invoice[] }) {
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border/60">
+    <div className="overflow-hidden rounded-lg border border-secondary bg-secondary shadow">
       <table className="w-full border-collapse">
         <thead>
           <tr className="border-b border-border/60 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">

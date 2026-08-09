@@ -1,4 +1,3 @@
-// member-list.tsx
 import {
   MemberTile,
   type Member,

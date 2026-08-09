@@ -30,6 +30,6 @@
     "**/*.mts",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
-, "jest.config.mjs"  ],
+, "jest.config.mjs", "lib/functions"  ],
   "exclude": ["node_modules"]
 }

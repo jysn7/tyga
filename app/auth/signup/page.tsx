@@ -2,18 +2,26 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
+import { useTheme } from "next-themes"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import { createClient } from "@/utils/supabase/client"
+import { toast } from "@/components/ui/toast"
+import { signUpSchema, type SignUpValues } from "@/lib/validations/auth"
+import { useSignUp, useGoogleAuth } from "@/hooks/use-auth-mutations"
 
 function Field({
   label,
   children,
+  error,
 }: {
   label: string
   children: React.ReactNode
+  error?: string
 }) {
   return (
     <div className="flex flex-col gap-1.5 py-2">
@@ -21,6 +29,7 @@ function Field({
         {label}
       </span>
       {children}
+      {error && <span className="text-xs text-destructive">{error}</span>}
     </div>
   )
 }
@@ -30,82 +39,108 @@ const fieldStyles =
 
 export default function SignupPage() {
   const router = useRouter()
-  const supabase = createClient()
+  const { resolvedTheme } = useTheme()
 
-  const [fullName, setFullName] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const logoSrc =
+    resolvedTheme === "dark" ? "/logo/light.png" : "/logo/dark.png"
 
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<SignUpValues>({
+    resolver: zodResolver(signUpSchema),
+  })
+
+  const signUp = useSignUp()
+  const googleAuth = useGoogleAuth()
+
+  const onSubmit = async (values: SignUpValues) => {
+    const toastId = "signup-status"
+
+    toast.add({
+      id: toastId,
+      title: "Creating account...",
+      description: "Please wait",
+      type: "loading",
+      timeout: 0,
+    })
 
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-          },
-        },
+      await signUp.mutateAsync(values)
+
+      toast.add({
+        id: toastId,
+        title: "Account created! 🎉",
+        description: "Check your email to verify your account.",
+        type: "success",
+        timeout: 5000,
       })
 
-      if (error) throw error
-
-      // Check if email confirmation is required
-      if (data.user?.identities?.length === 0) {
-        setError("This email is already registered. Please sign in instead.")
-        return
-      }
-
-      // Success - redirect to confirmation page or dashboard
-      router.push("/auth/verify-email?email=" + encodeURIComponent(email))
-    } catch (error: unknown) {
+      router.push(
+        "/auth/verify-email?email=" + encodeURIComponent(values.email)
+      )
+    } catch (error) {
       const message =
         error instanceof Error
           ? error.message
           : "An error occurred during sign up"
-      setError(message)
-    } finally {
-      setLoading(false)
+
+      toast.add({
+        id: toastId,
+        title: "Sign up failed",
+        description: message,
+        type: "error",
+        timeout: 5000,
+      })
     }
   }
 
   const handleGoogleAuth = async () => {
-    setLoading(true)
-    setError(null)
+    const toastId = "google-auth-status"
+
+    toast.add({
+      id: toastId,
+      title: "Redirecting to Google...",
+      description: "Please wait",
+      type: "loading",
+      timeout: 0,
+    })
 
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      })
-
-      if (error) throw error
-
-      setLoading(false)
-    } catch (error: unknown) {
+      await googleAuth.mutateAsync()
+      // Browser navigates away on success — nothing further to show
+    } catch (error) {
       const message =
-        error instanceof Error
-          ? error.message
-          : "An error occurred with Google sign in"
-      setError(message)
-      setLoading(false)
+        error instanceof Error ? error.message : "An error occurred"
+
+      toast.add({
+        id: toastId,
+        title: "Google sign in failed",
+        description: message,
+        type: "error",
+        timeout: 5000,
+      })
     }
   }
+
+  const loading = signUp.isPending || googleAuth.isPending
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-sm space-y-8">
         <div className="flex flex-col items-center space-y-4 text-center">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">
-            T
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center">
+            {resolvedTheme && (
+              <Image
+                width={36}
+                height={36}
+                alt="TYGA Logo"
+                src={logoSrc}
+                className="h-full w-full object-contain"
+                priority
+              />
+            )}
           </div>
           <div className="space-y-1">
             <h1 className="text-xl font-semibold tracking-tight text-foreground">
@@ -116,7 +151,6 @@ export default function SignupPage() {
             </p>
           </div>
 
-          {/* Segmented Auth Switcher */}
           <div className="flex w-full rounded-lg bg-muted p-1 text-xs">
             <Link
               href="/auth/signin"
@@ -129,12 +163,6 @@ export default function SignupPage() {
             </div>
           </div>
         </div>
-
-        {error && (
-          <div className="rounded-lg bg-destructive/10 px-4 py-2 text-sm text-destructive">
-            {error}
-          </div>
-        )}
 
         <div className="flex flex-col gap-6">
           <Button
@@ -172,45 +200,34 @@ export default function SignupPage() {
             </span>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSignup} className="flex flex-col">
-            <Field label="Full name">
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
+            <Field label="Full name" error={errors.fullName?.message}>
               <Input
-                id="fullName"
                 type="text"
                 placeholder="Sarah Conner"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
                 className={fieldStyles}
-                required
                 disabled={loading}
+                {...register("fullName")}
               />
             </Field>
 
-            <Field label="Email address">
+            <Field label="Email address" error={errors.email?.message}>
               <Input
-                id="email"
                 type="email"
                 placeholder="name@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 className={fieldStyles}
-                required
                 disabled={loading}
+                {...register("email")}
               />
             </Field>
 
-            <Field label="Password">
+            <Field label="Password" error={errors.password?.message}>
               <Input
-                id="password"
                 type="password"
                 placeholder="At least 8 characters"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
                 className={fieldStyles}
-                required
                 disabled={loading}
-                minLength={8}
+                {...register("password")}
               />
             </Field>
 
@@ -219,12 +236,11 @@ export default function SignupPage() {
               className="mt-6 h-10 w-full rounded-lg text-xs font-medium"
               disabled={loading}
             >
-              {loading ? "Creating account..." : "Create Account"}
+              {signUp.isPending ? "Creating account..." : "Create Account"}
             </Button>
           </form>
         </div>
 
-        {/* Footer info */}
         <p className="text-center font-mono text-[11px] text-muted-foreground/60">
           TYGA Portal &bull; Press{" "}
           <kbd className="rounded bg-muted px-1 py-0.5">d</kbd> for theme

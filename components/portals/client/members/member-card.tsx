@@ -1,10 +1,10 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { ArrowUpRight } from "lucide-react"
-import { MemberPanel } from "@/components/portals/client/members/member-panel"
 import { BookAssessmentPanel } from "@/components/portals/client/members/book-assessment-panel"
 
 export type Member = {
@@ -44,76 +44,68 @@ export function MemberTile({
   member: Member
   viewerRole: "client" | "coach" | "admin"
 }) {
-  const [detailOpen, setDetailOpen] = useState(false)
   const [assessmentOpen, setAssessmentOpen] = useState(false)
 
   const isAssessed = member.currentLevelName !== null
-  const clickable = viewerRole === "client" && isAssessed
+  const clickable = viewerRole === "client"
 
-  return (
-    <>
-      <div
-        onClick={() => clickable && setDetailOpen(true)}
-        className={`group flex flex-col gap-4 rounded-xl bg-secondary p-4 shadow transition-colors hover:bg-accent/40 ${
-          clickable ? "cursor-pointer" : ""
-        }`}
-      >
-        <div className="flex items-start justify-between">
-          <Avatar className="h-11 w-11 rounded-full">
-            <AvatarFallback className="bg-muted text-sm font-medium text-muted-foreground">
-              {getInitials(member.fullName)}
-            </AvatarFallback>
-          </Avatar>
+  const tile = (
+    <div
+      className={`group flex flex-col gap-4 rounded-xl border border-secondary bg-secondary p-4 shadow transition-colors hover:border-primary ${
+        clickable ? "cursor-pointer" : ""
+      }`}
+    >
+      <div className="flex items-start justify-between">
+        <Avatar className="h-11 w-11 rounded-full">
+          <AvatarFallback className="bg-pink text-sm font-medium text-background">
+            {getInitials(member.fullName)}
+          </AvatarFallback>
+        </Avatar>
 
-          {clickable && (
-            <ArrowUpRight className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-          )}
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <p className="text-sm font-medium text-foreground">
-            {member.fullName}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {getAge(member.dob)} years old ·{" "}
-            {isAssessed ? member.currentLevelName : "Not yet assessed"}
-          </p>
-          {member.nextSessionLabel && (
-            <p className="text-xs text-muted-foreground">
-              Next: {member.nextSessionLabel}
-            </p>
-          )}
-          {viewerRole === "coach" && (
-            <p className="text-xs text-muted-foreground">
-              {member.activeEnrollmentCount} active enrollment
-              {member.activeEnrollmentCount === 1 ? "" : "s"}
-            </p>
-          )}
-        </div>
-
-        {viewerRole === "client" && !isAssessed && (
-          <Button
-            size="sm"
-            variant="secondary"
-            className="w-fit rounded-md text-xs font-medium"
-            onClick={(e) => {
-              e.stopPropagation()
-              setAssessmentOpen(true)
-            }}
-          >
-            Book an assessment
-          </Button>
+        {clickable && (
+          <ArrowUpRight className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
         )}
       </div>
 
-      <MemberPanel
-        member={member}
-        open={detailOpen}
-        onOpenChange={setDetailOpen}
-        onSave={(updated) => {
-          console.log("save", updated)
-        }}
-      />
+      <div className="flex flex-col gap-1">
+        <p className="text-sm font-medium text-foreground">{member.fullName}</p>
+        <p className="text-xs text-muted-foreground">
+          {getAge(member.dob)} years old ·{" "}
+          {isAssessed ? member.currentLevelName : "Not yet assessed"}
+        </p>
+        {member.nextSessionLabel && (
+          <p className="text-xs text-muted-foreground">
+            Next: {member.nextSessionLabel}
+          </p>
+        )}
+        {viewerRole === "coach" && (
+          <p className="text-xs text-muted-foreground">
+            {member.activeEnrollmentCount} active enrollment
+            {member.activeEnrollmentCount === 1 ? "" : "s"}
+          </p>
+        )}
+      </div>
+
+      {viewerRole === "client" && !isAssessed && (
+        <Button
+          size="sm"
+          variant="secondary"
+          className="w-fit rounded-md text-xs font-medium"
+          onClick={(e) => {
+            e.preventDefault() // guards against the Link wrapper below on future edits
+            e.stopPropagation()
+            setAssessmentOpen(true)
+          }}
+        >
+          Book an assessment
+        </Button>
+      )}
+    </div>
+  )
+
+  return (
+    <>
+      {clickable ? <Link href={`/members/${member.id}`}>{tile}</Link> : tile}
 
       <BookAssessmentPanel
         memberName={member.fullName}

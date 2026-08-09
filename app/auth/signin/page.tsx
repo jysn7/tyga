@@ -2,21 +2,28 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
+import { useTheme } from "next-themes"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import { createClient } from "@/utils/supabase/client"
 import { toast } from "@/components/ui/toast"
+import { signInSchema, type SignInValues } from "@/lib/validations/auth"
+import { useSignIn, useGoogleAuth } from "@/hooks/use-auth-mutations"
 
 function Field({
   label,
   action,
   children,
+  error,
 }: {
   label: string
   action?: React.ReactNode
   children: React.ReactNode
+  error?: string
 }) {
   return (
     <div className="flex flex-col gap-1.5 py-3">
@@ -27,6 +34,7 @@ function Field({
         {action}
       </div>
       {children}
+      {error && <span className="text-xs text-destructive">{error}</span>}
     </div>
   )
 }
@@ -36,49 +44,53 @@ const fieldStyles =
 
 export default function LoginPage() {
   const router = useRouter()
-  const supabase = createClient()
+  const { resolvedTheme } = useTheme()
 
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
+  const logoSrc =
+    resolvedTheme === "dark" ? "/logo/light.png" : "/logo/dark.png"
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<SignInValues>({
+    resolver: zodResolver(signInSchema),
+  })
 
-    const loadingToast = toast.add({
+  const signIn = useSignIn()
+  const googleAuth = useGoogleAuth()
+
+  const onSubmit = async (values: SignInValues) => {
+    const toastId = "signin-status"
+
+    toast.add({
+      id: toastId,
       title: "Signing in...",
       description: "Please wait",
       type: "loading",
+      timeout: 0,
     })
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+      await signIn.mutateAsync(values)
 
-      if (error) throw error
-
-      toast.close(loadingToast)
+      toast.close(toastId)
       router.push("/dashboard?toast=auth-success")
-    } catch (error: unknown) {
+    } catch (error) {
       const message =
         error instanceof Error ? error.message : "Invalid email or password"
 
-      toast.update(loadingToast, {
+      toast.add({
+        id: toastId,
         title: "Sign in failed",
         description: message,
         type: "error",
+        timeout: 5000,
       })
-    } finally {
-      setLoading(false)
     }
   }
 
   const handleGoogleAuth = async () => {
-    setLoading(true)
-
     const toastId = "google-auth-status"
 
     toast.add({
@@ -90,39 +102,41 @@ export default function LoginPage() {
     })
 
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      })
-
-      if (error) throw error
-
+      await googleAuth.mutateAsync()
       toast.close(toastId)
-      setLoading(false)
-    } catch (error: unknown) {
+      // Browser navigates away to Google on success — nothing else to show
+    } catch (error) {
       const message =
         error instanceof Error ? error.message : "An error occurred"
 
       toast.add({
-        id: toastId, // same id = upserts the loading toast into the error state
+        id: toastId,
         title: "Google sign in failed",
         description: message,
         type: "error",
-        timeout: 100,
+        timeout: 5000, // was 100ms — too fast to actually read, fixed to 5s
       })
-      setLoading(false)
     }
   }
+
+  const loading = signIn.isPending || googleAuth.isPending
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-sm space-y-8">
         {/* Top Branding & Mode Switcher */}
         <div className="flex flex-col items-center space-y-4 text-center">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">
-            T
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center">
+            {resolvedTheme && (
+              <Image
+                width={36}
+                height={36}
+                alt="TYGA Logo"
+                src={logoSrc}
+                className="h-full w-full object-contain"
+                priority
+              />
+            )}
           </div>
           <div className="space-y-1">
             <h1 className="text-xl font-semibold tracking-tight text-foreground">
@@ -185,22 +199,20 @@ export default function LoginPage() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleLogin} className="flex flex-col">
-            <Field label="Email address">
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
+            <Field label="Email address" error={errors.email?.message}>
               <Input
-                id="email"
                 type="email"
                 placeholder="name@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 className={fieldStyles}
-                required
                 disabled={loading}
+                {...register("email")}
               />
             </Field>
 
             <Field
               label="Password"
+              error={errors.password?.message}
               action={
                 <Link
                   href="/auth/forgot-password"
@@ -211,14 +223,11 @@ export default function LoginPage() {
               }
             >
               <Input
-                id="password"
                 type="password"
                 placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
                 className={fieldStyles}
-                required
                 disabled={loading}
+                {...register("password")}
               />
             </Field>
 
@@ -227,7 +236,7 @@ export default function LoginPage() {
               className="mt-6 h-10 w-full rounded-lg text-xs font-medium"
               disabled={loading}
             >
-              {loading ? "Signing in..." : "Sign In"}
+              {signIn.isPending ? "Signing in..." : "Sign In"}
             </Button>
           </form>
         </div>

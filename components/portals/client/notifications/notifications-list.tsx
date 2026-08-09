@@ -66,7 +66,7 @@ export function NotificationList({
   }
 
   return (
-    <div className="flex flex-col divide-y divide-border/60 rounded-xl border border-border">
+    <div className="flex flex-col divide-y divide-border/60 rounded-xl border border-secondary bg-secondary shadow">
       {items.map((n) => {
         const Icon = iconMap[n.relatedType] ?? Bell
         const isUnread = !n.readAt

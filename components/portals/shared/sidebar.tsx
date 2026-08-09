@@ -5,9 +5,11 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useAppStore } from "@/stores/useAppStore"
+import { useTheme } from "next-themes"
 import { Search, PanelLeftClose } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import type { User } from "@supabase/supabase-js"
+import Image from "next/image"
 
 type NavItem = { label: string; href: string; icon: LucideIcon }
 
@@ -21,8 +23,12 @@ export function Sidebar({
   const pathname = usePathname()
   const sidebarOpen = useAppStore((s) => s.sidebarOpen)
   const toggleSidebar = useAppStore((s) => s.toggleSidebar)
+  const { resolvedTheme } = useTheme()
 
   const [searchQuery, setSearchQuery] = useState("")
+
+  const logoSrc =
+    resolvedTheme === "dark" ? "/logo/light.png" : "/logo/dark.png"
 
   const filteredItems = items.filter((item) =>
     item.label.toLowerCase().includes(searchQuery.toLowerCase())
@@ -52,8 +58,17 @@ export function Sidebar({
           {/* Top Header & Collapse Toggle */}
           <div className="flex h-20 shrink-0 items-center justify-between px-3.5">
             <div className="flex items-center gap-2.5 overflow-hidden">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary text-xs font-semibold text-primary-foreground">
-                T
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center">
+                {resolvedTheme && (
+                  <Image
+                    width={36}
+                    height={36}
+                    alt="TYGA Logo"
+                    src={logoSrc}
+                    className="h-full w-full object-contain"
+                    priority
+                  />
+                )}
               </div>
               <div className="flex flex-col truncate">
                 <span className="text-xs leading-none font-semibold tracking-tight text-foreground">
