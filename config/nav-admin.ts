@@ -1,7 +1,30 @@
-import { Home, ClipboardList, Users } from "lucide-react"
+import {
+  LayoutDashboard,
+  Users,
+  UserCog,
+  Award,
+  BookOpen,
+  Calendar,
+  Building2,
+  Trophy,
+  CalendarCheck,
+  Backpack,
+  Wallet,
+  Bell,
+} from "lucide-react"
 
 export const adminNav = [
-  { label: "Dashboard", href: "/dashboard", icon: Home },
-  { label: "My Sessions", href: "/sessions", icon: ClipboardList },
-  { label: "My Roster", href: "/roster", icon: Users },
+  { label: "Overview", href: "/admin/overview", icon: LayoutDashboard },
+  { label: "Members", href: "/admin/members", icon: Users },
+  { label: "Accounts", href: "/admin/accounts", icon: UserCog },
+  { label: "Coaches", href: "/admin/coaches", icon: Award },
+  { label: "Programmes", href: "/admin/programmes", icon: Calendar },
+  { label: "Venues", href: "/admin/venues", icon: Building2 },
+  { label: "Levels", href: "/admin/levels", icon: BookOpen },
+  { label: "Curriculum", href: "/admin/curriculum", icon: BookOpen },
+  { label: "Appointments", href: "/admin/appointments", icon: CalendarCheck },
+  // { label: "Events", href: "/admin/events", icon: Trophy },
+  // { label: "Gear", href: "/admin/gear", icon: Backpack },
+  { label: "Finance", href: "/admin/finance", icon: Wallet },
+  { label: "Notifications", href: "/admin/notifications", icon: Bell },
 ]

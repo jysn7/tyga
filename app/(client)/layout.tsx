@@ -8,9 +8,8 @@ export default function ClientLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { loading, authorized } = useAuth()
+  const { loading, authorized } = useAuth({ requiredRole: "parent" })
 
-  // Show loading state while checking auth
   if (loading) {
     return (
       <div className="flex min-h-svh items-center justify-center">
@@ -22,7 +21,6 @@ export default function ClientLayout({
     )
   }
 
-  // If not authorized, don't render (will redirect)
   if (!authorized) {
     return null
   }

@@ -6,6 +6,7 @@ export const sampleAccount: AccountSettings = {
   email: "thandiwe@example.com",
   phone: "071 234 5678",
   address: "12 Vilakazi Street, Soweto",
+  avatarUrl: null,
   preferences: {
     session_reminder: true,
     payment_due: true,

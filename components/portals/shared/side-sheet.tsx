@@ -1,4 +1,3 @@
-// side-sheet.tsx
 import {
   Sheet,
   SheetContent,
@@ -28,7 +27,7 @@ export function SidePanel({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="gap-0 p-0 shadow-2xl data-[side=right]:w-full data-[side=right]:border-l-0 data-[side=right]:sm:max-w-2xl"
+        className="gap-0 bg-background p-0 shadow-2xl data-[side=right]:w-full data-[side=right]:border-l-0 data-[side=right]:sm:max-w-2xl"
       >
         <div className="flex h-full w-full flex-col">
           {header ? (

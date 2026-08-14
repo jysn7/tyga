@@ -16,6 +16,7 @@ import {
   Layers,
   HelpCircle,
   Keyboard,
+  Loader2,
 } from "lucide-react"
 import { useTheme } from "next-themes"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -37,6 +38,18 @@ import { createClient } from "@/utils/supabase/client"
 import { toast } from "@/components/ui/toast"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
 
+type Account = {
+  id: string
+  role: "parent" | "coach" | "admin"
+  full_name: string | null
+  email: string | null
+  phone: string | null
+  address: string | null
+  avatar_url: string | null
+  active: boolean
+  created_at: string
+}
+
 function getInitials(name: string) {
   return name
     .split(" ")
@@ -46,13 +59,23 @@ function getInitials(name: string) {
     .toUpperCase()
 }
 
-export function UserDropdown({ user }: { user: SupabaseUser | null }) {
+export function UserDropdown({
+  user,
+  account,
+  loading,
+}: {
+  user: SupabaseUser | null
+  account?: Account | null
+  loading?: boolean
+}) {
   const router = useRouter()
   const supabase = createClient()
   const { theme, setTheme } = useTheme()
 
-  const fullName = user?.user_metadata?.full_name || user?.email || "User"
-  const email = user?.email || ""
+  // Use account data primarily, fallback to email from auth for display
+  const fullName = account?.full_name || "User"
+  const email = account?.email || user?.email || ""
+  const avatarUrl = account?.avatar_url
 
   const handleSignOut = async () => {
     try {
@@ -73,6 +96,14 @@ export function UserDropdown({ user }: { user: SupabaseUser | null }) {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -80,9 +111,9 @@ export function UserDropdown({ user }: { user: SupabaseUser | null }) {
         className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-accent"
       >
         <Avatar className="h-10 w-10">
-          <AvatarImage src={user?.user_metadata?.avatar_url} />
+          <AvatarImage src={avatarUrl || undefined} />
           <AvatarFallback className="bg-primary text-primary-foreground">
-            {fullName ? (
+            {fullName !== "User" ? (
               getInitials(fullName)
             ) : (
               <User className="h-4.5 w-4.5" />
@@ -99,9 +130,9 @@ export function UserDropdown({ user }: { user: SupabaseUser | null }) {
 
           <div className="flex items-center gap-3 px-2 py-2">
             <Avatar className="h-8 w-8">
-              <AvatarImage src={user?.user_metadata?.avatar_url} />
+              <AvatarImage src={avatarUrl || undefined} />
               <AvatarFallback className="bg-primary text-primary-foreground">
-                {fullName ? (
+                {fullName !== "User" ? (
                   getInitials(fullName)
                 ) : (
                   <User className="h-4 w-4" />

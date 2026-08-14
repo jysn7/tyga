@@ -7,6 +7,7 @@ type AccountRow = {
   id: string
   role: string
   full_name: string | null
+  avatar_url: string | null
   email: string | null
   phone: string | null
   address: string | null
@@ -56,6 +57,7 @@ export default async function SettingsPage() {
           id: account.id,
           fullName: account.full_name ?? "",
           email: account.email ?? "",
+          avatarUrl: account.avatar_url ?? "",
           phone: account.phone ?? "",
           address: account.address ?? "",
           preferences,
