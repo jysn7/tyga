@@ -9,8 +9,18 @@ export async function proxy(request: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession()
 
-  const isAuthPage = request.nextUrl.pathname.startsWith("/auth/")
-  const isAdminPage = request.nextUrl.pathname.startsWith("/admin")
+  const path = request.nextUrl.pathname
+
+  // ✅ Public routes that don't need session checks
+  const isAuthPage = path.startsWith("/auth/")
+  const isCallback = path === "/auth/callback" // ← ADD THIS
+  const isAdminPage = path.startsWith("/admin")
+
+  // ✅ Allow callback to pass through without session check
+  if (isCallback) {
+    return response
+  }
+
   const isProtectedPage = !isAuthPage
 
   if (!session && isProtectedPage) {
