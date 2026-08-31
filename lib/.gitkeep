@@ -1,0 +1,56 @@
+import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase backend connection
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!, 
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+export async function POST(req: Request) {
+  try {
+    const { memberId, programmeId, email, amount } = await req.json();
+
+    // 1. Create Pending Enrollment in Supabase
+    const { data: enrollment, error: enrollError } = await supabase
+      .from('enrollments')
+      .insert([{ member_id: memberId, programme_id: programmeId, status: 'pending' }])
+      .select()
+      .single();
+
+    if (enrollError) throw enrollError;
+
+    // 2. Create Invoice
+    const { data: invoice, error: invoiceError } = await supabase
+      .from('invoices')
+      .insert([{ enrollment_id: enrollment.id, total_amount: amount, status: 'unpaid' }])
+      .select()
+      .single();
+
+    if (invoiceError) throw invoiceError;
+
+    // 3. Initialize Paystack Transaction
+    const paystackRes = await fetch('https://api.paystack.co/transaction/initialize', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: email,
+        amount: amount * 100, // Paystack works in cents
+        metadata: { invoice_id: invoice.id, enrollment_id: enrollment.id }, 
+        callback_url: 'http://localhost:3000/client/invoices', // Where parent goes after paying
+      }),
+    });
+
+    const paystackData = await paystackRes.json();
+
+    // Return the secure checkout link to the frontend
+    return NextResponse.json({ checkoutUrl: paystackData.data.authorization_url });
+
+  } catch (error) {
+    console.error("Enrollment error:", error);
+    return NextResponse.json({ error: 'Failed to process enrollment' }, { status: 500 });
+  }
+}

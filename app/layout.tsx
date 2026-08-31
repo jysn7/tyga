@@ -29,7 +29,7 @@ export default function RootLayout({
         inter.variable
       )}
     >
-      <body>
+      <body suppressHydrationWarning>
         <Toaster />
         <Providers>
           <ThemeProvider>{children}</ThemeProvider>

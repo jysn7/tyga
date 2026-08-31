@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button"
+import { EnrollButton } from "@/components/portals/shared/enroll-button"
 
 export default function Page() {
   return (
@@ -8,9 +8,16 @@ export default function Page() {
           TYGA
         </h1>
         <p className="text-sm text-muted-foreground">
-          Project ready. You may now add components and start building.
+          Click below to test the Payfast redirect.
         </p>
-        <Button>Button</Button>
+
+        <EnrollButton
+          memberId={1}
+          programmeId={1}
+          email="test@example.com"
+          amount={500}
+        />
+
         <p className="font-mono text-xs text-muted-foreground">
           (Press <kbd className="rounded border px-1">d</kbd> to toggle dark
           mode)
