@@ -8,6 +8,7 @@ import {
   CalendarCheck,
   Bell,
   ScrollText,
+  Award,
   GraduationCap,
   FileText,
   CreditCard,
