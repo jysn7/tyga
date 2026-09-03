@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { createClient } from "@/utils/supabase/client"
 import { toast } from "@/components/ui/toast"
+import { useTheme } from "next-themes"
+import Image from "next/image"
 
 function Field({
   label,
@@ -26,13 +28,17 @@ function Field({
 }
 
 const fieldStyles =
-  "h-auto border-none bg-transparent px-0 shadow-none text-[15px]  px-2 text-foreground focus-visible:ring-0 placeholder:text-muted-foreground/50"
+  "h-auto border-none bg-transparent px-0 shadow-none text-[15px] text-foreground focus-visible:ring-0 placeholder:text-muted-foreground/50"
 
 export default function ForgotPasswordPage() {
   const supabase = createClient()
+  const { resolvedTheme } = useTheme()
   const [email, setEmail] = useState("")
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
+
+  const logoSrc =
+    resolvedTheme === "dark" ? "/logo/light.png" : "/logo/dark.png"
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -67,7 +73,7 @@ export default function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <div className="flex min-h-svh flex-col items-center justify-center bg-background px-4 py-12">
+      <div className="flex min-h-svh flex-col items-center justify-center bg-secondary px-4 py-12 dark:bg-background">
         <div className="w-full max-w-sm space-y-8 text-center">
           <div className="flex flex-col items-center space-y-4">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -102,8 +108,17 @@ export default function ForgotPasswordPage() {
     <div className="flex min-h-svh flex-col items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-sm space-y-8">
         <div className="flex flex-col items-center space-y-4 text-center">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">
-            T
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center">
+            {resolvedTheme && (
+              <Image
+                width={36}
+                height={36}
+                alt="TYGA Logo"
+                src={logoSrc}
+                className="h-full w-full object-contain"
+                priority
+              />
+            )}
           </div>
           <div className="space-y-1">
             <h1 className="text-xl font-semibold tracking-tight text-foreground">

@@ -1,18 +1,16 @@
 "use client"
 
 import { useState } from "react"
+import { ClipboardList, CheckCircle2 } from "lucide-react"
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetFooter,
-  SheetTrigger,
-  SheetClose,
-} from "@/components/ui/sheet"
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Field } from "@/components/portals/shared/field"
 import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -23,7 +21,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { CheckCircle2 } from "lucide-react"
 import type { Programme } from "./programme-card"
 
 const mockMembers = [
@@ -67,46 +64,42 @@ export function EnrollmentSheet({
   const selectedMember = mockMembers.find((m) => m.id === selectedMemberId)
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button
-          disabled={isFull}
-          size="sm"
-          className={`h-9 rounded-md px-4 text-xs font-medium ${fullWidthTrigger ? "w-full" : ""}`}
-        >
-          {isFull ? "Full" : "Enroll now"}
-        </Button>
-      </SheetTrigger>
-
-      <SheetContent
-        side="right"
-        className="flex w-full flex-col gap-0 p-0 sm:max-w-xl"
+    <>
+      <Button
+        disabled={isFull}
+        size="sm"
+        className={`h-9 rounded-md px-4 text-xs font-medium ${fullWidthTrigger ? "w-full" : ""}`}
+        onClick={() => setOpen(true)}
       >
-        <SheetHeader className="space-y-1.5 border-b border-border/60 px-6 py-4 text-left">
-          <span className="text-[11px] font-medium tracking-wide text-muted-foreground">
-            {programme.levelName}
-          </span>
-          <div>
-            <SheetTitle className="text-base leading-snug font-semibold text-foreground">
-              {programme.name}
-            </SheetTitle>
-            <SheetDescription className="mt-0.5 text-xs text-muted-foreground">
-              {programme.venueName} · {programme.recurrenceRule}
-            </SheetDescription>
-          </div>
-        </SheetHeader>
+        {isFull ? "Full" : "Enroll now"}
+      </Button>
 
-        <div className="flex-1 space-y-6 overflow-y-auto px-6 py-5">
-          <div className="space-y-2.5">
-            <h4 className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
-              Select a member to enroll
-            </h4>
-            <div className="space-y-2">
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="w-full gap-0 overflow-hidden rounded-2xl bg-card p-6 shadow-2xl ring-0 sm:max-w-xl [&>button]:top-6 [&>button]:right-6 [&>button]:text-muted-foreground [&>button]:hover:text-foreground">
+          <DialogHeader className="flex flex-row items-center gap-3.5 space-y-0 p-0 pb-6 text-left">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-input">
+              <ClipboardList
+                className="h-4.5 w-4.5 text-foreground"
+                strokeWidth={1.75}
+              />
+            </div>
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <DialogTitle className="truncate text-xl font-semibold tracking-tight text-foreground">
+                {programme.name}
+              </DialogTitle>
+              <span className="truncate text-xs text-muted-foreground">
+                {programme.venueName} · {programme.recurrenceRule}
+              </span>
+            </div>
+          </DialogHeader>
+
+          <div className="flex max-h-[60vh] flex-col gap-4 overflow-y-auto pr-1">
+            <Field label="Select a member to enroll">
               <Select
                 value={selectedMemberId}
                 onValueChange={(value) => setSelectedMemberId(value ?? "")}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="h-11 w-full rounded-lg border border-border bg-input px-3.5 text-sm text-foreground shadow-none focus:ring-0">
                   <SelectValue placeholder="Choose a member..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -114,7 +107,7 @@ export function EnrollmentSheet({
                     <SelectItem key={member.id} value={member.id}>
                       <div className="flex items-center gap-2.5">
                         <Avatar className="h-6 w-6">
-                          <AvatarFallback className="bg-muted text-[10px] text-muted-foreground">
+                          <AvatarFallback className="bg-secondary text-[10px] text-foreground">
                             {member.name
                               .split(" ")
                               .map((n) => n[0])
@@ -136,8 +129,8 @@ export function EnrollmentSheet({
               </Select>
 
               {selectedMember && (
-                <div className="flex items-center gap-2 pt-1 text-xs">
-                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                <div className="mt-2 flex items-center gap-2 rounded-lg bg-input px-3 py-2.5 text-xs">
+                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-primary" />
                   <div>
                     <span className="font-medium text-foreground">
                       {selectedMember.name}
@@ -151,118 +144,105 @@ export function EnrollmentSheet({
                 </div>
               )}
 
-              <p className="text-[11px] text-muted-foreground">
+              <p className="mt-1.5 text-xs text-muted-foreground">
                 Only members who meet the age and eligibility requirements are
                 shown.
               </p>
-            </div>
-          </div>
+            </Field>
 
-          {selectedMember && (
-            <div className="space-y-2">
-              <h4 className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
-                Member details
-              </h4>
-              <div className="flex flex-col divide-y divide-border/60 text-xs">
-                <div className="flex justify-between py-2">
-                  <span className="text-muted-foreground">Full name</span>
-                  <span className="text-foreground">{selectedMember.name}</span>
-                </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-muted-foreground">Age</span>
-                  <span className="text-foreground">
-                    {selectedMember.age} years
-                  </span>
-                </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-muted-foreground">Gender</span>
-                  <span className="text-foreground">
-                    {selectedMember.gender}
-                  </span>
-                </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-muted-foreground">Current level</span>
-                  <span className="text-foreground">
-                    {selectedMember.level}
-                  </span>
+            {selectedMember && (
+              <div className="flex flex-col gap-1.5">
+                <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                  Member details
+                </span>
+                <div className="flex flex-col divide-y divide-border/60">
+                  <div className="flex justify-between py-2 text-sm">
+                    <span className="text-muted-foreground">Full name</span>
+                    <span className="text-foreground">
+                      {selectedMember.name}
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-2 text-sm">
+                    <span className="text-muted-foreground">Age</span>
+                    <span className="text-foreground">
+                      {selectedMember.age} years
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-2 text-sm">
+                    <span className="text-muted-foreground">Gender</span>
+                    <span className="text-foreground">
+                      {selectedMember.gender}
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-2 text-sm">
+                    <span className="text-muted-foreground">Current level</span>
+                    <span className="text-foreground">
+                      {selectedMember.level}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          <div className="space-y-1.5">
-            <Label
-              htmlFor="notes"
-              className="text-xs font-medium text-foreground"
-            >
-              Medical notes{" "}
-              <span className="font-normal text-muted-foreground">
-                (optional)
+            <Field label="Medical notes (optional)">
+              <Textarea
+                id="notes"
+                value={medicalNotes}
+                onChange={(e) => setMedicalNotes(e.target.value)}
+                placeholder="Allergies, medication, or details for the coach"
+                className="min-h-20 resize-none rounded-lg border border-border bg-input p-3.5 text-sm text-foreground shadow-none focus-visible:ring-0"
+              />
+            </Field>
+
+            <div className="flex items-center justify-between rounded-lg border border-border bg-input p-3.5">
+              <span className="text-sm text-muted-foreground">
+                Programme fee
               </span>
-            </Label>
-            <Textarea
-              id="notes"
-              value={medicalNotes}
-              onChange={(e) => setMedicalNotes(e.target.value)}
-              placeholder="Allergies, medication, or details for the coach"
-              className="min-h-20 resize-none text-xs"
-            />
+              <div className="text-right">
+                <span className="text-sm font-medium text-foreground">
+                  R{programme.price}
+                </span>
+                <span className="ml-1 text-xs text-muted-foreground">
+                  per term
+                </span>
+              </div>
+            </div>
+
+            <label className="flex cursor-pointer items-start gap-2 text-xs leading-normal text-muted-foreground">
+              <Checkbox
+                checked={agreed}
+                onCheckedChange={(v) => setAgreed(v === true)}
+                className="mt-0.5"
+              />
+              <span>
+                I confirm the participant meets the age and eligibility
+                requirements and accept the terms of enrollment.
+              </span>
+            </label>
           </div>
 
-          <div className="flex items-center justify-between border-t border-border/60 pt-4 text-xs">
-            <span className="text-muted-foreground">Programme fee</span>
-            <div className="text-right">
-              <span className="font-medium text-foreground">
+          <DialogFooter className="mt-8 flex flex-col gap-3 p-0 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-left">
+              <div className="text-base font-semibold text-foreground">
                 R{programme.price}
-              </span>
-              <span className="ml-1 text-[11px] text-muted-foreground">
-                per term
-              </span>
+              </div>
+              <div className="text-[10px] text-muted-foreground">per term</div>
             </div>
-          </div>
-
-          <label className="flex cursor-pointer items-start gap-2 text-xs leading-normal text-muted-foreground">
-            <Checkbox
-              checked={agreed}
-              onCheckedChange={(v) => setAgreed(v === true)}
-              className="mt-0.5"
-            />
-            <span>
-              I confirm the participant meets the age and eligibility
-              requirements and accept the terms of enrollment.
-            </span>
-          </label>
-        </div>
-
-        <SheetFooter className="flex-row items-center justify-between gap-3 border-t border-border/60 px-6 py-3.5">
-          <div className="text-left">
-            <div className="text-base font-semibold text-foreground">
-              R{programme.price}
-            </div>
-            <div className="text-[10px] text-muted-foreground">per term</div>
-          </div>
-          <div className="flex gap-2">
-            <SheetClose asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 text-xs text-muted-foreground hover:text-foreground"
-              >
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setOpen(false)}>
                 Cancel
               </Button>
-            </SheetClose>
-            <Button
-              size="sm"
-              variant="secondary"
-              disabled={!agreed || !selectedMemberId}
-              className="h-8 rounded-md px-4 text-xs font-medium"
-              onClick={() => setOpen(false)}
-            >
-              Confirm enrollment
-            </Button>
-          </div>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+              <Button
+                variant="secondary"
+                disabled={!agreed || !selectedMemberId}
+                onClick={() => setOpen(false)}
+              >
+                Confirm enrollment
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

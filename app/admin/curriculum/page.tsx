@@ -52,11 +52,7 @@ export default function AdminCurriculumPage() {
         title="Curriculum"
         description="Modules taught within each skill level"
         action={
-          <Button
-            size="sm"
-            className="gap-1.5 rounded-lg text-xs"
-            onClick={handleCreate}
-          >
+          <Button variant="secondary" size="lg" onClick={handleCreate}>
             <Plus className="h-3.5 w-3.5" />
             New module
           </Button>
@@ -67,7 +63,7 @@ export default function AdminCurriculumPage() {
         value={levelFilter}
         onValueChange={(value) => setLevelFilter(value ?? "all")}
       >
-        <SelectTrigger className="h-9 w-full text-sm sm:w-48">
+        <SelectTrigger className="h-9 w-full border border-border bg-card text-sm sm:w-48">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -81,7 +77,7 @@ export default function AdminCurriculumPage() {
       </Select>
 
       {isLoading ? (
-        <div className="flex h-full w-full justify-center">
+        <div className="flex h-full w-full justify-center border border-border bg-card">
           <Loader />
         </div>
       ) : error ? (

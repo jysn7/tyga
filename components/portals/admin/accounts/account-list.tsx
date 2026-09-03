@@ -1,4 +1,3 @@
-// account-list.tsx — now a real table, with client-side pagination
 "use client"
 
 import { useMemo, useState } from "react"
@@ -35,7 +34,7 @@ export function AccountList({ accounts }: { accounts: Account[] }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="overflow-hidden rounded-lg bg-secondary shadow">
+      <div className="overflow-x-auto rounded-lg bg-card shadow">
         <table className="w-full border-collapse">
           <thead>
             <tr className="border-b border-border/60 text-left text-[11px] font-medium tracking-wider text-muted-foreground uppercase">

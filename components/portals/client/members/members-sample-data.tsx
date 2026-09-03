@@ -9,6 +9,7 @@ export const sampleMembers: Member[] = [
     currentLevelName: "Skill Building",
     nextSessionLabel: "Tue, 4:00 PM — Zodwa Khoza Foundation",
     activeEnrollmentCount: 1,
+    onboardingComplete: true,
   },
   {
     id: "2",
@@ -18,5 +19,6 @@ export const sampleMembers: Member[] = [
     currentLevelName: null,
     nextSessionLabel: null,
     activeEnrollmentCount: 0,
+    onboardingComplete: false,
   },
 ]

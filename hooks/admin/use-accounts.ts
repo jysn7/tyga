@@ -8,6 +8,7 @@ export type Account = {
   email: string
   phone: string | null
   address: string | null
+  avatarUrl: string | null
   active: boolean
   createdAt: string
 }
@@ -18,6 +19,7 @@ type AccountRow = {
   full_name: string | null
   email: string | null
   phone: string | null
+  avatar_url: string | null
   address: string | null
   active: boolean
   created_at: string
@@ -29,6 +31,7 @@ function toAccount(row: AccountRow): Account {
     role: row.role,
     fullName: row.full_name ?? "Unnamed",
     email: row.email ?? "",
+    avatarUrl: row.avatar_url ?? null,
     phone: row.phone,
     address: row.address,
     active: row.active,

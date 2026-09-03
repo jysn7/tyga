@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
@@ -35,7 +34,7 @@ function Field({
 }
 
 const fieldStyles =
-  "h-auto border-none py-3 bg-background pl-2 shadow-none text-[15px] text-foreground active:ring active:ring-primary placeholder:text-muted-foreground/50"
+  "h-auto border-none py-3 bg-card pl-2 shadow-none text-[15px] text-foreground active:ring active:ring-primary placeholder:text-muted-foreground/50"
 
 export default function SignupPage() {
   const router = useRouter()
@@ -127,8 +126,15 @@ export default function SignupPage() {
   const loading = signUp.isPending || googleAuth.isPending
 
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center bg-background px-4 py-12">
-      <div className="w-full max-w-sm space-y-8">
+    <div className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden bg-secondary px-4 py-12">
+      {/* Background shapes — flat geometric, fewer & larger, no primary color */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <div className="absolute -top-16 -left-16 h-40 w-40 rotate-12 rounded-3xl bg-muted" />
+        <div className="absolute -right-10 bottom-16 h-52 w-52 rounded-full bg-muted" />
+        <div className="absolute -bottom-20 left-1/4 h-32 w-32 -rotate-6 rounded-2xl bg-card" />
+      </div>
+
+      <div className="relative z-10 w-full max-w-sm space-y-8">
         <div className="flex flex-col items-center space-y-4 text-center">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center">
             {resolvedTheme && (
@@ -151,7 +157,7 @@ export default function SignupPage() {
             </p>
           </div>
 
-          <div className="flex w-full rounded-lg bg-muted p-1 text-xs">
+          <div className="flex w-full rounded-lg bg-background p-1 text-xs">
             <Link
               href="/auth/signin"
               className="flex-1 rounded-md py-1.5 text-center font-medium text-muted-foreground transition-colors hover:text-foreground"

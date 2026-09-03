@@ -15,11 +15,14 @@ export function ProgrammeSidebar({
     (programme.enrolledCount / programme.capacity) * 100
 
   return (
-    <aside className="sticky top-6 space-y-4 text-xs">
-      {/* Main Block */}
-      <div className="bg-tertiary/50 space-y-4 rounded-md border border-border/80 p-4">
-        {/* Price Property */}
-        <div className="flex items-baseline justify-between">
+    <aside className="sticky top-6 flex flex-col gap-5 text-xs">
+      <div className="relative flex flex-col gap-4 overflow-hidden rounded-xl bg-card p-4 shadow">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute right-7 -bottom-8 h-14 w-14 rotate-45 rounded-lg bg-secondary"
+        />
+
+        <div className="relative flex items-baseline justify-between">
           <span className="font-normal text-muted-foreground">Price</span>
           <div className="text-right">
             <span className="text-base font-semibold text-foreground">
@@ -31,9 +34,9 @@ export function ProgrammeSidebar({
           </div>
         </div>
 
-        <Separator className="bg-border/60" />
+        <Separator className="relative bg-border/40" />
 
-        <div className="space-y-2.5">
+        <div className="relative flex flex-col gap-2.5">
           <div className="flex items-start gap-2.5 text-foreground">
             <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
             <span className="leading-tight">{programme.venueName}</span>
@@ -57,9 +60,9 @@ export function ProgrammeSidebar({
           </div>
         </div>
 
-        <Separator className="bg-border/60" />
+        <Separator className="relative bg-border/40" />
 
-        <div className="space-y-2">
+        <div className="relative flex flex-col gap-2">
           <div className="flex items-center justify-between text-xs">
             <span className="text-muted-foreground">Enrollment</span>
             <span className="font-medium text-foreground">
@@ -69,13 +72,7 @@ export function ProgrammeSidebar({
 
           <Progress
             value={enrollmentPercentage}
-            className={`h-1.5 rounded-full ${
-              isFull
-                ? "bg-destructive/20"
-                : spotsLeft <= 2
-                  ? "bg-accent"
-                  : "bg-muted"
-            }`}
+            className="h-1.5 rounded-full bg-input"
             indicatorClassName={
               isFull
                 ? "bg-destructive"
@@ -102,48 +99,53 @@ export function ProgrammeSidebar({
           </div>
         </div>
 
-        <EnrollmentSheet programme={programme} fullWidthTrigger />
+        <div className="relative">
+          <EnrollmentSheet programme={programme} fullWidthTrigger />
+        </div>
       </div>
 
-      {programme.venueMap && (
-        <a
-          href={programme.venueMap}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="bg-tertiary/30 hover:bg-tertiary flex items-center justify-between rounded-md border border-border/80 p-3 text-xs text-foreground transition-colors"
-        >
-          <span className="flex items-center gap-2">
-            <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-            View on Google Maps
-          </span>
-          <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
-        </a>
-      )}
+      {(programme.venueMap ||
+        programme.contactEmail ||
+        programme.contactPhone) && (
+        <div className="flex flex-col gap-3 border-t border-border/40 pt-4">
+          {programme.venueMap && (
+            <a
+              href={programme.venueMap}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-information hover:text-information/70 flex items-center justify-between underline transition-colors"
+            >
+              <span className="text-information flex items-center gap-2">
+                <MapPin className="text-foreground-muted h-3.5 w-3.5" />
+                View on Google Maps
+              </span>
+              <ExternalLink className="text-information h-3.5 w-3.5" />
+            </a>
+          )}
 
-      {/* Contact Section Block */}
-      {(programme.contactEmail || programme.contactPhone) && (
-        <div className="bg-tertiary/30 space-y-2 rounded-md border border-border/80 p-3 text-xs">
-          <p className="font-normal text-muted-foreground">Contact</p>
-          <div className="space-y-1.5">
-            {programme.contactEmail && (
-              <a
-                href={`mailto:${programme.contactEmail}`}
-                className="flex items-center gap-2 text-foreground transition-colors hover:text-primary"
-              >
-                <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="truncate">{programme.contactEmail}</span>
-              </a>
-            )}
-            {programme.contactPhone && (
-              <a
-                href={`tel:${programme.contactPhone}`}
-                className="flex items-center gap-2 text-foreground transition-colors hover:text-primary"
-              >
-                <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                <span>{programme.contactPhone}</span>
-              </a>
-            )}
-          </div>
+          {(programme.contactEmail || programme.contactPhone) && (
+            <div className="flex flex-col gap-1.5">
+              <p className="font-normal text-muted-foreground">Contact</p>
+              {programme.contactEmail && (
+                <a
+                  href={`mailto:${programme.contactEmail}`}
+                  className="text-information hover:text-information/70 flex items-center gap-2 underline transition-colors"
+                >
+                  <Mail className="text-foreground-muted h-3.5 w-3.5" />
+                  <span className="truncate">{programme.contactEmail}</span>
+                </a>
+              )}
+              {programme.contactPhone && (
+                <a
+                  href={`tel:${programme.contactPhone}`}
+                  className="text-information hover:text-information/70 flex items-center gap-2 underline transition-colors"
+                >
+                  <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span>{programme.contactPhone}</span>
+                </a>
+              )}
+            </div>
+          )}
         </div>
       )}
     </aside>

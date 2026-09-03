@@ -2,7 +2,13 @@
 
 import { useState } from "react"
 import { BookOpen } from "lucide-react"
-import { SidePanel } from "@/components/portals/shared/side-sheet"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -21,29 +27,6 @@ import {
 } from "@/hooks/admin/curriculums/use-curriculum-module-mutations"
 import type { CurriculumModule } from "@/hooks/admin/curriculums/use-curriculum-modules"
 import type { Level } from "@/hooks/admin/levels/use-levels"
-
-function Field({
-  label,
-  children,
-  hint,
-}: {
-  label: string
-  children: React.ReactNode
-  hint?: string
-}) {
-  return (
-    <div className="flex flex-col gap-1.5 border-b border-border/60 py-3 last:border-b-0">
-      <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-        {label}
-      </span>
-      {children}
-      {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
-    </div>
-  )
-}
-
-const fieldStyles =
-  "h-auto border-none bg-transparent px-0 shadow-none text-[15px] text-foreground focus-visible:ring-0 placeholder:text-muted-foreground/50"
 
 const CATEGORY_OPTIONS: {
   label: string
@@ -126,106 +109,132 @@ export function ModulePanel({
   }
 
   return (
-    <SidePanel
-      open={open}
-      onOpenChange={onOpenChange}
-      title={isEditing ? "Edit module" : "New module"}
-      header={
-        <div className="flex items-center gap-4 px-8 pt-8 pb-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10">
-            <BookOpen className="h-6 w-6 text-primary" />
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="w-full gap-0 overflow-hidden rounded-2xl bg-card p-6 shadow-2xl ring-0 sm:max-w-xl [&>button]:top-6 [&>button]:right-6 [&>button]:text-muted-foreground [&>button]:hover:text-foreground">
+        <DialogHeader className="flex flex-row items-center gap-3.5 space-y-0 p-0 pb-6 text-left">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-input">
+            <BookOpen
+              className="h-4.5 w-4.5 text-foreground"
+              strokeWidth={1.75}
+            />
           </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-xl font-semibold tracking-tight text-foreground">
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <DialogTitle className="truncate text-xl font-semibold tracking-tight text-foreground">
               {isEditing ? "Edit module" : "New module"}
-            </span>
-            <span className="text-sm text-muted-foreground">
+            </DialogTitle>
+            <span className="truncate text-xs text-muted-foreground">
               {isEditing ? module.name : "Add a curriculum module to a level"}
             </span>
           </div>
-        </div>
-      }
-      footer={
-        <Button
-          className="w-full rounded-lg text-sm"
-          disabled={!name || !levelId || isSaving}
-          onClick={handleSubmit}
-        >
-          {isSaving
-            ? "Saving..."
-            : isEditing
-              ? "Save changes"
-              : "Create module"}
-        </Button>
-      }
-    >
-      <div className="flex flex-col">
-        {!isEditing && (
-          <Field label="Level">
+        </DialogHeader>
+
+        <div className="flex max-h-[60vh] flex-col gap-4 overflow-y-auto pr-1">
+          {!isEditing && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-normal text-muted-foreground">
+                Level
+              </label>
+              <Select
+                value={levelId}
+                onValueChange={(value) => setLevelId(value ?? "")}
+              >
+                <SelectTrigger className="h-11 w-full rounded-lg border border-border bg-input px-3.5 text-sm text-foreground shadow-none focus:ring-0">
+                  <SelectValue placeholder="Select a level" />
+                </SelectTrigger>
+                <SelectContent>
+                  {levels.map((l) => (
+                    <SelectItem key={l.id} value={l.id.toString()}>
+                      {l.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-normal text-muted-foreground">
+              Name
+            </label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Grip and stance fundamentals"
+              className="h-11 rounded-lg border border-border bg-input px-3.5 text-sm text-foreground shadow-none focus-visible:ring-0"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-normal text-muted-foreground">
+              Category (optional)
+            </label>
             <Select
-              value={levelId}
-              onValueChange={(value) => setLevelId(value ?? "")}
+              value={category}
+              onValueChange={(value) => setCategory(value ?? "")}
             >
-              <SelectTrigger className="h-9 w-full border-none bg-transparent px-0 text-sm shadow-none">
-                <SelectValue placeholder="Select a level" />
+              <SelectTrigger className="h-11 w-full rounded-lg border border-border bg-input px-3.5 text-sm text-foreground shadow-none focus:ring-0">
+                <SelectValue placeholder="Select a category" />
               </SelectTrigger>
               <SelectContent>
-                {levels.map((l) => (
-                  <SelectItem key={l.id} value={l.id.toString()}>
-                    {l.name}
+                {CATEGORY_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-          </Field>
-        )}
-
-        <Field label="Name">
-          <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Grip and stance fundamentals"
-            className={fieldStyles}
-          />
-        </Field>
-
-        <Field label="Category (optional)">
-          <Select
-            value={category}
-            onValueChange={(value) => setCategory(value ?? "")}
-          >
-            <SelectTrigger className="h-9 w-full border-none bg-transparent px-0 text-sm shadow-none">
-              <SelectValue placeholder="Select a category" />
-            </SelectTrigger>
-            <SelectContent>
-              {CATEGORY_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Field>
-
-        <Field label="Description (optional)">
-          <Textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="What this module covers"
-            className={`${fieldStyles} min-h-20 resize-none`}
-          />
-        </Field>
-
-        <div className="flex items-center justify-between py-3">
-          <div className="flex flex-col gap-0.5">
-            <span className="text-sm text-foreground">Milestone module</span>
-            <span className="text-xs text-muted-foreground">
-              Flagged as a key checkpoint for progression
-            </span>
           </div>
-          <Switch checked={isMilestone} onCheckedChange={setIsMilestone} />
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-normal text-muted-foreground">
+              Description (optional)
+            </label>
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="What this module covers"
+              className="min-h-24 resize-none rounded-lg border border-border bg-input p-3.5 text-sm text-foreground shadow-none focus-visible:ring-0"
+            />
+          </div>
+
+          <div className="relative flex items-center justify-between overflow-hidden rounded-lg border border-border bg-primary/70 p-3.5">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute right-6 -bottom-6 h-12 w-12 rotate-45 rounded-lg bg-primary"
+            />
+            <div className="relative flex flex-col gap-0.5">
+              <span className="text-sm font-semibold text-white">
+                Milestone module
+              </span>
+              <span className="text-foreground-primary text-xs">
+                Flagged as a key checkpoint for progression
+              </span>
+            </div>
+            <Switch
+              checked={isMilestone}
+              onCheckedChange={setIsMilestone}
+              className="relative"
+            />
+          </div>
         </div>
-      </div>
-    </SidePanel>
+
+        <DialogFooter className="mt-8 flex flex-row items-center justify-between gap-3 p-0 sm:justify-between">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="secondary"
+            disabled={!name || !levelId || isSaving}
+            onClick={handleSubmit}
+          >
+            {isSaving
+              ? "Saving..."
+              : isEditing
+                ? "Save changes"
+                : "Create module"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

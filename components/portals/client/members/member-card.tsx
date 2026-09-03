@@ -4,7 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { ArrowUpRight } from "lucide-react"
+import { ArrowUpRight, AlertCircle } from "lucide-react"
 import { BookAssessmentPanel } from "@/components/portals/client/members/book-assessment-panel"
 
 export type Member = {
@@ -15,6 +15,7 @@ export type Member = {
   currentLevelName: string | null
   nextSessionLabel: string | null
   activeEnrollmentCount: number
+  onboardingComplete: boolean
 }
 
 const sampleVenues = [
@@ -84,6 +85,12 @@ export function MemberTile({
             {member.activeEnrollmentCount === 1 ? "" : "s"}
           </p>
         )}
+        {!member.onboardingComplete && (
+          <p className="flex items-center gap-1 text-xs text-amber-600">
+            <AlertCircle className="h-3 w-3" />
+            Registration incomplete
+          </p>
+        )}
       </div>
 
       {viewerRole === "client" && !isAssessed && (
@@ -92,7 +99,7 @@ export function MemberTile({
           variant="secondary"
           className="w-fit rounded-md text-xs font-medium"
           onClick={(e) => {
-            e.preventDefault() // guards against the Link wrapper below on future edits
+            e.preventDefault()
             e.stopPropagation()
             setAssessmentOpen(true)
           }}

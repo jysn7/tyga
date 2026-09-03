@@ -59,7 +59,7 @@ export default function AdminMembersPage() {
           value={archivedFilter}
           onValueChange={(v) => setArchivedFilter(v as typeof archivedFilter)}
         >
-          <SelectTrigger className="h-9 w-full text-sm sm:w-44">
+          <SelectTrigger className="h-9 w-full border border-border bg-card text-sm sm:w-44">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

@@ -41,7 +41,7 @@ export function CoachList({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="overflow-hidden rounded-lg border border-border/60">
+      <div className="overflow-hidden rounded-lg bg-card shadow">
         <table className="w-full border-collapse">
           <thead>
             <tr className="border-b border-border/60 text-left text-[11px] font-medium tracking-wider text-muted-foreground uppercase">

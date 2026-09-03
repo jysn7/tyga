@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -22,14 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+import { SidePanel } from "@/components/portals/shared/side-sheet"
 import { toast } from "@/components/ui/toast"
 import { createClient } from "@/utils/supabase/client"
 import {
@@ -70,10 +63,42 @@ export type EditableMember = {
   dob: string
   gender: "male" | "female"
   medicalNotes: string | null
-  emergencyContact: string | null
+  medicalAidDetails: string | null
+  doctorContact: string | null
+  emergencyContactName: string | null
+  emergencyContactRelationship: string | null
+  emergencyContactPhone: string | null
+  schoolName: string | null
+  schoolGrade: string | null
+  idOrBirthCertNumber: string | null
+  previousClub: string | null
+  kitSizeTop: string | null
+  kitSizeBottom: string | null
+  shoeSize: string | null
 }
 
-export function EditMemberModal({ member }: { member: EditableMember }) {
+function toDefaultValues(member: EditableMember): MemberEditValues {
+  return {
+    fullName: member.fullName,
+    dob: new Date(member.dob),
+    gender: member.gender,
+    medicalNotes: member.medicalNotes ?? "",
+    medicalAidDetails: member.medicalAidDetails ?? "",
+    doctorContact: member.doctorContact ?? "",
+    emergencyContactName: member.emergencyContactName ?? "",
+    emergencyContactRelationship: member.emergencyContactRelationship ?? "",
+    emergencyContactPhone: member.emergencyContactPhone ?? "",
+    schoolName: member.schoolName ?? "",
+    schoolGrade: member.schoolGrade ?? "",
+    idOrBirthCertNumber: member.idOrBirthCertNumber ?? "",
+    previousClub: member.previousClub ?? "",
+    kitSizeTop: member.kitSizeTop ?? "",
+    kitSizeBottom: member.kitSizeBottom ?? "",
+    shoeSize: member.shoeSize ?? "",
+  }
+}
+
+export function EditMemberPanel({ member }: { member: EditableMember }) {
   const [open, setOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const router = useRouter()
@@ -82,17 +107,18 @@ export function EditMemberModal({ member }: { member: EditableMember }) {
     register,
     handleSubmit,
     control,
+    reset,
     formState: { errors },
   } = useForm<MemberEditValues>({
     resolver: zodResolver(memberEditSchema),
-    defaultValues: {
-      fullName: member.fullName,
-      dob: new Date(member.dob),
-      gender: member.gender,
-      medicalNotes: member.medicalNotes ?? "",
-      emergencyContact: member.emergencyContact ?? "",
-    },
+    defaultValues: toDefaultValues(member),
   })
+
+  useEffect(() => {
+    if (open) {
+      reset(toDefaultValues(member))
+    }
+  }, [open, member, reset])
 
   const onSubmit = async (values: MemberEditValues) => {
     setIsSaving(true)
@@ -108,11 +134,11 @@ export function EditMemberModal({ member }: { member: EditableMember }) {
 
     try {
       const supabase = createClient()
-      const { error } = await supabase.rpc("update_member", {
-        p_member_id: member.id,
-        ...toUpdateMemberInput(values),
-      })
-      if (error) throw error
+      const { error } = await supabase.rpc(
+        "update_member",
+        toUpdateMemberInput(values, member.id)
+      )
+      if (error) throw new Error(error.message)
 
       toast.add({
         id: toastId,
@@ -123,7 +149,7 @@ export function EditMemberModal({ member }: { member: EditableMember }) {
       })
 
       setOpen(false)
-      router.refresh() // re-run the Server Component fetch on the detail page
+      router.refresh()
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Something went wrong"
@@ -141,26 +167,39 @@ export function EditMemberModal({ member }: { member: EditableMember }) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger>
-        <Button
-          variant="secondary"
-          size="sm"
-          className="gap-1.5 rounded-md text-xs font-medium"
+    <>
+      <Button
+        variant="secondary"
+        size="sm"
+        className="gap-1.5 rounded-md text-xs font-medium"
+        onClick={() => setOpen(true)}
+      >
+        <Pencil className="h-3.5 w-3.5" />
+        Edit
+      </Button>
+
+      <SidePanel
+        open={open}
+        onOpenChange={setOpen}
+        title="Edit member"
+        footer={
+          <Button
+            type="submit"
+            form="edit-member-form"
+            disabled={isSaving}
+            className="w-full rounded-lg text-xs font-medium"
+          >
+            {isSaving ? "Saving..." : "Save changes"}
+          </Button>
+        }
+      >
+        <form
+          id="edit-member-form"
+          onSubmit={handleSubmit(onSubmit)}
+          className="flex flex-col"
         >
-          <Pencil className="h-3.5 w-3.5" />
-          Edit
-        </Button>
-      </DialogTrigger>
-
-      <DialogContent className="border-background bg-background ring-background sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Edit member</DialogTitle>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
           <Field label="Full name" error={errors.fullName?.message}>
-            <Input className={fieldStyles} {...register("fullName")} />
+            <Input {...register("fullName")} />
           </Field>
 
           <Field
@@ -218,8 +257,41 @@ export function EditMemberModal({ member }: { member: EditableMember }) {
             />
           </Field>
 
-          <Field label="Emergency contact">
-            <Input className={fieldStyles} {...register("emergencyContact")} />
+          <Field label="School name">
+            <Input {...register("schoolName")} />
+          </Field>
+
+          <Field label="School grade">
+            <Input {...register("schoolGrade")} />
+          </Field>
+
+          <Field label="ID / birth certificate number">
+            <Input disabled {...register("idOrBirthCertNumber")} />
+          </Field>
+
+          <Field label="Previous team / club">
+            <Input {...register("previousClub")} />
+          </Field>
+
+          <Field
+            label="Emergency contact name"
+            error={errors.emergencyContactName?.message}
+          >
+            <Input {...register("emergencyContactName")} />
+          </Field>
+
+          <Field
+            label="Relationship to member"
+            error={errors.emergencyContactRelationship?.message}
+          >
+            <Input {...register("emergencyContactRelationship")} />
+          </Field>
+
+          <Field
+            label="Emergency contact phone"
+            error={errors.emergencyContactPhone?.message}
+          >
+            <Input type="tel" {...register("emergencyContactPhone")} />
           </Field>
 
           <Field label="Medical notes">
@@ -229,17 +301,27 @@ export function EditMemberModal({ member }: { member: EditableMember }) {
             />
           </Field>
 
-          <DialogFooter className="mt-4">
-            <Button
-              type="submit"
-              disabled={isSaving}
-              className="w-full rounded-lg text-xs font-medium"
-            >
-              {isSaving ? "Saving..." : "Save changes"}
-            </Button>
-          </DialogFooter>
+          <Field label="Medical aid details">
+            <Input {...register("medicalAidDetails")} />
+          </Field>
+
+          <Field label="Doctor contact">
+            <Input {...register("doctorContact")} />
+          </Field>
+
+          <Field label="Kit size (top)">
+            <Input {...register("kitSizeTop")} />
+          </Field>
+
+          <Field label="Kit size (bottom)">
+            <Input {...register("kitSizeBottom")} />
+          </Field>
+
+          <Field label="Shoe size">
+            <Input {...register("shoeSize")} />
+          </Field>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SidePanel>
+    </>
   )
 }

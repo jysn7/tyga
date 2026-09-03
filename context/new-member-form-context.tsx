@@ -46,7 +46,6 @@ export function NewMemberFormProvider({
       dob: undefined,
       gender: undefined,
       medicalNotes: "",
-      emergencyContact: "",
       skillLevel: undefined,
       availability: "",
       interests: "",

@@ -9,11 +9,10 @@ type MemberWithDetailsRow = {
   full_name: string
   dob: string
   gender: "male" | "female" | "any"
-  medical_notes: string | null
-  emergency_contact: string | null
   current_level_name: string | null
   next_session_label: string | null
   active_enrollment_count: number
+  onboarding_complete: boolean
 }
 
 function toUiMember(row: MemberWithDetailsRow): UiMember {
@@ -25,17 +24,34 @@ function toUiMember(row: MemberWithDetailsRow): UiMember {
     currentLevelName: row.current_level_name,
     nextSessionLabel: row.next_session_label,
     activeEnrollmentCount: row.active_enrollment_count,
+    onboardingComplete: row.onboarding_complete,
   }
 }
 
-export function useMembers() {
+export type MemberFilters = {
+  search?: string
+  gender?: "male" | "female"
+  levelId?: number
+  includeArchived?: boolean
+}
+
+export function useMembers(filters: MemberFilters = {}) {
   const supabase = createClient()
+  const { search, gender, levelId, includeArchived = false } = filters
 
   return useQuery({
-    queryKey: ["members"],
+    queryKey: ["members", { search, gender, levelId, includeArchived }],
     queryFn: async (): Promise<UiMember[]> => {
-      const { data, error } = await supabase.rpc("get_my_members_with_details")
-      if (error) throw error
+      const { data, error } = await supabase.rpc(
+        "get_my_members_with_details",
+        {
+          p_search: search || null,
+          p_gender: gender || null,
+          p_level_id: levelId ?? null,
+          p_include_archived: includeArchived,
+        }
+      )
+      if (error) throw new Error(error.message)
       return (data as MemberWithDetailsRow[]).map(toUiMember)
     },
   })

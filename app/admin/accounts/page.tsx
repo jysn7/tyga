@@ -65,7 +65,7 @@ export default function AccountsPage() {
       />
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <div className="relative flex-1 sm:max-w-sm">
+        <div className="relative flex-1 rounded-lg border border-border bg-input sm:max-w-sm">
           <Search className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={searchInput}
@@ -81,7 +81,7 @@ export default function AccountsPage() {
           value={roleFilter}
           onValueChange={(v) => setRoleFilter(v as typeof roleFilter)}
         >
-          <SelectTrigger className="h-9 w-full text-sm sm:w-36">
+          <SelectTrigger className="h-9 w-full rounded-lg border-border bg-card text-sm sm:w-36">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -97,7 +97,7 @@ export default function AccountsPage() {
           value={activeFilter}
           onValueChange={(v) => setActiveFilter(v as typeof activeFilter)}
         >
-          <SelectTrigger className="h-9 w-full text-sm sm:w-36">
+          <SelectTrigger className="h-9 w-full rounded-lg border-border bg-card text-sm sm:w-36">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

@@ -1,3 +1,4 @@
+// components/portals/shared/side-sheet.tsx
 import {
   Sheet,
   SheetContent,
@@ -27,9 +28,9 @@ export function SidePanel({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="gap-0 bg-background p-0 shadow-2xl data-[side=right]:w-full data-[side=right]:border-l-0 data-[side=right]:sm:max-w-2xl"
+        className="flex flex-col gap-0 bg-secondary p-0 shadow-2xl data-[side=right]:w-full data-[side=right]:border-l-0 data-[side=right]:sm:max-w-3xl"
       >
-        <div className="flex h-full w-full flex-col">
+        <div className="flex h-full w-full flex-col overflow-hidden">
           {header ? (
             <SheetHeader className="gap-0 p-0 text-left">
               <SheetTitle className="sr-only">{title}</SheetTitle>

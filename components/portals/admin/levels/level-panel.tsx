@@ -2,7 +2,14 @@
 
 import { useState } from "react"
 import { GraduationCap } from "lucide-react"
-import { SidePanel } from "@/components/portals/shared/side-sheet"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Field } from "@/components/portals/shared/field"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -12,29 +19,6 @@ import {
   useUpdateLevel,
 } from "@/hooks/admin/levels/use-level-mutations"
 import type { Level } from "@/hooks/admin/levels/use-levels"
-
-function Field({
-  label,
-  children,
-  hint,
-}: {
-  label: string
-  children: React.ReactNode
-  hint?: string
-}) {
-  return (
-    <div className="flex flex-col gap-1.5 border-b border-border/60 py-3 last:border-b-0">
-      <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-        {label}
-      </span>
-      {children}
-      {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
-    </div>
-  )
-}
-
-const fieldStyles =
-  "h-auto border-none bg-transparent px-0 shadow-none text-[15px] text-foreground focus-visible:ring-0 placeholder:text-muted-foreground/50"
 
 export function LevelPanel({
   level,
@@ -101,105 +85,117 @@ export function LevelPanel({
   }
 
   return (
-    <SidePanel
-      open={open}
-      onOpenChange={onOpenChange}
-      title={isEditing ? "Edit level" : "New level"}
-      header={
-        <div className="flex items-center gap-4 px-8 pt-8 pb-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10">
-            <GraduationCap className="h-6 w-6 text-primary" />
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="w-full gap-0 overflow-hidden rounded-2xl bg-card p-6 shadow-2xl ring-0 sm:max-w-xl [&>button]:top-6 [&>button]:right-6 [&>button]:text-muted-foreground [&>button]:hover:text-foreground">
+        <DialogHeader className="flex flex-row items-center gap-3.5 space-y-0 p-0 pb-6 text-left">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-input">
+            <GraduationCap
+              className="h-4.5 w-4.5 text-foreground"
+              strokeWidth={1.75}
+            />
           </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-xl font-semibold tracking-tight text-foreground">
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <DialogTitle className="truncate text-xl font-semibold tracking-tight text-foreground">
               {isEditing ? "Edit level" : "New level"}
-            </span>
-            <span className="text-sm text-muted-foreground">
+            </DialogTitle>
+            <span className="truncate text-xs text-muted-foreground">
               {isEditing ? level.name : "Define a new skill level"}
             </span>
           </div>
+        </DialogHeader>
+
+        <div className="flex max-h-[60vh] flex-col gap-4 overflow-y-auto pr-1">
+          <Field label="Name">
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Foundation"
+              className="h-11 rounded-lg border border-border bg-input px-3.5 text-sm text-foreground shadow-none focus-visible:ring-0"
+            />
+          </Field>
+
+          <Field
+            label="Sort order"
+            hint="Determines display order — lower numbers come first"
+          >
+            <Input
+              type="number"
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              placeholder="e.g. 1"
+              className="h-11 rounded-lg border border-border bg-input px-3.5 text-sm text-foreground shadow-none focus-visible:ring-0"
+            />
+          </Field>
+
+          <Field label="Default age range (optional)">
+            <div className="flex items-center gap-2 bg-card">
+              <Input
+                type="number"
+                value={ageMin}
+                onChange={(e) => setAgeMin(e.target.value)}
+                placeholder="Min"
+                className="h-11 rounded-lg border border-border bg-input px-3.5 text-sm text-foreground shadow-none focus-visible:ring-0"
+              />
+              <span className="text-muted-foreground">–</span>
+              <Input
+                type="number"
+                value={ageMax}
+                onChange={(e) => setAgeMax(e.target.value)}
+                placeholder="Max"
+                className="h-11 rounded-lg border border-border bg-input px-3.5 text-sm text-foreground shadow-none focus-visible:ring-0"
+              />
+            </div>
+          </Field>
+
+          <Field label="Goal (optional)">
+            <Textarea
+              value={goal}
+              onChange={(e) => setGoal(e.target.value)}
+              placeholder="What this level is working toward"
+              className="min-h-16 resize-none rounded-lg border border-border bg-input p-3.5 text-sm text-foreground shadow-none focus-visible:ring-0"
+            />
+          </Field>
+
+          <Field label="Focus summary (optional)">
+            <Textarea
+              value={focusSummary}
+              onChange={(e) => setFocusSummary(e.target.value)}
+              placeholder="Key areas of focus at this level"
+              className="min-h-16 resize-none rounded-lg border border-border bg-input p-3.5 text-sm text-foreground shadow-none focus-visible:ring-0"
+            />
+          </Field>
+
+          <Field label="Upgrade criteria (optional)">
+            <Textarea
+              value={upgradeCriteria}
+              onChange={(e) => setUpgradeCriteria(e.target.value)}
+              placeholder="What's required to move to the next level"
+              className="min-h-16 resize-none rounded-lg border border-border bg-input p-3.5 text-sm text-foreground shadow-none focus-visible:ring-0"
+            />
+          </Field>
         </div>
-      }
-      footer={
-        <Button
-          className="w-full rounded-lg text-sm"
-          disabled={!name || !sortOrder || isSaving}
-          onClick={handleSubmit}
-        >
-          {isSaving ? "Saving..." : isEditing ? "Save changes" : "Create level"}
-        </Button>
-      }
-    >
-      <div className="flex flex-col">
-        <Field label="Name">
-          <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Foundation"
-            className={fieldStyles}
-          />
-        </Field>
 
-        <Field
-          label="Sort order"
-          hint="Determines display order — lower numbers come first"
-        >
-          <Input
-            type="number"
-            value={sortOrder}
-            onChange={(e) => setSortOrder(e.target.value)}
-            placeholder="e.g. 1"
-            className={fieldStyles}
-          />
-        </Field>
-
-        <Field label="Default age range (optional)">
-          <div className="flex items-center gap-2">
-            <Input
-              type="number"
-              value={ageMin}
-              onChange={(e) => setAgeMin(e.target.value)}
-              placeholder="Min"
-              className={fieldStyles}
-            />
-            <span className="text-muted-foreground">–</span>
-            <Input
-              type="number"
-              value={ageMax}
-              onChange={(e) => setAgeMax(e.target.value)}
-              placeholder="Max"
-              className={fieldStyles}
-            />
-          </div>
-        </Field>
-
-        <Field label="Goal (optional)">
-          <Textarea
-            value={goal}
-            onChange={(e) => setGoal(e.target.value)}
-            placeholder="What this level is working toward"
-            className={`${fieldStyles} min-h-16 resize-none`}
-          />
-        </Field>
-
-        <Field label="Focus summary (optional)">
-          <Textarea
-            value={focusSummary}
-            onChange={(e) => setFocusSummary(e.target.value)}
-            placeholder="Key areas of focus at this level"
-            className={`${fieldStyles} min-h-16 resize-none`}
-          />
-        </Field>
-
-        <Field label="Upgrade criteria (optional)">
-          <Textarea
-            value={upgradeCriteria}
-            onChange={(e) => setUpgradeCriteria(e.target.value)}
-            placeholder="What's required to move to the next level"
-            className={`${fieldStyles} min-h-16 resize-none`}
-          />
-        </Field>
-      </div>
-    </SidePanel>
+        <DialogFooter className="mt-8 flex flex-row items-center justify-between gap-3 p-0 sm:justify-between">
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isSaving}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="secondary"
+            disabled={!name || !sortOrder || isSaving}
+            onClick={handleSubmit}
+          >
+            {isSaving
+              ? "Saving..."
+              : isEditing
+                ? "Save changes"
+                : "Create level"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

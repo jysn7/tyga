@@ -93,7 +93,7 @@ export function StepBasicInfo() {
           control={control}
           name="gender"
           render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
+            <Select value={field.value ?? ""} onValueChange={field.onChange}>
               <SelectTrigger className={triggerStyles}>
                 <SelectValue placeholder="Select gender" />
               </SelectTrigger>
@@ -103,6 +103,38 @@ export function StepBasicInfo() {
               </SelectContent>
             </Select>
           )}
+        />
+      </Field>
+
+      <Field label="School name">
+        <Input
+          className={fieldStyles}
+          placeholder="e.g. Sunnyside Primary"
+          {...register("schoolName")}
+        />
+      </Field>
+
+      <Field label="School grade">
+        <Input
+          className={fieldStyles}
+          placeholder="e.g. Grade 5"
+          {...register("schoolGrade")}
+        />
+      </Field>
+
+      <Field label="ID / birth certificate number">
+        <Input
+          className={fieldStyles}
+          placeholder="Child's ID or birth certificate number"
+          {...register("idOrBirthCertNumber")}
+        />
+      </Field>
+
+      <Field label="Previous team / club">
+        <Input
+          className={fieldStyles}
+          placeholder="If your child has played elsewhere before"
+          {...register("previousClub")}
         />
       </Field>
     </div>

@@ -84,7 +84,7 @@ export function ModuleList({
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border/60">
+    <div className="overflow-hidden rounded-lg border border-border/60 bg-card/80 shadow">
       <table className="w-full border-collapse">
         <thead>
           <tr className="border-b border-border/60 text-left text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
@@ -133,7 +133,7 @@ export function ModuleList({
                       type="button"
                       onClick={() => onEdit(module)}
                       title="Edit"
-                      className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                      className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-transparent text-muted-foreground transition-colors hover:border-border hover:bg-accent hover:text-foreground"
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
@@ -141,7 +141,7 @@ export function ModuleList({
                       type="button"
                       onClick={() => handleToggleArchive(module)}
                       title={isArchived ? "Restore" : "Archive"}
-                      className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                      className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-transparent text-muted-foreground transition-colors hover:border-border hover:bg-accent hover:text-foreground"
                     >
                       {isArchived ? (
                         <ArchiveRestore className="h-3.5 w-3.5" />
@@ -154,7 +154,7 @@ export function ModuleList({
                       onClick={() => handleDelete(module)}
                       disabled={deletingId === module.id}
                       title="Delete permanently"
-                      className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:pointer-events-none disabled:opacity-40"
+                      className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-transparent text-muted-foreground transition-colors hover:border-destructive hover:bg-destructive/10 hover:text-destructive disabled:pointer-events-none disabled:opacity-40"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>

@@ -6,18 +6,24 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useAppStore } from "@/stores/useAppStore"
 import { useTheme } from "next-themes"
-import { Search, PanelLeftClose } from "lucide-react"
+import { Search, PanelLeftClose, ChevronDown } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import type { User } from "@supabase/supabase-js"
 import Image from "next/image"
 
 type NavItem = { label: string; href: string; icon: LucideIcon }
 
+type NavGroup = {
+  label: string
+  icon: LucideIcon
+  items: NavItem[]
+}
+
 export function Sidebar({
   items,
   user,
 }: {
-  items: NavItem[]
+  items: NavGroup[]
   user: User | null
 }) {
   const pathname = usePathname()
@@ -26,13 +32,42 @@ export function Sidebar({
   const { resolvedTheme } = useTheme()
 
   const [searchQuery, setSearchQuery] = useState("")
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
+    () => {
+      // Auto-expand groups that have an active item
+      const expanded: Record<string, boolean> = {}
+      items.forEach((group) => {
+        const hasActive = group.items.some((item) =>
+          pathname.startsWith(item.href)
+        )
+        if (hasActive) expanded[group.label] = true
+      })
+      return expanded
+    }
+  )
 
   const logoSrc =
     resolvedTheme === "dark" ? "/logo/light.png" : "/logo/dark.png"
 
-  const filteredItems = items.filter((item) =>
-    item.label.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const toggleGroup = (label: string) => {
+    setExpandedGroups((prev) => ({
+      ...prev,
+      [label]: !prev[label],
+    }))
+  }
+
+  // Filter groups and their items based on search
+  const filteredGroups = items
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) =>
+        item.label.toLowerCase().includes(searchQuery.toLowerCase())
+      ),
+    }))
+    .filter((group) => group.items.length > 0)
+
+  // If searching, expand all groups that have matches
+  const isSearching = searchQuery.length > 0
 
   return (
     <>
@@ -99,45 +134,77 @@ export function Sidebar({
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-8 w-full rounded-md border border-secondary bg-secondary pr-3 pl-8 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none active:border-primary"
+                className="h-8 w-full rounded-md border border-border bg-input pr-3 pl-8 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none active:border-primary"
               />
             </div>
           </div>
 
           {/* Navigation */}
           <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-2 py-2">
-            <p className="my-2 text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
-              Navigation
-            </p>
-            {filteredItems.map((item) => {
-              const isActive = pathname.startsWith(item.href)
-              const Icon = item.icon
+            {filteredGroups.map((group) => {
+              const isExpanded = isSearching || expandedGroups[group.label]
+              const GroupIcon = group.icon
 
               return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "group relative flex items-center gap-3 rounded-md px-2.5 py-2 text-xs font-medium transition-colors",
-                    isActive
-                      ? "bg-secondary text-foreground shadow"
-                      : "text-muted-foreground hover:bg-primary/5 hover:text-foreground"
-                  )}
-                >
-                  <Icon
+                <div key={group.label} className="flex flex-col gap-0.5">
+                  {/* Group header */}
+                  <button
+                    onClick={() => toggleGroup(group.label)}
                     className={cn(
-                      "h-4 w-4 shrink-0 transition-colors",
-                      isActive
-                        ? "text-primary"
-                        : "text-muted-foreground group-hover:text-foreground"
+                      "flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-xs font-medium transition-colors",
+                      "text-muted-foreground hover:bg-primary/5 hover:text-foreground",
+                      isExpanded && "text-foreground"
                     )}
-                  />
-                  <span className="truncate">{item.label}</span>
+                  >
+                    <GroupIcon className="h-4 w-4 shrink-0" />
+                    <span className="flex-1 truncate text-left">
+                      {group.label}
+                    </span>
+                    <ChevronDown
+                      className={cn(
+                        "h-3.5 w-3.5 shrink-0 transition-transform duration-200",
+                        isExpanded && "rotate-180"
+                      )}
+                    />
+                  </button>
 
-                  {isActive && (
-                    <span className="absolute left-0 h-4 w-0.5 rounded-r-full bg-primary" />
+                  {/* Group items */}
+                  {isExpanded && (
+                    <div className="ml-2 flex flex-col gap-0.5 border-l border-border/60 pl-2">
+                      {group.items.map((item) => {
+                        const isActive = pathname.startsWith(item.href)
+                        const Icon = item.icon
+
+                        return (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            className={cn(
+                              "group relative flex items-center gap-3 rounded-md px-2.5 py-2 text-xs font-medium transition-colors",
+                              isActive
+                                ? "bg-card text-foreground shadow"
+                                : "text-muted-foreground hover:bg-primary/5 hover:text-foreground"
+                            )}
+                          >
+                            <Icon
+                              className={cn(
+                                "h-4 w-4 shrink-0 transition-colors",
+                                isActive
+                                  ? "text-primary"
+                                  : "text-muted-foreground group-hover:text-foreground"
+                              )}
+                            />
+                            <span className="truncate">{item.label}</span>
+
+                            {isActive && (
+                              <span className="absolute -left-0.5 h-4 w-0.5 rounded-r-full bg-primary" />
+                            )}
+                          </Link>
+                        )
+                      })}
+                    </div>
                   )}
-                </Link>
+                </div>
               )
             })}
           </nav>

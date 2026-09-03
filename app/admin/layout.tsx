@@ -8,7 +8,7 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { loading, authorized } = useAuth({ requiredRole: "admin" })
+  const { user, loading, authorized } = useAuth({ requiredRole: "admin" })
 
   if (loading) {
     return (
@@ -25,5 +25,9 @@ export default function AdminLayout({
     return null
   }
 
-  return <AppShell portal="admin">{children}</AppShell>
+  return (
+    <AppShell portal="admin" user={user}>
+      {children}
+    </AppShell>
+  )
 }

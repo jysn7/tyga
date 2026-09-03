@@ -17,7 +17,9 @@ export function SearchInput({
   maxLength?: number
 }) {
   return (
-    <div className={`relative ${className}`}>
+    <div
+      className={`relative rounded-lg border border-border bg-input active:border-primary ${className}`}
+    >
       <Search className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
       <Input
         value={value}
@@ -25,7 +27,7 @@ export function SearchInput({
         placeholder={placeholder}
         maxLength={maxLength}
         autoComplete="off"
-        className="h-9 pr-8 pl-8 text-sm"
+        className="h-9 border-none bg-transparent pr-8 pl-8 text-sm shadow-none focus-visible:ring-0"
       />
       {value && (
         <button

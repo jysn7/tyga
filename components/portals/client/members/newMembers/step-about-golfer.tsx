@@ -36,7 +36,7 @@ export function StepAboutGolfer() {
           control={control}
           name="skillLevel"
           render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
+            <Select value={field.value ?? ""} onValueChange={field.onChange}>
               <SelectTrigger className={triggerStyles}>
                 <SelectValue placeholder="Select a starting point" />
               </SelectTrigger>
@@ -74,6 +74,30 @@ export function StepAboutGolfer() {
           className={fieldStyles}
           placeholder="e.g. Junior club set, no bag yet"
           {...register("gearOwned")}
+        />
+      </Field>
+
+      <Field label="Kit size (top)">
+        <Input
+          className={fieldStyles}
+          placeholder="e.g. Youth M"
+          {...register("kitSizeTop")}
+        />
+      </Field>
+
+      <Field label="Kit size (bottom)">
+        <Input
+          className={fieldStyles}
+          placeholder="e.g. Youth M"
+          {...register("kitSizeBottom")}
+        />
+      </Field>
+
+      <Field label="Shoe size">
+        <Input
+          className={fieldStyles}
+          placeholder="e.g. UK 3"
+          {...register("shoeSize")}
         />
       </Field>
     </div>

@@ -4,18 +4,30 @@ import { notFound } from "next/navigation"
 import { ChevronLeft, ShieldAlert } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { createClient } from "@/utils/supabase/server"
-import { EditMemberModal } from "@/components/portals/client/members/edit-member-modal"
+import { EditMemberPanel } from "@/components/portals/client/members/edit-member-modal"
 
 type MemberWithDetailsRow = {
   id: number
   full_name: string
   dob: string
   gender: "male" | "female" | "any"
+  school_name: string | null
+  school_grade: string | null
+  id_or_birth_cert_number: string | null
+  kit_size_top: string | null
+  kit_size_bottom: string | null
+  shoe_size: string | null
+  previous_club: string | null
   medical_notes: string | null
-  emergency_contact: string | null
+  medical_aid_details: string | null
+  doctor_contact: string | null
+  emergency_contact_name: string | null
+  emergency_contact_relationship: string | null
+  emergency_contact_phone: string | null
   current_level_name: string | null
   next_session_label: string | null
   active_enrollment_count: number
+  onboarding_complete: boolean
 }
 
 function getAge(dob: string) {
@@ -70,7 +82,8 @@ export default async function MemberDetailPage({
     notFound()
   }
 
-  // Audit log — this page surfaces dob, medical_notes, and emergency_contact
+  // Audit log — this page surfaces dob, medical/medical_aid/doctor info,
+  // and emergency contact details
   await Promise.all([
     supabase.rpc("log_sensitive_data_access", {
       p_member_id: member.id,
@@ -84,7 +97,27 @@ export default async function MemberDetailPage({
     }),
     supabase.rpc("log_sensitive_data_access", {
       p_member_id: member.id,
-      p_field: "emergency_contact",
+      p_field: "medical_aid_details",
+      p_reason: "Viewed member profile",
+    }),
+    supabase.rpc("log_sensitive_data_access", {
+      p_member_id: member.id,
+      p_field: "doctor_contact",
+      p_reason: "Viewed member profile",
+    }),
+    supabase.rpc("log_sensitive_data_access", {
+      p_member_id: member.id,
+      p_field: "emergency_contact_name",
+      p_reason: "Viewed member profile",
+    }),
+    supabase.rpc("log_sensitive_data_access", {
+      p_member_id: member.id,
+      p_field: "emergency_contact_phone",
+      p_reason: "Viewed member profile",
+    }),
+    supabase.rpc("log_sensitive_data_access", {
+      p_member_id: member.id,
+      p_field: "id_or_birth_cert_number",
       p_reason: "Viewed member profile",
     }),
   ])
@@ -118,17 +151,34 @@ export default async function MemberDetailPage({
             {isAssessed ? member.current_level_name : "Not yet assessed"} ·{" "}
             <span className="capitalize">{member.gender}</span>
           </p>
+          {!member.onboarding_complete && (
+            <p className="text-xs font-medium text-amber-600">
+              Registration incomplete
+            </p>
+          )}
         </div>
 
         <div className="ml-auto">
-          <EditMemberModal
+          <EditMemberPanel
             member={{
               id: member.id,
               fullName: member.full_name,
               dob: member.dob,
               gender: member.gender === "any" ? "male" : member.gender,
               medicalNotes: member.medical_notes,
-              emergencyContact: member.emergency_contact,
+              medicalAidDetails: member.medical_aid_details ?? null,
+              doctorContact: member.doctor_contact ?? null,
+              emergencyContactName: member.emergency_contact_name,
+              emergencyContactRelationship:
+                member.emergency_contact_relationship,
+              emergencyContactPhone: member.emergency_contact_phone,
+              schoolName: member.school_name ?? null,
+              schoolGrade: member.school_grade ?? null,
+              idOrBirthCertNumber: member.id_or_birth_cert_number ?? null,
+              previousClub: member.previous_club ?? null,
+              kitSizeTop: member.kit_size_top ?? null,
+              kitSizeBottom: member.kit_size_bottom ?? null,
+              shoeSize: member.shoe_size ?? null,
             }}
           />
         </div>
@@ -156,6 +206,35 @@ export default async function MemberDetailPage({
               label="Next session"
               value={member.next_session_label ?? "—"}
             />
+            <Detail
+              label="School"
+              value={
+                member.school_name
+                  ? `${member.school_name}${member.school_grade ? ` · Grade ${member.school_grade}` : ""}`
+                  : "Not provided"
+              }
+            />
+            <Detail
+              label="Previous team / club"
+              value={member.previous_club ?? "None"}
+            />
+          </div>
+        </div>
+
+        <div className="rounded-xl bg-secondary p-4 shadow">
+          <h2 className="pb-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            Kit sizing
+          </h2>
+          <div className="flex flex-col">
+            <Detail label="Top" value={member.kit_size_top ?? "Not provided"} />
+            <Detail
+              label="Bottom"
+              value={member.kit_size_bottom ?? "Not provided"}
+            />
+            <Detail
+              label="Shoe size"
+              value={member.shoe_size ?? "Not provided"}
+            />
           </div>
         </div>
 
@@ -171,12 +250,36 @@ export default async function MemberDetailPage({
           </p>
           <div className="flex flex-col">
             <Detail
+              label="ID / birth certificate number"
+              value={member.id_or_birth_cert_number ?? "Not provided"}
+            />
+            <Detail
               label="Emergency contact"
-              value={member.emergency_contact ?? "Not provided"}
+              value={
+                member.emergency_contact_name
+                  ? `${member.emergency_contact_name}${
+                      member.emergency_contact_relationship
+                        ? ` (${member.emergency_contact_relationship})`
+                        : ""
+                    }`
+                  : "Not provided"
+              }
+            />
+            <Detail
+              label="Emergency contact phone"
+              value={member.emergency_contact_phone ?? "Not provided"}
             />
             <Detail
               label="Medical notes"
               value={member.medical_notes ?? "None provided"}
+            />
+            <Detail
+              label="Medical aid details"
+              value={member.medical_aid_details ?? "Not provided"}
+            />
+            <Detail
+              label="Doctor contact"
+              value={member.doctor_contact ?? "Not provided"}
             />
           </div>
         </div>

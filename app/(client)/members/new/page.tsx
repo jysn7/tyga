@@ -14,6 +14,8 @@ import { useCreateMember } from "@/hooks/use-create-member"
 import { StepBasicInfo } from "@/components/portals/client/members/newMembers/step-basic-info"
 import { StepHealthSafety } from "@/components/portals/client/members/newMembers/step-health-safety"
 import { StepAboutGolfer } from "@/components/portals/client/members/newMembers/step-about-golfer"
+import { StepConsent } from "@/components/portals/client/members/newMembers/step-consent"
+import { StepDocuments } from "@/components/portals/client/members/newMembers/step-documents"
 
 function NewMemberFormContent() {
   const router = useRouter()
@@ -27,7 +29,7 @@ function NewMemberFormContent() {
     toast.add({
       id: toastId,
       title: "Creating member...",
-      description: "Please wait",
+      description: "Uploading documents and saving consent — please wait",
       type: "loading",
       timeout: 0,
     })
@@ -75,7 +77,7 @@ function NewMemberFormContent() {
   }
 
   return (
-    <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-lg flex-col px-6 py-10">
+    <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-4xl flex-col px-6 py-10">
       <div className="mb-8 flex items-center gap-2">
         {STEPS.map((label, i) => (
           <div key={label} className="flex flex-1 flex-col gap-2">
@@ -99,6 +101,8 @@ function NewMemberFormContent() {
         {step === 0 && <StepBasicInfo />}
         {step === 1 && <StepHealthSafety />}
         {step === 2 && <StepAboutGolfer />}
+        {step === 3 && <StepConsent />}
+        {step === 4 && <StepDocuments />}
       </div>
 
       <div className="mt-8 flex items-center justify-between border-t border-border/60 pt-5">

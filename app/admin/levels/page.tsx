@@ -30,11 +30,7 @@ export default function AdminLevelsPage() {
         title="Levels"
         description="Skill levels used across programmes and member placement"
         action={
-          <Button
-            size="sm"
-            className="gap-1.5 rounded-lg text-xs"
-            onClick={handleCreate}
-          >
+          <Button size="lg" variant="secondary" onClick={handleCreate}>
             <Plus className="h-3.5 w-3.5" />
             New level
           </Button>

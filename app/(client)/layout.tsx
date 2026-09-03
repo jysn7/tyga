@@ -8,7 +8,7 @@ export default function ClientLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { loading, authorized } = useAuth({ requiredRole: "parent" })
+  const { user, loading, authorized } = useAuth({ requiredRole: "parent" })
 
   if (loading) {
     return (
@@ -25,5 +25,9 @@ export default function ClientLayout({
     return null
   }
 
-  return <AppShell portal="client">{children}</AppShell>
+  return (
+    <AppShell portal="client" user={user}>
+      {children}
+    </AppShell>
+  )
 }
