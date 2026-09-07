@@ -1,6 +1,3 @@
-// lib/types.ts
-
-// Enums
 export type AccountRole = "parent" | "coach" | "admin"
 export type Gender = "male" | "female" | "any"
 export type VenueType = "practice_ground" | "course" | "range" | "school"
@@ -186,6 +183,8 @@ export interface Venue {
   name: string
   address: string | null
   type: VenueType | null
+  longitude: number | null
+  latitude: number | null
 }
 
 export interface Programme {
