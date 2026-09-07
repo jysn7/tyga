@@ -12,6 +12,11 @@ export type Level = {
   focusSummary: string | null
   upgradeCriteria: string | null
   archivedAt: string | null
+  modules?: Array<{
+    id: number
+    name: string
+    category?: string | null
+  }>
 }
 
 type LevelRow = {
