@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { UserCog } from "lucide-react"
 import { SidePanel } from "@/components/portals/shared/side-sheet"
+import { Field } from "@/components/portals/shared/field"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "@/components/ui/toast"
@@ -71,8 +72,8 @@ export function EditCoachPanel({
       title="Edit coach"
       header={
         <div className="flex items-center gap-4 px-8 pt-8 pb-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10">
-            <UserCog className="h-6 w-6 text-primary" />
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-accent">
+            <UserCog className="h-6 w-6 text-foreground" />
           </div>
           <div className="flex flex-col gap-1">
             <span className="text-xl font-semibold tracking-tight text-foreground">
@@ -92,12 +93,9 @@ export function EditCoachPanel({
         </Button>
       }
     >
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            Coach type
-          </span>
-          <div className="grid grid-cols-3 gap-1.5">
+      <div className="flex flex-col">
+        <Field label="Coach type">
+          <div className="grid grid-cols-3 gap-1.5 p-0.5">
             {COACH_TYPE_OPTIONS.map((opt) => {
               const isSelected = coachType === opt.value
               return (
@@ -107,8 +105,8 @@ export function EditCoachPanel({
                   onClick={() => setCoachType(isSelected ? "" : opt.value)}
                   className={`rounded-lg px-3 py-2.5 text-center text-xs font-medium transition-colors ${
                     isSelected
-                      ? "bg-primary/10 text-primary"
-                      : "bg-muted/60 text-muted-foreground hover:bg-accent/60 hover:text-foreground"
+                      ? "bg-secondary text-primary shadow"
+                      : "bg-background text-muted-foreground hover:bg-accent/60 hover:text-foreground"
                   }`}
                 >
                   {opt.label}
@@ -116,21 +114,17 @@ export function EditCoachPanel({
               )
             })}
           </div>
-        </div>
+        </Field>
 
-        <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            Max student ratio
-          </span>
+        <Field label="Max student ratio">
           <Input
             type="number"
             min={1}
             value={maxRatio}
             onChange={(e) => setMaxRatio(e.target.value)}
             placeholder="e.g. 8"
-            className="h-11 rounded-xl text-sm"
           />
-        </div>
+        </Field>
       </div>
     </SidePanel>
   )

@@ -8,6 +8,8 @@ export const sampleVenues: Venue[] = [
     type: "course",
     latitude: -26.2578,
     longitude: 27.8618,
+    archivedAt: null,
+    createdAt: "2026-01-01T00:00:00Z",
   },
   {
     id: 2,
@@ -16,6 +18,8 @@ export const sampleVenues: Venue[] = [
     type: "practice_ground",
     latitude: null,
     longitude: null,
+    archivedAt: null,
+    createdAt: "2026-01-02T00:00:00Z",
   },
   {
     id: 3,
@@ -24,5 +28,7 @@ export const sampleVenues: Venue[] = [
     type: "school",
     latitude: null,
     longitude: null,
+    archivedAt: null,
+    createdAt: "2026-01-03T00:00:00Z",
   },
 ]

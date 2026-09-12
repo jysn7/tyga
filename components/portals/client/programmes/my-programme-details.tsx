@@ -31,8 +31,6 @@ const typeLabels: Record<ProgrammeDetail["type"], string> = {
 }
 
 export function MyProgrammeDetails({ programme }: MyProgrammeDetailsProps) {
-  const isFull = programme.enrolledCount >= programme.capacity
-  const spotsLeft = programme.capacity - programme.enrolledCount
   const enrollmentPercentage =
     (programme.enrolledCount / programme.capacity) * 100
 

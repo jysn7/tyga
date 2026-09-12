@@ -2,15 +2,25 @@
 "use client"
 
 import { useState } from "react"
-import { UserPlus } from "lucide-react"
+import { UserPlus, Mail, ChevronDown, UserCog, Send } from "lucide-react"
 import { PageHeader } from "@/components/portals/shared/page-header"
 import { SearchInput } from "@/components/portals/shared/search-input"
 import { CoachList } from "@/components/portals/admin/coaches/coach-list"
 import { CreateCoachPanel } from "@/components/portals/admin/coaches/create-coach-panel"
+import { EditCoachPanel } from "@/components/portals/admin/coaches/edit-coach-panel"
+import { PendingInvitesPanel } from "@/components/portals/admin/coaches/pending-invites-panel"
+import { InviteCoachModal } from "@/components/portals/admin/coaches/invite-coach-modal"
 import { Coach, useCoaches } from "@/hooks/admin/use-coaches"
+import { useCoachInvites } from "@/hooks/admin/invites/use-coach-invites"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { Loader } from "@/components/portals/shared/loader"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   Select,
   SelectContent,
@@ -18,7 +28,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { EditCoachPanel } from "@/components/portals/admin/coaches/edit-coach-panel"
 
 const ACTIVE_OPTIONS: {
   label: string
@@ -37,6 +46,8 @@ export default function AdminCoachesPage() {
   const debouncedSearch = useDebouncedValue(searchInput)
   const [createOpen, setCreateOpen] = useState(false)
   const [editingCoach, setEditingCoach] = useState<Coach | null>(null)
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false)
+  const [invitesPanelOpen, setInvitesPanelOpen] = useState(false)
 
   const {
     data: coaches,
@@ -47,20 +58,53 @@ export default function AdminCoachesPage() {
     active: activeFilter === "all" ? undefined : activeFilter === "active",
   })
 
+  const { data: pendingInvites } = useCoachInvites("pending")
+  const pendingCount = pendingInvites?.length ?? 0
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Coaches"
         description="Manage coaching staff and their status"
         action={
-          <Button
-            size="sm"
-            className="gap-1.5 rounded-lg text-xs"
-            onClick={() => setCreateOpen(true)}
-          >
-            <UserPlus className="h-3.5 w-3.5" />
-            Add coach
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* Add coach dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger>
+                <Button size="lg" variant="secondary">
+                  <UserPlus className="h-3.5 w-3.5" />
+                  Add coach
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={() => setCreateOpen(true)}>
+                  <UserCog className="h-3.5 w-3.5" />
+                  Promote existing parent
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setInviteDialogOpen(true)}>
+                  <Send className="h-3.5 w-3.5" />
+                  Invite by email
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Pending invites as outline button with badge */}
+            <Button
+              size="lg"
+              variant="outline"
+              className="bg-pink text-secondary"
+              onClick={() => setInvitesPanelOpen(true)}
+            >
+              <Mail className="h-3.5 w-3.5" />
+              Invites
+              {pendingCount > 0 && (
+                <span className="ml-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
+                  {pendingCount}
+                </span>
+              )}
+            </Button>
+          </div>
         }
       />
 
@@ -98,6 +142,7 @@ export default function AdminCoachesPage() {
       ) : (
         <CoachList coaches={coaches ?? []} onEdit={setEditingCoach} />
       )}
+
       <EditCoachPanel
         key={editingCoach ? `coach-${editingCoach.id}` : "new-coach"}
         coach={editingCoach}
@@ -105,6 +150,18 @@ export default function AdminCoachesPage() {
         onOpenChange={(open) => !open && setEditingCoach(null)}
       />
       <CreateCoachPanel open={createOpen} onOpenChange={setCreateOpen} />
+      <InviteCoachModal
+        open={inviteDialogOpen}
+        onOpenChange={setInviteDialogOpen}
+      />
+      <PendingInvitesPanel
+        open={invitesPanelOpen}
+        onOpenChange={setInvitesPanelOpen}
+        onInviteNew={() => {
+          setInvitesPanelOpen(false)
+          setInviteDialogOpen(true)
+        }}
+      />
     </div>
   )
 }

@@ -1,6 +1,5 @@
 export type AccountRole = "parent" | "coach" | "admin"
 export type Gender = "male" | "female" | "any"
-export type VenueType = "practice_ground" | "course" | "range" | "school"
 export type CoachType = "head_coach" | "assistant_coach" | "volunteer"
 export type SensitiveField = "medical_notes" | "dob" | "emergency_contact"
 
@@ -64,6 +63,8 @@ export type NotificationType =
   | "level_upgrade"
   | "parent_consultation_reminder"
   | "announcement"
+
+export type VenueType = "course" | "practice_ground" | "range" | "school"
 
 // Auth & Identity
 export interface Account {
@@ -178,13 +179,15 @@ export interface MemberMilestone {
 }
 
 // Structure & Scheduling
-export interface Venue {
+export type Venue = {
   id: number
   name: string
-  address: string | null
-  type: VenueType | null
-  longitude: number | null
+  type: VenueType
+  address: string
   latitude: number | null
+  longitude: number | null
+  archivedAt: string | null
+  createdAt: string
 }
 
 export interface Programme {

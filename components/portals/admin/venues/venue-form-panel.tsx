@@ -2,8 +2,13 @@
 
 import { useState } from "react"
 import { MapPin } from "lucide-react"
-import { SidePanel } from "@/components/portals/shared/side-sheet"
-import { Field } from "@/components/portals/shared/field"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -18,7 +23,11 @@ import {
   type LocationValue,
 } from "@/components/portals/shared/address-map-picker"
 import { toast } from "@/components/ui/toast"
-import type { Venue } from "@/lib/types"
+import {
+  useCreateVenue,
+  useUpdateVenue,
+} from "@/hooks/admin/venues/use-venue-mutations"
+import type { AdminVenue } from "@/hooks/admin/venues/use-venues"
 
 const VENUE_TYPES = [
   { label: "Course", value: "course" },
@@ -32,7 +41,7 @@ export function VenueFormPanel({
   open,
   onOpenChange,
 }: {
-  venue: Venue | null
+  venue: AdminVenue | null
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
@@ -40,21 +49,39 @@ export function VenueFormPanel({
   const [type, setType] = useState(venue?.type ?? "")
   const [location, setLocation] = useState<LocationValue>({
     address: venue?.address ?? "",
-    latitude: null,
-    longitude: null,
+    latitude: venue?.latitude ?? null,
+    longitude: venue?.longitude ?? null,
   })
-  const [isSaving, setIsSaving] = useState(false)
 
   const isEditing = venue !== null
   const canSave = name.trim().length > 0 && type && location.address
 
+  const createVenue = useCreateVenue()
+  const updateVenue = useUpdateVenue()
+  const isSaving = createVenue.isPending || updateVenue.isPending
+
   async function handleSave() {
     if (!canSave) return
-    setIsSaving(true)
 
     try {
-      // TODO: call admin_create_venue or admin_update_venue via Supabase RPC
-      await new Promise((r) => setTimeout(r, 500))
+      if (isEditing) {
+        await updateVenue.mutateAsync({
+          venueId: venue.id,
+          name,
+          type,
+          address: location.address,
+          latitude: location.latitude,
+          longitude: location.longitude,
+        })
+      } else {
+        await createVenue.mutateAsync({
+          name,
+          type,
+          address: location.address,
+          latitude: location.latitude,
+          longitude: location.longitude,
+        })
+      }
 
       toast.add({
         title: isEditing ? "Venue updated" : "Venue created",
@@ -73,74 +100,88 @@ export function VenueFormPanel({
         type: "error",
         timeout: 5000,
       })
-    } finally {
-      setIsSaving(false)
     }
   }
 
   return (
-    <SidePanel
-      open={open}
-      onOpenChange={onOpenChange}
-      title={isEditing ? "Edit venue" : "New venue"}
-      description={isEditing ? venue.name : "Add a new venue location"}
-      header={
-        <div className="flex items-center gap-4 border-b border-border/60 px-8 pt-8 pb-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-accent">
-            <MapPin className="h-6 w-6 text-foreground" />
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="w-full gap-0 overflow-hidden rounded-2xl bg-card p-6 shadow-2xl ring-0 sm:max-w-xl [&>button]:top-6 [&>button]:right-6 [&>button]:text-muted-foreground [&>button]:hover:text-foreground">
+        <DialogHeader className="flex flex-row items-center gap-3.5 space-y-0 p-0 pb-6 text-left">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-input">
+            <MapPin
+              className="h-4.5 w-4.5 text-foreground"
+              strokeWidth={1.75}
+            />
           </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-xl font-semibold tracking-tight text-foreground">
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <DialogTitle className="truncate text-xl font-semibold tracking-tight text-foreground">
               {isEditing ? "Edit venue" : "New venue"}
-            </span>
-            <span className="text-sm text-muted-foreground">
+            </DialogTitle>
+            <span className="truncate text-xs text-muted-foreground">
               {isEditing ? venue.name : "Add a new venue location"}
             </span>
           </div>
-        </div>
-      }
-      footer={
-        <Button
-          className="w-full rounded-lg text-sm"
-          disabled={!canSave || isSaving}
-          onClick={handleSave}
-        >
-          {isSaving ? "Saving…" : isEditing ? "Save changes" : "Create venue"}
-        </Button>
-      }
-    >
-      <div className="flex flex-col">
-        <Field label="Venue name">
-          <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Soweto Country Club"
-          />
-        </Field>
+        </DialogHeader>
 
-        <Field label="Venue type">
-          <Select value={type} onValueChange={(value) => setType(value ?? "")}>
-            <SelectTrigger className="h-auto w-full border-none bg-transparent text-[15px] font-normal shadow-none focus:ring-0">
-              <SelectValue placeholder="Select a type" />
-            </SelectTrigger>
-            <SelectContent>
-              {VENUE_TYPES.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Field>
+        <div className="flex max-h-[60vh] flex-col gap-4 overflow-y-auto pr-1">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-normal text-muted-foreground">
+              Venue name
+            </label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Soweto Country Club"
+              className="h-11 rounded-lg border border-border bg-input px-3.5 text-sm text-foreground shadow-none focus-visible:ring-0"
+            />
+          </div>
 
-        {/* Location field WITHOUT Field wrapper */}
-        <div className="flex flex-col gap-1.5 border-b border-border/60 py-3 last:border-b-0">
-          <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            Location
-          </span>
-          <AddressMapPicker value={location} onChange={setLocation} />
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-normal text-muted-foreground">
+              Venue type
+            </label>
+            <Select
+              value={type}
+              onValueChange={(value) => setType(value ?? "")}
+            >
+              <SelectTrigger className="h-11 w-full rounded-lg border border-border bg-input px-3.5 text-sm text-foreground shadow-none focus:ring-0">
+                <SelectValue placeholder="Select a type" />
+              </SelectTrigger>
+              <SelectContent>
+                {VENUE_TYPES.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-normal text-muted-foreground">
+              Location
+            </label>
+            <AddressMapPicker value={location} onChange={setLocation} />
+          </div>
         </div>
-      </div>
-    </SidePanel>
+
+        <DialogFooter className="mt-8 flex flex-row items-center justify-between gap-3 p-0 sm:justify-between">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="secondary"
+            disabled={!canSave || isSaving}
+            onClick={handleSave}
+          >
+            {isSaving
+              ? "Saving..."
+              : isEditing
+                ? "Save changes"
+                : "Create venue"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
