@@ -35,17 +35,58 @@ export default function UpdatePasswordPage() {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [loading, setLoading] = useState(false)
+  const [checkingSession, setCheckingSession] = useState(true)
   const [validSession, setValidSession] = useState(false)
 
   useEffect(() => {
-    // Check if we have a valid session for password reset
-    const checkSession = async () => {
+    // Invite/recovery links deliver the session as a URL hash fragment
+    // (#access_token=...&refresh_token=...&type=invite), NOT a query
+    // string or an already-established session. Browsers never send the
+    // fragment to the server, so if we only check getSession(), a fresh
+    // invite click always looks like "no session" even though the link
+    // is perfectly valid — we have to explicitly parse the hash and call
+    // setSession() to actually turn those tokens into a real session.
+    const establishSession = async () => {
+      const hash = window.location.hash
+
+      if (hash && hash.includes("access_token")) {
+        const params = new URLSearchParams(hash.substring(1))
+        const access_token = params.get("access_token")
+        const refresh_token = params.get("refresh_token")
+
+        if (access_token && refresh_token) {
+          const { error } = await supabase.auth.setSession({
+            access_token,
+            refresh_token,
+          })
+
+          if (error) {
+            setValidSession(false)
+            setCheckingSession(false)
+            return
+          }
+
+          // Strip the tokens out of the visible URL/history now that
+          // they've been consumed — they shouldn't linger in the address
+          // bar or browser history.
+          window.history.replaceState(null, "", window.location.pathname)
+          setValidSession(true)
+          setCheckingSession(false)
+          return
+        }
+      }
+
+      // No hash present — fall back to checking for an existing session
+      // (e.g. the user refreshed this page after the hash was already
+      // consumed once).
       const {
         data: { session },
       } = await supabase.auth.getSession()
       setValidSession(!!session)
+      setCheckingSession(false)
     }
-    checkSession()
+
+    establishSession()
   }, [supabase.auth])
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
@@ -98,6 +139,18 @@ export default function UpdatePasswordPage() {
       })
       setLoading(false)
     }
+  }
+
+  // Still parsing the hash / checking for a session — avoid flashing the
+  // "invalid link" state before we've actually finished checking.
+  if (checkingSession) {
+    return (
+      <div className="flex min-h-svh flex-col items-center justify-center bg-background px-4 py-12">
+        <div className="w-full max-w-sm text-center text-sm text-muted-foreground">
+          Verifying your invite link...
+        </div>
+      </div>
+    )
   }
 
   // If no valid session, show error
