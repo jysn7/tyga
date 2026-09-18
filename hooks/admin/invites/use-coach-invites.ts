@@ -1,4 +1,3 @@
-// hooks/admin/coaches/use-coach-invites.ts
 import { useQuery } from "@tanstack/react-query"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { createClient } from "@/utils/supabase/client"

@@ -1,4 +1,3 @@
-// components/portals/admin/coaches/pending-invites-panel.tsx
 "use client"
 
 import { useState } from "react"

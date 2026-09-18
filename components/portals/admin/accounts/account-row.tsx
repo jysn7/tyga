@@ -1,4 +1,3 @@
-// account-row.tsx (now exports AccountTableRow, renders as a <tr>)
 "use client"
 
 import { useState } from "react"

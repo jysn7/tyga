@@ -5,30 +5,11 @@ import Link from "next/link"
 import { Mail } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Field, fieldStyles } from "@/components/portals/shared/field"
 import { createClient } from "@/utils/supabase/client"
 import { toast } from "@/components/ui/toast"
 import { useTheme } from "next-themes"
 import Image from "next/image"
-
-function Field({
-  label,
-  children,
-}: {
-  label: string
-  children: React.ReactNode
-}) {
-  return (
-    <div className="flex flex-col gap-1.5 border-b border-border/60 py-3 last:border-b-0">
-      <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-        {label}
-      </span>
-      {children}
-    </div>
-  )
-}
-
-const fieldStyles =
-  "h-auto border-none bg-transparent px-0 shadow-none text-[15px] text-foreground focus-visible:ring-0 placeholder:text-muted-foreground/50"
 
 export default function ForgotPasswordPage() {
   const supabase = createClient()

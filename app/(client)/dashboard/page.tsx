@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 
 import { toast } from "@/components/ui/toast"
+import { ParentOverview } from "./ParentOverview"
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -26,5 +27,5 @@ export default function DashboardPage() {
     router.replace("/dashboard")
   }, [router, searchParams])
 
-  return <div>page</div>
+  return <ParentOverview />
 }

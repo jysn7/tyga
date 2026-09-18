@@ -3,6 +3,8 @@
 import { Suspense, use, useState } from "react"
 import { Mail } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
+import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 
 function VerifyEmailContent({
@@ -11,8 +13,12 @@ function VerifyEmailContent({
   searchParams: Promise<{ email?: string }>
 }) {
   const params = use(searchParams)
+  const { resolvedTheme } = useTheme()
   const [isResending, setIsResending] = useState(false)
   const [resent, setResent] = useState(false)
+
+  const logoSrc =
+    resolvedTheme === "dark" ? "/logo/light.png" : "/logo/dark.png"
 
   async function handleResend() {
     setIsResending(true)
@@ -24,6 +30,18 @@ function VerifyEmailContent({
   return (
     <div className="w-full max-w-sm space-y-8 text-center">
       <div className="flex flex-col items-center space-y-4">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center">
+          {resolvedTheme && (
+            <Image
+              width={36}
+              height={36}
+              alt="TYGA Logo"
+              src={logoSrc}
+              className="h-full w-full object-contain"
+              priority
+            />
+          )}
+        </div>
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
           <Mail className="h-6 w-6" />
         </div>

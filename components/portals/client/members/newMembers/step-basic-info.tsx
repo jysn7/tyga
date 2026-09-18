@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Field, fieldStyles, triggerStyles } from "./shared"
+import { Field, triggerStyles } from "./shared"
 import { useMemberForm } from "@/context/new-member-form-context"
 
 export function StepBasicInfo() {
@@ -37,11 +37,7 @@ export function StepBasicInfo() {
       </p>
 
       <Field label="Full name" error={errors.fullName?.message}>
-        <Input
-          className={fieldStyles}
-          placeholder="Child's full name"
-          {...register("fullName")}
-        />
+        <Input placeholder="Child's full name" {...register("fullName")} />
       </Field>
 
       <Field
@@ -108,23 +104,17 @@ export function StepBasicInfo() {
 
       <Field label="School name">
         <Input
-          className={fieldStyles}
           placeholder="e.g. Sunnyside Primary"
           {...register("schoolName")}
         />
       </Field>
 
       <Field label="School grade">
-        <Input
-          className={fieldStyles}
-          placeholder="e.g. Grade 5"
-          {...register("schoolGrade")}
-        />
+        <Input placeholder="e.g. Grade 5" {...register("schoolGrade")} />
       </Field>
 
       <Field label="ID / birth certificate number">
         <Input
-          className={fieldStyles}
           placeholder="Child's ID or birth certificate number"
           {...register("idOrBirthCertNumber")}
         />
@@ -132,7 +122,6 @@ export function StepBasicInfo() {
 
       <Field label="Previous team / club">
         <Input
-          className={fieldStyles}
           placeholder="If your child has played elsewhere before"
           {...register("previousClub")}
         />

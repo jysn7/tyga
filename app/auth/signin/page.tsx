@@ -10,36 +10,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { toast } from "@/components/ui/toast"
+import { Field } from "@/components/portals/shared/field"
 import { signInSchema, type SignInValues } from "@/lib/validations/auth"
 import { useSignIn, useGoogleAuth } from "@/hooks/use-auth-mutations"
-
-function Field({
-  label,
-  action,
-  children,
-  error,
-}: {
-  label: string
-  action?: React.ReactNode
-  children: React.ReactNode
-  error?: string
-}) {
-  return (
-    <div className="flex flex-col gap-1.5 py-3">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-          {label}
-        </span>
-        {action}
-      </div>
-      {children}
-      {error && <span className="text-xs text-destructive">{error}</span>}
-    </div>
-  )
-}
-
-const fieldStyles =
-  "h-auto border-none bg-background active:ring active:ring-primary pl-2 py-3 shadow-none text-[15px] text-foreground placeholder:text-muted-foreground/50"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -103,7 +76,6 @@ export default function LoginPage() {
     try {
       await googleAuth.mutateAsync()
       toast.close(toastId)
-      // Browser navigates away to Google on success — nothing else to show
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "An error occurred"
@@ -113,7 +85,7 @@ export default function LoginPage() {
         title: "Google sign in failed",
         description: message,
         type: "error",
-        timeout: 5000, // was 100ms — too fast to actually read, fixed to 5s
+        timeout: 5000,
       })
     }
   }
@@ -122,7 +94,6 @@ export default function LoginPage() {
 
   return (
     <div className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden bg-secondary px-4 py-12">
-      {/* Background shapes — flat geometric, fewer & larger, no primary color */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         <div className="absolute -top-16 -left-16 h-40 w-40 rotate-12 rounded-3xl bg-muted" />
         <div className="absolute -right-10 bottom-16 h-52 w-52 rounded-full bg-muted" />
@@ -130,7 +101,6 @@ export default function LoginPage() {
       </div>
 
       <div className="relative z-10 w-full max-w-sm space-y-8">
-        {/* Top Branding & Mode Switcher */}
         <div className="flex flex-col items-center space-y-4 text-center">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center">
             {resolvedTheme && (
@@ -153,7 +123,6 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Segmented Auth Switcher */}
           <div className="flex w-full rounded-lg bg-background p-1 text-xs">
             <div className="flex-1 rounded-md bg-card py-1.5 text-center font-medium text-foreground shadow-sm">
               Sign In
@@ -167,7 +136,6 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Main content — no card frame, just spacing */}
         <div className="flex flex-col gap-6">
           <Button
             type="button"
@@ -204,13 +172,11 @@ export default function LoginPage() {
             </span>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
             <Field label="Email address" error={errors.email?.message}>
               <Input
                 type="email"
                 placeholder="name@example.com"
-                className={fieldStyles}
                 disabled={loading}
                 {...register("email")}
               />
@@ -231,7 +197,6 @@ export default function LoginPage() {
               <Input
                 type="password"
                 placeholder="••••••••"
-                className={fieldStyles}
                 disabled={loading}
                 {...register("password")}
               />
@@ -247,7 +212,6 @@ export default function LoginPage() {
           </form>
         </div>
 
-        {/* Footer info */}
         <p className="text-center font-mono text-[11px] text-muted-foreground/60">
           TYGA Portal &bull; Press{" "}
           <kbd className="rounded bg-muted px-1 py-0.5">d</kbd> for theme

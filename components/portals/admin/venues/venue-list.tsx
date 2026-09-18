@@ -1,4 +1,3 @@
-// components/portals/admin/venues/venue-list.tsx — add the programme_count column, drop archived styling
 "use client"
 
 import { MapPin } from "lucide-react"

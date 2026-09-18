@@ -115,7 +115,8 @@ function NewMemberFormContent() {
         </button>
         <Button
           size="sm"
-          className="rounded-md px-5 text-sm"
+          variant="secondary"
+
           disabled={isPending}
           onClick={handleNext}
         >

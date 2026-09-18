@@ -276,16 +276,22 @@ export interface Booking {
   status: BookingStatus
 }
 
-export interface Event {
+export type Event = {
   id: number
   name: string
-  type: EventType | null
-  min_age: number | null
-  max_age: number | null
-  venue_id: number
-  event_date: string | null
-  entry_fee: number
+  type: string
+  description: string | null
+  imageUrl: string | null
+  venueId: number
+  venueName: string
+  eventDate: string
+  startTime: string | null
+  entryFee: number
   capacity: number | null
+  minAge: number | null
+  maxAge: number | null
+  status: "draft" | "active" | "cancelled" | "completed"
+  registeredCount: number
 }
 
 export interface EventRegistration {

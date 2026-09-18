@@ -1,4 +1,3 @@
-// hooks/admin/coaches/use-invite-coach.ts
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 
 export type InviteCoachInput = {

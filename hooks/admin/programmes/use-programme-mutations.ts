@@ -1,4 +1,3 @@
-// hooks/admin/programmes/use-programme-mutations.ts
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { createClient } from "@/utils/supabase/client"
 import type { ProgrammeType } from "./use-programmes"

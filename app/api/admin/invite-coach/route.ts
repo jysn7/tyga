@@ -1,4 +1,3 @@
-// app/api/admin/invite-coach/route.ts
 import { NextRequest, NextResponse } from "next/server"
 import { createClient as createServerClient } from "@/utils/supabase/server"
 import { createClient as createAdminClient } from "@supabase/supabase-js"
