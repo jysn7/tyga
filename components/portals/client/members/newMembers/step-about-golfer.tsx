@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Field, fieldStyles, triggerStyles } from "./shared"
+import { Field, triggerStyles } from "./shared"
 import { useMemberForm } from "@/context/new-member-form-context"
 
 export function StepAboutGolfer() {
@@ -55,7 +55,6 @@ export function StepAboutGolfer() {
 
       <Field label="Availability">
         <Input
-          className={fieldStyles}
           placeholder="e.g. Weekday afternoons, Saturday mornings"
           {...register("availability")}
         />
@@ -63,7 +62,6 @@ export function StepAboutGolfer() {
 
       <Field label="Interests">
         <Input
-          className={fieldStyles}
           placeholder="e.g. Short game, competing in tournaments"
           {...register("interests")}
         />
@@ -71,34 +69,21 @@ export function StepAboutGolfer() {
 
       <Field label="Gear owned">
         <Input
-          className={fieldStyles}
           placeholder="e.g. Junior club set, no bag yet"
           {...register("gearOwned")}
         />
       </Field>
 
       <Field label="Kit size (top)">
-        <Input
-          className={fieldStyles}
-          placeholder="e.g. Youth M"
-          {...register("kitSizeTop")}
-        />
+        <Input placeholder="e.g. Youth M" {...register("kitSizeTop")} />
       </Field>
 
       <Field label="Kit size (bottom)">
-        <Input
-          className={fieldStyles}
-          placeholder="e.g. Youth M"
-          {...register("kitSizeBottom")}
-        />
+        <Input placeholder="e.g. Youth M" {...register("kitSizeBottom")} />
       </Field>
 
       <Field label="Shoe size">
-        <Input
-          className={fieldStyles}
-          placeholder="e.g. UK 3"
-          {...register("shoeSize")}
-        />
+        <Input placeholder="e.g. UK 3" {...register("shoeSize")} />
       </Field>
     </div>
   )

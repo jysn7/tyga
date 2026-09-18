@@ -1,4 +1,3 @@
-// app/(admin)/coaches/page.tsx
 "use client"
 
 import { useState } from "react"
@@ -92,7 +91,6 @@ export default function AdminCoachesPage() {
             {/* Pending invites as outline button with badge */}
             <Button
               size="lg"
-              variant="outline"
               className="bg-pink text-secondary"
               onClick={() => setInvitesPanelOpen(true)}
             >

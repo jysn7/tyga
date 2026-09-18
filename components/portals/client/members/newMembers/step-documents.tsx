@@ -94,7 +94,7 @@ function FileRow({ field }: { field: (typeof DOC_FIELDS)[number] }) {
         <div className="flex items-center justify-between rounded-lg border border-border/60 p-3">
           <div className="flex items-center gap-2 text-sm">
             <FileText className="h-4 w-4 text-muted-foreground" />
-            <span className="max-w-[220px] truncate">{file.name}</span>
+            <span className="max-w-55 truncate">{file.name}</span>
           </div>
           <button
             type="button"

@@ -1,4 +1,3 @@
-// hooks/admin/programmes/use-session-mutations.ts
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { createClient } from "@/utils/supabase/client"
 

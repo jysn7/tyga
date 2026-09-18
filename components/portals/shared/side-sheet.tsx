@@ -1,4 +1,3 @@
-// components/portals/shared/side-sheet.tsx
 import {
   Sheet,
   SheetContent,

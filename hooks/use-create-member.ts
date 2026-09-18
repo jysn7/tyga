@@ -71,15 +71,10 @@ async function createMember(values: MemberFormValues): Promise<Member> {
       p_doctor_contact: memberInput.doctor_contact,
     }
   )
-  // BUG FIX: memberError is a PostgrestError, not an Error instance — the UI's
-  // `error instanceof Error` check was silently swallowing the real message
-  // and always showing the generic "Failed to create member" fallback.
+
   if (memberError) throw new Error(memberError.message)
   if (memberId == null) throw new Error("Failed to create member")
 
-  // From here on the member exists — collect errors instead of throwing
-  // immediately, so a partial failure doesn't leave the caller with no
-  // idea what succeeded.
   const stepErrors: string[] = []
 
   // 2. Submit the questionnaire

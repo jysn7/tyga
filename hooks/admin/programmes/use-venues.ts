@@ -1,4 +1,3 @@
-// hooks/admin/programmes/use-venues.ts
 import { useQuery } from "@tanstack/react-query"
 import { createClient } from "@/utils/supabase/client"
 

@@ -1,4 +1,3 @@
-// components/portals/admin/coaches/invite-coach-dialog.tsx
 "use client"
 
 import { useState } from "react"

@@ -1,30 +1,41 @@
 import { cn } from "@/lib/utils"
 
-const fieldStyles =
-  "h-auto border-none bg-input px-0 rounded-lg shadow-none text-[15px] text-foreground focus-visible:ring-0 placeholder:text-muted-foreground/50"
+export const fieldStyles = cn(
+  "h-10 w-full rounded-lg border border-border bg-input px-3",
+  "text-[15px] text-foreground",
+  "placeholder:text-muted-foreground",
+  "focus-visible:ring-1 focus-visible:ring-primary focus-visible:outline-none",
+  "disabled:cursor-not-allowed disabled:opacity-50"
+)
 
 export function Field({
   label,
   children,
   className,
   hint,
+  action,
+  error,
 }: {
   label: string
   children: React.ReactNode
   className?: string
   hint?: string
+  action?: React.ReactNode
+  error?: string
 }) {
   return (
-    <div
-      className={cn("flex flex-col gap-1.5 py-3 last:border-b-0", className)}
-    >
-      <span className="border-borderfont-medium border-b text-xs tracking-wide text-muted-foreground uppercase">
-        {label}
-      </span>
-      <div className={fieldStyles}>{children}</div>
-      {hint && (
-        <span className="pt-0.5 text-xs text-muted-foreground">{hint}</span>
+    <div className={cn("flex flex-col gap-1.5 py-3", className)}>
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-muted-foreground">
+          {label}
+        </span>
+        {action}
+      </div>
+      {children}
+      {hint && !error && (
+        <span className="text-xs text-muted-foreground">{hint}</span>
       )}
+      {error && <span className="text-xs text-destructive">{error}</span>}
     </div>
   )
 }

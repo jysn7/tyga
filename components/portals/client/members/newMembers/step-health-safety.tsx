@@ -2,7 +2,7 @@
 
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Field, fieldStyles } from "./shared"
+import { Field } from "./shared"
 import { useMemberForm } from "@/context/new-member-form-context"
 
 export function StepHealthSafety() {
@@ -19,16 +19,11 @@ export function StepHealthSafety() {
       </p>
 
       <Field label="Emergency contact name">
-        <Input
-          className={fieldStyles}
-          placeholder="Full name"
-          {...register("emergencyContactName")}
-        />
+        <Input placeholder="Full name" {...register("emergencyContactName")} />
       </Field>
 
       <Field label="Relationship to child">
         <Input
-          className={fieldStyles}
           placeholder="e.g. Mother, Father, Guardian"
           {...register("emergencyContactRelationship")}
         />
@@ -36,7 +31,6 @@ export function StepHealthSafety() {
 
       <Field label="Emergency contact phone">
         <Input
-          className={fieldStyles}
           placeholder="Phone number"
           type="tel"
           {...register("emergencyContactPhone")}
@@ -48,7 +42,7 @@ export function StepHealthSafety() {
         hint="Only visible to coaches directly teaching your child. Access is logged."
       >
         <Textarea
-          className={`${fieldStyles} min-h-24 resize-none`}
+          className="min-h-24 resize-none"
           placeholder="Allergies, conditions, medication..."
           {...register("medicalNotes")}
         />
@@ -56,7 +50,6 @@ export function StepHealthSafety() {
 
       <Field label="Medical aid details">
         <Input
-          className={fieldStyles}
           placeholder="Scheme name and membership number"
           {...register("medicalAidDetails")}
         />
@@ -64,7 +57,6 @@ export function StepHealthSafety() {
 
       <Field label="Doctor contact">
         <Input
-          className={fieldStyles}
           placeholder="Doctor's name and phone number"
           {...register("doctorContact")}
         />

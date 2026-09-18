@@ -1,4 +1,3 @@
-// components/portals/admin/coaches/create-coach-panel.tsx
 "use client"
 
 import { useState } from "react"

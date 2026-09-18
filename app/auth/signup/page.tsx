@@ -10,31 +10,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { toast } from "@/components/ui/toast"
+import { Field } from "@/components/portals/shared/field"
 import { signUpSchema, type SignUpValues } from "@/lib/validations/auth"
 import { useSignUp, useGoogleAuth } from "@/hooks/use-auth-mutations"
-
-function Field({
-  label,
-  children,
-  error,
-}: {
-  label: string
-  children: React.ReactNode
-  error?: string
-}) {
-  return (
-    <div className="flex flex-col gap-1.5 py-2">
-      <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-        {label}
-      </span>
-      {children}
-      {error && <span className="text-xs text-destructive">{error}</span>}
-    </div>
-  )
-}
-
-const fieldStyles =
-  "h-auto border-none py-3 bg-card pl-2 shadow-none text-[15px] text-foreground active:ring active:ring-primary placeholder:text-muted-foreground/50"
 
 export default function SignupPage() {
   const router = useRouter()
@@ -108,7 +86,6 @@ export default function SignupPage() {
 
     try {
       await googleAuth.mutateAsync()
-      // Browser navigates away on success — nothing further to show
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "An error occurred"
@@ -127,7 +104,6 @@ export default function SignupPage() {
 
   return (
     <div className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden bg-secondary px-4 py-12">
-      {/* Background shapes — flat geometric, fewer & larger, no primary color */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         <div className="absolute -top-16 -left-16 h-40 w-40 rotate-12 rounded-3xl bg-muted" />
         <div className="absolute -right-10 bottom-16 h-52 w-52 rounded-full bg-muted" />
@@ -211,7 +187,6 @@ export default function SignupPage() {
               <Input
                 type="text"
                 placeholder="Sarah Conner"
-                className={fieldStyles}
                 disabled={loading}
                 {...register("fullName")}
               />
@@ -221,7 +196,6 @@ export default function SignupPage() {
               <Input
                 type="email"
                 placeholder="name@example.com"
-                className={fieldStyles}
                 disabled={loading}
                 {...register("email")}
               />
@@ -231,7 +205,6 @@ export default function SignupPage() {
               <Input
                 type="password"
                 placeholder="At least 8 characters"
-                className={fieldStyles}
                 disabled={loading}
                 {...register("password")}
               />

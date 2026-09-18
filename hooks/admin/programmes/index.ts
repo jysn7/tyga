@@ -1,5 +1,3 @@
-// hooks/admin/programmes/index.ts
-
 // Queries
 export {
   useProgrammes,

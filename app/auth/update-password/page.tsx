@@ -3,35 +3,23 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
+import { useTheme } from "next-themes"
 import { AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Field } from "@/components/portals/shared/field"
 import { createClient } from "@/utils/supabase/client"
 import { toast } from "@/components/ui/toast"
-
-function Field({
-  label,
-  children,
-}: {
-  label: string
-  children: React.ReactNode
-}) {
-  return (
-    <div className="flex flex-col gap-1.5 border-b border-border/60 py-3 last:border-b-0">
-      <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-        {label}
-      </span>
-      {children}
-    </div>
-  )
-}
-
-const fieldStyles =
-  "h-auto border-none bg-transparent px-0 shadow-none text-[15px] text-foreground focus-visible:ring-0 placeholder:text-muted-foreground/50"
 
 export default function UpdatePasswordPage() {
   const router = useRouter()
   const supabase = createClient()
+  const { resolvedTheme } = useTheme()
+
+  const logoSrc =
+    resolvedTheme === "dark" ? "/logo/light.png" : "/logo/dark.png"
+
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [loading, setLoading] = useState(false)
@@ -39,13 +27,6 @@ export default function UpdatePasswordPage() {
   const [validSession, setValidSession] = useState(false)
 
   useEffect(() => {
-    // Invite/recovery links deliver the session as a URL hash fragment
-    // (#access_token=...&refresh_token=...&type=invite), NOT a query
-    // string or an already-established session. Browsers never send the
-    // fragment to the server, so if we only check getSession(), a fresh
-    // invite click always looks like "no session" even though the link
-    // is perfectly valid — we have to explicitly parse the hash and call
-    // setSession() to actually turn those tokens into a real session.
     const establishSession = async () => {
       const hash = window.location.hash
 
@@ -66,9 +47,6 @@ export default function UpdatePasswordPage() {
             return
           }
 
-          // Strip the tokens out of the visible URL/history now that
-          // they've been consumed — they shouldn't linger in the address
-          // bar or browser history.
           window.history.replaceState(null, "", window.location.pathname)
           setValidSession(true)
           setCheckingSession(false)
@@ -76,9 +54,7 @@ export default function UpdatePasswordPage() {
         }
       }
 
-      // No hash present — fall back to checking for an existing session
-      // (e.g. the user refreshed this page after the hash was already
-      // consumed once).
+      // Fall back to existing session (e.g. refresh after hash was consumed)
       const {
         data: { session },
       } = await supabase.auth.getSession()
@@ -159,6 +135,18 @@ export default function UpdatePasswordPage() {
       <div className="flex min-h-svh flex-col items-center justify-center bg-background px-4 py-12">
         <div className="w-full max-w-sm space-y-8 text-center">
           <div className="flex flex-col items-center space-y-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center">
+              {resolvedTheme && (
+                <Image
+                  width={36}
+                  height={36}
+                  alt="TYGA Logo"
+                  src={logoSrc}
+                  className="h-full w-full object-contain"
+                  priority
+                />
+              )}
+            </div>
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 text-destructive">
               <AlertTriangle className="h-6 w-6" />
             </div>
@@ -187,8 +175,17 @@ export default function UpdatePasswordPage() {
     <div className="flex min-h-svh flex-col items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-sm space-y-8">
         <div className="flex flex-col items-center space-y-4 text-center">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">
-            T
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center">
+            {resolvedTheme && (
+              <Image
+                width={36}
+                height={36}
+                alt="TYGA Logo"
+                src={logoSrc}
+                className="h-full w-full object-contain"
+                priority
+              />
+            )}
           </div>
           <div className="space-y-1">
             <h1 className="text-xl font-semibold tracking-tight text-foreground">
@@ -207,7 +204,6 @@ export default function UpdatePasswordPage() {
               placeholder="At least 8 characters"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className={fieldStyles}
               required
               disabled={loading}
               minLength={8}
@@ -220,7 +216,6 @@ export default function UpdatePasswordPage() {
               placeholder="Confirm your password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className={fieldStyles}
               required
               disabled={loading}
               minLength={8}
