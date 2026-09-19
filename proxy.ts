@@ -13,11 +13,13 @@ export async function proxy(request: NextRequest) {
 
   // ✅ Public routes that don't need session checks
   const isAuthPage = path.startsWith("/auth/")
-  const isCallback = path === "/auth/callback" // ← ADD THIS
+  const isCallback = path === "/auth/callback"
+  const isWebhook = path.startsWith("/api/paystack/webhook") // ← ADD THIS
+  const isApiRoute = path.startsWith("/api/") // ← ADD THIS
   const isAdminPage = path.startsWith("/admin")
 
-  // ✅ Allow callback to pass through without session check
-  if (isCallback) {
+  // ✅ Allow these to pass through without session check
+  if (isCallback || isWebhook || isApiRoute) {
     return response
   }
 
