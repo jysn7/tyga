@@ -245,6 +245,70 @@ export interface Appointment {
   notes: string | null
 }
 
+// lib/types.ts additions
+export type ProgrammeListItem = {
+  id: number
+  name: string
+  type: string
+  levelId: number | null
+  levelName: string | null
+  venueId: number
+  venueName: string
+  recurrenceRule: string | null
+  price: number
+  capacity: number | null
+  enrolledCount: number
+  maxRatio: number | null
+  alreadyEnrolled: boolean
+}
+
+// lib/types.ts
+export type ProgrammeCoachDetail = {
+  id: number
+  name: string
+  role: string
+  avatar_url: string | null
+}
+
+export type ProgrammeDetail = ProgrammeListItem & {
+  id: number
+  name: string
+  type: string
+  levelId: number | null
+  levelName: string | null
+  levelGoal: string | null
+  levelFocusSummary: string | null
+  venueId: number | null
+  venueName: string | null
+  venueAddress: string | null
+  minAge: number
+  maxAge: number
+  genderRestriction: string | null
+  recurrenceRule: string | null
+  price: number
+  capacity: number
+  enrolledCount: number
+  maxRatio: number | null
+  coaches: ProgrammeCoachDetail[]
+  curriculumModules: { id: number; name: string; category: string }[]
+  upcomingSessions: ProgrammeSession[]
+  sessions: {
+    id: number
+    sessionDate: string
+    startTime: string
+    endTime: string
+  }[]
+  isEligible: boolean | null
+  alreadyEnrolled: boolean
+}
+
+export type EnrollableMember = {
+  id: number
+  fullName: string
+  isEligible: boolean
+  reason: string | null
+}
+
 export interface Enrollment {
   id: number
   member_id: number
@@ -359,22 +423,45 @@ export interface GearRentalUnit {
   condition_in: string | null
 }
 
-export interface Invoice {
+// export type InvoiceStatus = 'pending' | 'paid' | 'partially_paid' | 'overdue' | 'cancelled'
+
+export type Invoice = {
   id: number
-  account_id: string // uuid
-  issued_at: string
-  due_at: string | null
-  total_amount: number
+  issuedAt: string
+  dueAt: string
+  totalAmount: number
   status: InvoiceStatus
+  itemCount: number
+  paidAmount: number
+  outstandingAmount: number
 }
 
-export interface InvoiceLineItem {
+export type InvoiceLineItem = {
   id: number
-  invoice_id: number
-  item_type: InvoiceLineItemType | null
-  reference_id: number | null // polymorphic, not a real FK
-  description: string | null
+  itemType: string
+  description: string
   amount: number
+}
+
+export type InvoicePayment = {
+  id: number
+  amount: number
+  method: string
+  status: string
+  paidAt: string | null
+  gatewayReference: string | null
+}
+
+export type InvoiceDetail = {
+  id: number
+  issuedAt: string
+  dueAt: string
+  totalAmount: number
+  status: InvoiceStatus
+  paidAmount: number
+  outstandingAmount: number
+  lineItems: InvoiceLineItem[]
+  payments: InvoicePayment[]
 }
 
 export interface Payment {
