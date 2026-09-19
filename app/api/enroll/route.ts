@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
           amount: Math.round(Number(total_amount) * 100),
           currency: "ZAR",
           reference,
-          callback_url: `${process.env.NEXT_PUBLIC_SITE_URL}/programmes/${programmeId}`,
+          callback_url: `${process.env.NEXT_PUBLIC_SITE_URL}/payment/callback`,
           metadata: {
             enrollment_id,
             invoice_id,
