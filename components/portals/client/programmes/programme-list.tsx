@@ -1,29 +1,17 @@
-"use client"
-
-import { useState } from "react"
-import {
-  ProgrammeCard,
-  type Programme,
-} from "@/components/portals/client/programmes/programme-card"
+import Link from "next/link"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { MapPin, Clock, Users } from "lucide-react"
 import { EmptyState } from "@/components/portals/shared/empty-state"
-import { Search, X } from "lucide-react"
+import type { ProgrammeListItem } from "@/lib/types"
 
-export function ProgrammeList({ programmes }: { programmes: Programme[] }) {
-  const [searchQuery, setSearchQuery] = useState("")
-
-  const filteredProgrammes = programmes.filter((programme) => {
-    const query = searchQuery.toLowerCase().trim()
-    if (!query) return true
-
-    return (
-      programme.name.toLowerCase().includes(query) ||
-      programme.type.toLowerCase().includes(query) ||
-      programme.levelName.toLowerCase().includes(query) ||
-      programme.venueName.toLowerCase().includes(query) ||
-      programme.recurrenceRule.toLowerCase().includes(query)
-    )
-  })
-
+export function ProgrammeList({
+  programmes,
+  onEnroll,
+}: {
+  programmes: ProgrammeListItem[]
+  onEnroll: (programme: ProgrammeListItem) => void
+}) {
   if (programmes.length === 0) {
     return (
       <EmptyState
@@ -34,42 +22,100 @@ export function ProgrammeList({ programmes }: { programmes: Programme[] }) {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Search Input Bar */}
-      <div className="relative w-full max-w-sm">
-        <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search programmes..."
-          className="w-full rounded-md border border-border bg-secondary py-2 pr-9 pl-9 text-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
-        />
-        {searchQuery && (
-          <button
-            type="button"
-            onClick={() => setSearchQuery("")}
-            className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <X className="h-4 w-4" />
-            <span className="sr-only">Clear search</span>
-          </button>
-        )}
-      </div>
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {programmes.map((p) => {
+        const isFull = p.capacity !== null && p.enrolledCount >= p.capacity
+        const spotsLeft =
+          p.capacity !== null ? p.capacity - p.enrolledCount : null
 
-      {/* Programme Cards or No Results State */}
-      {filteredProgrammes.length === 0 ? (
-        <EmptyState
-          title="No matching programmes"
-          description={`No results found for "${searchQuery}". Try searching for something else.`}
-        />
-      ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-          {filteredProgrammes.map((programme) => (
-            <ProgrammeCard key={programme.id} programme={programme} />
-          ))}
-        </div>
-      )}
+        return (
+          <Card key={p.id} className="rounded-xl border-0 shadow ring-0">
+            <CardHeader className="flex flex-row items-start justify-between gap-2">
+              <div className="min-w-0">
+                <Link href={`/programmes/${p.id}`}>
+                  <CardTitle className="truncate text-base font-semibold tracking-tight text-foreground hover:underline">
+                    {p.name}
+                  </CardTitle>
+                </Link>
+                {p.levelName && (
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    <span className="rounded-md bg-input px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                      {p.levelName}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <div className="shrink-0 text-right">
+                <span className="text-base font-semibold tracking-tight text-foreground">
+                  R{p.price}
+                </span>
+                <span className="block text-[11px] text-muted-foreground">
+                  / term
+                </span>
+              </div>
+            </CardHeader>
+
+            <CardContent className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2.5 text-xs">
+                <div className="flex items-center gap-2.5">
+                  <MapPin
+                    className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                    strokeWidth={1.75}
+                  />
+                  <span className="truncate text-muted-foreground">
+                    {p.venueName}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <Clock
+                    className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                    strokeWidth={1.75}
+                  />
+                  <span className="truncate text-muted-foreground">
+                    {p.recurrenceRule}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <Users
+                    className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                    strokeWidth={1.75}
+                  />
+                  <span
+                    className={
+                      isFull
+                        ? "font-medium text-destructive"
+                        : spotsLeft !== null && spotsLeft <= 2
+                          ? "font-medium text-orange"
+                          : "text-muted-foreground"
+                    }
+                  >
+                    {isFull
+                      ? "Full"
+                      : spotsLeft !== null
+                        ? `${spotsLeft} spots left`
+                        : "Open"}
+                  </span>
+                </div>
+              </div>
+
+              {p.alreadyEnrolled ? (
+                <div className="flex h-11 w-full items-center justify-center rounded-lg bg-input text-sm font-medium text-muted-foreground">
+                  Already enrolled
+                </div>
+              ) : (
+                <Button
+                  disabled={isFull}
+                  variant="secondary"
+                  className="h-11 w-full text-sm"
+                  onClick={() => onEnroll(p)}
+                >
+                  {isFull ? "Programme full" : "Enrol"}
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        )
+      })}
     </div>
   )
 }
