@@ -11,9 +11,16 @@ type EnrollmentRpcRow = {
 
 export async function POST(req: NextRequest) {
   try {
-    const { memberId, programmeId } = await req.json()
+    const body = await req.json()
+    const memberId = Number(body.memberId)
+    const programmeId = Number(body.programmeId)
 
-    if (!memberId || !programmeId) {
+    if (
+      !Number.isInteger(memberId) ||
+      memberId <= 0 ||
+      !Number.isInteger(programmeId) ||
+      programmeId <= 0
+    ) {
       return NextResponse.json(
         { error: "memberId and programmeId are required" },
         { status: 400 }
@@ -29,6 +36,19 @@ export async function POST(req: NextRequest) {
 
     if (!user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    }
+
+    const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!paystackSecretKey || !siteUrl || !supabaseUrl || !serviceRoleKey) {
+      console.error("Missing payment configuration")
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 }
+      )
     }
 
     // Create the enrollment + invoice via RPC (user-scoped, so RLS applies)
@@ -52,7 +72,6 @@ export async function POST(req: NextRequest) {
 
     const { enrollment_id, invoice_id, total_amount } = enrollment
 
-    // Get parent's email + programme name for the Paystack transaction
     const { data: account } = await supabase
       .from("accounts")
       .select("email")
@@ -80,7 +99,7 @@ export async function POST(req: NextRequest) {
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+          Authorization: `Bearer ${paystackSecretKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -88,7 +107,7 @@ export async function POST(req: NextRequest) {
           amount: Math.round(Number(total_amount) * 100),
           currency: "ZAR",
           reference,
-          callback_url: `${process.env.NEXT_PUBLIC_SITE_URL}/payment/callback`,
+          callback_url: `${siteUrl}/payment/callback`,
           metadata: {
             enrollment_id,
             invoice_id,
@@ -102,15 +121,19 @@ export async function POST(req: NextRequest) {
 
     const paystackData = await paystackRes.json()
 
-    if (!paystackData.status) {
-      return NextResponse.json({ error: paystackData.message }, { status: 400 })
+    if (
+      !paystackRes.ok ||
+      !paystackData.status ||
+      !paystackData.data?.authorization_url
+    ) {
+      return NextResponse.json(
+        { error: paystackData.message ?? "Payment initialization failed" },
+        { status: 400 }
+      )
     }
 
     // Record the pending payment with the admin client (bypasses RLS)
-    const adminClient = createAdminClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
+    const adminClient = createAdminClient(supabaseUrl, serviceRoleKey)
 
     const { error: paymentError } = await adminClient.from("payments").insert({
       invoice_id,

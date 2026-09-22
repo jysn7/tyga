@@ -30,7 +30,7 @@ import { SessionsSection } from "./sections/sessions-section"
 import { CurriculumSection } from "./sections/curriculum-section"
 
 const SECTIONS = [
-  { id: "basic", label: "Basic Info", icon: Settings },
+  { id: "basic", label: "Basic info", icon: Settings },
   { id: "coaches", label: "Coaches", icon: Users },
   { id: "sessions", label: "Sessions", icon: CalendarDays },
   { id: "curriculum", label: "Curriculum", icon: BookOpen },
@@ -151,29 +151,30 @@ export function EditProgrammePanel({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-5xl overflow-hidden rounded-2xl border-0 bg-card p-0 shadow-2xl ring-0 sm:max-w-5xl">
+      <DialogContent className="flex max-h-[calc(100dvh-1.5rem)] w-[calc(100vw-1.5rem)] max-w-[calc(100vw-1.5rem)] flex-col gap-0 overflow-hidden rounded-2xl bg-card p-0 shadow-2xl ring-0 sm:w-full sm:max-w-5xl [&>button]:top-5 [&>button]:right-5 [&>button]:text-muted-foreground [&>button]:hover:text-foreground">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border/60 px-6 py-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-input">
-              <CalendarPlus className="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <h2 className="text-xl font-medium text-foreground">
-                {programme.name}
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Edit programme details
-              </p>
-            </div>
+        <div className="flex shrink-0 items-center gap-3.5 border-b border-border/60 px-6 py-5">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-input">
+            <CalendarPlus
+              className="h-4.5 w-4.5 text-foreground"
+              strokeWidth={1.75}
+            />
+          </div>
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <h2 className="truncate text-xl font-semibold tracking-tight text-foreground">
+              {programme.name}
+            </h2>
+            <p className="truncate text-xs text-muted-foreground">
+              Edit programme details
+            </p>
           </div>
         </div>
 
-        {/* Main content: Left sidebar + Right content */}
-        <div className="flex h-[75vh]">
-          {/* Left sidebar - Folder-style navigation */}
-          <div className="w-56 shrink-0 border-r border-border/60 p-3">
-            <div className="flex flex-col gap-1">
+        {/* Main: sidebar + content */}
+        <div className="flex min-h-0 flex-1 flex-col sm:flex-row">
+          {/* Sidebar */}
+          <div className="shrink-0 border-b border-border/60 p-3 sm:w-56 sm:border-r sm:border-b-0">
+            <div className="flex gap-1 overflow-x-auto sm:flex-col sm:overflow-x-visible">
               {SECTIONS.map((section) => {
                 const isActive = activeSection === section.id
                 const Icon = section.icon
@@ -181,23 +182,30 @@ export function EditProgrammePanel({
                   <button
                     key={section.id}
                     onClick={() => setActiveSection(section.id)}
-                    className={`group relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                    className={`group relative flex shrink-0 items-center gap-2.5 rounded-md px-3 py-2 text-xs font-medium transition-colors sm:w-full ${
                       isActive
-                        ? "bg-primary text-primary-foreground"
+                        ? "bg-foreground/80 text-background shadow-sm"
                         : "text-muted-foreground hover:bg-accent/40 hover:text-foreground"
-                    } `}
+                    }`}
                   >
-                    <Icon className="h-4 w-4" />
-                    <span className="flex-1 text-left">{section.label}</span>
-                    {isActive && <ChevronRight className="h-4 w-4" />}
+                    <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
+                    <span className="flex-1 text-left whitespace-nowrap">
+                      {section.label}
+                    </span>
+                    {isActive && (
+                      <ChevronRight
+                        className="hidden h-3.5 w-3.5 shrink-0 sm:block"
+                        strokeWidth={1.75}
+                      />
+                    )}
                   </button>
                 )
               })}
             </div>
           </div>
 
-          {/* Right content */}
-          <div className="flex-1 overflow-y-auto p-8">
+          {/* Content */}
+          <div className="min-h-0 flex-1 overflow-y-auto p-6">
             {activeSection === "basic" && (
               <BasicInfoSection
                 name={name}

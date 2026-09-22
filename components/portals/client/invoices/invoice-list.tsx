@@ -41,23 +41,23 @@ export function InvoiceList({ invoices }: { invoices: Invoice[] }) {
   }
 
   return (
-    <div className="overflow-hidden rounded-xl bg-card shadow">
+    <div className="overflow-hidden rounded-lg bg-card shadow">
       <Table>
         <TableHeader>
-          <TableRow className="border-border/60 hover:bg-transparent">
-            <TableHead className="h-11 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          <TableRow className="border-border/60 bg-foreground/80 py-1 text-card hover:bg-transparent">
+            <TableHead className="h-11 text-xs font-medium tracking-wide text-secondary uppercase">
               Invoice
             </TableHead>
-            <TableHead className="h-11 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            <TableHead className="h-11 text-xs font-medium tracking-wide text-secondary uppercase">
               Issued
             </TableHead>
-            <TableHead className="h-11 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            <TableHead className="h-11 text-xs font-medium tracking-wide text-secondary uppercase">
               Due
             </TableHead>
-            <TableHead className="h-11 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            <TableHead className="h-11 text-xs font-medium tracking-wide text-secondary uppercase">
               Amount
             </TableHead>
-            <TableHead className="h-11 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            <TableHead className="h-11 text-xs font-medium tracking-wide text-secondary uppercase">
               Status
             </TableHead>
             <TableHead className="h-11 w-24" />
@@ -107,7 +107,7 @@ export function InvoiceList({ invoices }: { invoices: Invoice[] }) {
               <TableCell className="py-3 text-right">
                 <Link
                   href={`/invoices/${invoice.id}`}
-                  className="inline-flex h-8 items-center gap-1 rounded-md px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  className="inline-flex h-8 items-center gap-1 rounded-md border border-border px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                 >
                   View
                   <ArrowRight className="h-3 w-3" strokeWidth={1.75} />

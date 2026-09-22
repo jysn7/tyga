@@ -43,8 +43,8 @@ export function AuditList({
     <div className="flex flex-col gap-3">
       <div className="overflow-x-auto rounded-lg bg-card shadow">
         <Table>
-          <TableHeader>
-            <TableRow>
+          <TableHeader className="">
+            <TableRow className="border-b border-border/60 text-left text-[11px] font-medium tracking-wider text-background uppercase">
               <TableHead>Timestamp</TableHead>
               <TableHead>Actor</TableHead>
               <TableHead>Action</TableHead>

@@ -85,7 +85,7 @@ export function CoachTableRow({
       <td className="px-4 py-3">
         <div className="flex items-center gap-3">
           <Avatar className="h-8 w-8 shrink-0 rounded-full">
-            <AvatarFallback className="bg-blue text-xs font-medium text-primary-foreground">
+            <AvatarFallback className="bg-orange/80 text-xs font-medium text-primary-foreground">
               {getInitials(coach.fullName)}
             </AvatarFallback>
           </Avatar>

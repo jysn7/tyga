@@ -48,8 +48,8 @@ export function VenueRow({
     <tr className="border-b border-border/60 text-sm last:border-b-0 hover:bg-accent/40">
       <td className="px-4 py-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
-            <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue/40">
+            <MapPin className="h-3.5 w-3.5 text-foreground" />
           </div>
           <div className="min-w-0">
             <p className="truncate font-medium text-foreground">{venue.name}</p>

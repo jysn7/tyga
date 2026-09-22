@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { format } from "date-fns"
@@ -24,10 +23,9 @@ import {
 } from "@/components/ui/select"
 import { SidePanel } from "@/components/portals/shared/side-sheet"
 import { toast } from "@/components/ui/toast"
-import { createClient } from "@/utils/supabase/client"
+import { useUpdateMember } from "@/hooks/client/members/use-member-mutations"
 import {
   memberEditSchema,
-  toUpdateMemberInput,
   type MemberEditValues,
 } from "@/lib/validations/member"
 
@@ -58,10 +56,10 @@ const triggerStyles =
   "h-auto w-full justify-start border-none bg-transparent pl-2 text-[15px] font-normal text-foreground shadow-none hover:bg-transparent"
 
 export type EditableMember = {
-  id: number
+  id: number | string
   fullName: string
   dob: string
-  gender: "male" | "female"
+  gender: "male" | "female" | "any"
   medicalNotes: string | null
   medicalAidDetails: string | null
   doctorContact: string | null
@@ -100,8 +98,7 @@ function toDefaultValues(member: EditableMember): MemberEditValues {
 
 export function EditMemberPanel({ member }: { member: EditableMember }) {
   const [open, setOpen] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const router = useRouter()
+  const updateMember = useUpdateMember(Number(member.id))
 
   const {
     register,
@@ -121,7 +118,6 @@ export function EditMemberPanel({ member }: { member: EditableMember }) {
   }, [open, member, reset])
 
   const onSubmit = async (values: MemberEditValues) => {
-    setIsSaving(true)
     const toastId = "update-member-status"
 
     toast.add({
@@ -133,12 +129,7 @@ export function EditMemberPanel({ member }: { member: EditableMember }) {
     })
 
     try {
-      const supabase = createClient()
-      const { error } = await supabase.rpc(
-        "update_member",
-        toUpdateMemberInput(values, member.id)
-      )
-      if (error) throw new Error(error.message)
+      await updateMember.mutateAsync(values)
 
       toast.add({
         id: toastId,
@@ -149,7 +140,6 @@ export function EditMemberPanel({ member }: { member: EditableMember }) {
       })
 
       setOpen(false)
-      router.refresh()
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Something went wrong"
@@ -161,8 +151,6 @@ export function EditMemberPanel({ member }: { member: EditableMember }) {
         type: "error",
         timeout: 5000,
       })
-    } finally {
-      setIsSaving(false)
     }
   }
 
@@ -186,10 +174,10 @@ export function EditMemberPanel({ member }: { member: EditableMember }) {
           <Button
             type="submit"
             form="edit-member-form"
-            disabled={isSaving}
+            disabled={updateMember.isPending}
             className="w-full rounded-lg text-xs font-medium"
           >
-            {isSaving ? "Saving..." : "Save changes"}
+            {updateMember.isPending ? "Saving..." : "Save changes"}
           </Button>
         }
       >
@@ -251,6 +239,7 @@ export function EditMemberPanel({ member }: { member: EditableMember }) {
                   <SelectContent>
                     <SelectItem value="male">Male</SelectItem>
                     <SelectItem value="female">Female</SelectItem>
+                    <SelectItem value="any">Any</SelectItem>
                   </SelectContent>
                 </Select>
               )}

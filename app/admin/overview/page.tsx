@@ -53,7 +53,7 @@ function StatTile({
 }) {
   const TrendIcon = trend === "up" ? TrendingUp : TrendingDown
   return (
-    <div className="relative flex flex-col gap-3 overflow-hidden rounded-xl bg-card p-4 shadow">
+    <div className="relative flex flex-col gap-3 overflow-hidden rounded-xl bg-foreground/80 p-4 text-card shadow dark:bg-foreground">
       <div className="relative flex items-center justify-between">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-background">
           <Icon className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
@@ -66,10 +66,10 @@ function StatTile({
         </div>
       </div>
       <div className="relative flex flex-col gap-0.5">
-        <span className="text-2xl font-semibold tracking-tight text-foreground">
+        <span className="text-2xl font-semibold tracking-tight text-card">
           {value}
         </span>
-        <span className="text-xs text-muted-foreground">{label}</span>
+        <span className="text-xs text-card">{label}</span>
       </div>
     </div>
   )

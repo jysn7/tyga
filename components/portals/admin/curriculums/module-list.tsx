@@ -87,7 +87,7 @@ export function ModuleList({
     <div className="overflow-hidden rounded-lg border border-border/60 bg-card/80 shadow">
       <table className="w-full border-collapse">
         <thead>
-          <tr className="border-b border-border/60 text-left text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
+          <tr className="border-b border-border/60 bg-foreground/80 text-left text-[11px] font-medium tracking-wider text-background uppercase">
             <th className="px-4 py-2.5 font-medium">Module</th>
             <th className="px-4 py-2.5 font-medium">Level</th>
             <th className="px-4 py-2.5 font-medium">Category</th>
@@ -110,12 +110,12 @@ export function ModuleList({
                       {module.name}
                     </span>
                     {module.isMilestone && (
-                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                      <span className="flex items-center justify-center rounded bg-pink px-2 py-0.5 text-[10px] font-medium text-card">
                         Milestone
                       </span>
                     )}
                     {isArchived && (
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                      <span className="rounded border border-accent bg-input px-2 py-0.5 text-[10px] text-muted-foreground">
                         Archived
                       </span>
                     )}

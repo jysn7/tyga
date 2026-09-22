@@ -235,19 +235,14 @@ export default function ProgrammeDetailPage() {
         {/* Main content */}
         <div className="flex flex-col gap-4 lg:order-1 lg:col-span-2">
           {levelGoal && (
-            <section className="flex flex-col gap-3 rounded-xl bg-card p-6 shadow ring-0">
+            <section className="flex flex-col gap-3 rounded-xl bg-yellow p-6 shadow ring-0">
               <div className="flex items-center gap-2.5">
-                <Target
-                  className="h-3.5 w-3.5 text-muted-foreground"
-                  strokeWidth={1.75}
-                />
-                <h2 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                <Target className="h-3.5 w-3.5 text-card" strokeWidth={1.75} />
+                <h2 className="text-xs font-medium tracking-wide text-card uppercase">
                   Programme goal
                 </h2>
               </div>
-              <p className="text-sm leading-relaxed text-foreground">
-                {levelGoal}
-              </p>
+              <p className="text-sm leading-relaxed text-card">{levelGoal}</p>
             </section>
           )}
 

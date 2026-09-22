@@ -1,9 +1,10 @@
 import { z } from "zod"
 import type { Member, MemberQuestionnaire } from "@/lib/types"
 
-// Member.gender is "male" | "female" | "any", but "any" doesn't apply to
-// an individual person — that value is only meaningful on Programme.gender_restriction.
-const MEMBER_GENDER_OPTIONS = ["male", "female"] as const
+// Member.gender is a shared domain type that can legitimately include "any" for
+// imported / legacy data; the edit flow must accept it to avoid invalidating
+// existing records while still keeping the standard male/female options available.
+const MEMBER_GENDER_OPTIONS = ["male", "female", "any"] as const
 type MemberGender = (typeof MEMBER_GENDER_OPTIONS)[number]
 
 // self_reported_skill_level is just `string | null` at the DB/type level

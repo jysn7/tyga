@@ -145,7 +145,7 @@ export function AccountTableRow({ account }: { account: Account }) {
           onValueChange={(v) => handleRoleChange(v as Account["role"])}
           disabled={roleSaving}
         >
-          <SelectTrigger className="h-8 w-28 border-none bg-transparent px-2 text-sm shadow-none hover:bg-accent">
+          <SelectTrigger className="h-8 w-28">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

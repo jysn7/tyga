@@ -13,10 +13,10 @@ import type { InvoiceDetail as InvoiceDetailType } from "@/lib/types"
 
 const statusStyles: Record<string, string> = {
   pending: "text-orange",
-  paid: "text-primary",
-  partially_paid: "text-foreground",
-  overdue: "text-destructive",
-  cancelled: "text-muted-foreground",
+  paid: "bg-primary text-secondary py-1 px-2 rounded",
+  partially_paid: "bg-foreground text-secondary py-1 px-2 rounded",
+  overdue: "bg-orange text-secondary py-1 px-2 rounded",
+  cancelled: "bg-destructive text-secondary py-1 px-2 rounded",
 }
 
 const statusLabels: Record<string, string> = {
@@ -36,7 +36,7 @@ export function InvoiceDetail({ invoice }: { invoice: InvoiceDetailType }) {
   const invoiceNumber = `#${invoice.id.toString().padStart(5, "0")}`
 
   return (
-    <div className="mx-auto max-w-5xl py-8">
+    <div className="mx-auto py-8">
       {/* Breadcrumb */}
       <nav className="mb-6 flex items-center gap-1.5 text-xs text-muted-foreground">
         <Link
@@ -76,7 +76,7 @@ export function InvoiceDetail({ invoice }: { invoice: InvoiceDetailType }) {
               </div>
               <button
                 type="button"
-                className="flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-card px-3 text-xs font-medium text-foreground shadow transition-colors hover:bg-accent"
+                className="flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg bg-card px-3 text-xs font-medium text-foreground shadow transition-colors hover:bg-accent/80"
               >
                 <Download className="h-3.5 w-3.5" strokeWidth={1.75} />
                 <span className="hidden sm:inline">Download</span>
@@ -85,13 +85,13 @@ export function InvoiceDetail({ invoice }: { invoice: InvoiceDetailType }) {
           </div>
 
           {/* Line items card */}
-          <section className="overflow-hidden rounded-xl bg-card shadow">
-            <div className="flex items-center gap-2.5 border-b border-border/60 px-6 py-4">
+          <section className="overflow-hidden rounded-lg bg-card shadow">
+            <div className="flex items-center gap-2.5 border-b border-border/60 bg-foreground/80 px-6 py-2 text-secondary">
               <Receipt
-                className="h-3.5 w-3.5 text-muted-foreground"
+                className="h-3.5 w-3.5 text-secondary"
                 strokeWidth={1.75}
               />
-              <h2 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+              <h2 className="text-xs font-medium tracking-wide text-secondary uppercase">
                 Line items
               </h2>
             </div>
@@ -120,13 +120,13 @@ export function InvoiceDetail({ invoice }: { invoice: InvoiceDetailType }) {
 
           {/* Payment history */}
           {invoice.payments.length > 0 && (
-            <section className="overflow-hidden rounded-xl bg-card shadow">
-              <div className="flex items-center gap-2.5 border-b border-border/60 px-6 py-4">
+            <section className="overflow-hidden rounded-lg bg-card shadow">
+              <div className="flex items-center gap-2.5 border-b border-border/60 bg-foreground/80 px-6 py-2">
                 <CreditCard
-                  className="h-3.5 w-3.5 text-muted-foreground"
+                  className="h-3.5 w-3.5 text-secondary"
                   strokeWidth={1.75}
                 />
-                <h2 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                <h2 className="text-xs font-medium tracking-wide text-secondary uppercase">
                   Payment history
                 </h2>
               </div>

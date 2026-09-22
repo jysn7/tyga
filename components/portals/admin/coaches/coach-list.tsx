@@ -44,7 +44,7 @@ export function CoachList({
       <div className="overflow-hidden rounded-lg bg-card shadow">
         <table className="w-full border-collapse">
           <thead>
-            <tr className="border-b border-border/60 text-left text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
+            <tr className="border-b border-border/60 bg-foreground/80 text-left text-[11px] font-medium tracking-wider text-card uppercase">
               <th className="px-4 py-2.5 font-medium">Coach</th>
               <th className="px-4 py-2.5 font-medium">Email</th>
               <th className="px-4 py-2.5 font-medium">Type</th>
