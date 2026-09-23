@@ -14,12 +14,20 @@ export async function proxy(request: NextRequest) {
   // ✅ Public routes that don't need session checks
   const isAuthPage = path.startsWith("/auth/")
   const isCallback = path === "/auth/callback"
-  const isWebhook = path.startsWith("/api/paystack/webhook") // ← ADD THIS
-  const isApiRoute = path.startsWith("/api/") // ← ADD THIS
+  const isWebhook = path.startsWith("/api/paystack/webhook")
+  const isApiRoute = path.startsWith("/api/")
   const isAdminPage = path.startsWith("/admin")
 
+  // ✅ PWA assets — must bypass auth or the SW/manifest fetch gets redirected
+  const isManifest =
+    path === "/manifest.json" || path === "/manifest.webmanifest"
+  const isServiceWorker =
+    path === "/sw.js" ||
+    path.startsWith("/serwist/") ||
+    path.startsWith("/workbox-")
+
   // ✅ Allow these to pass through without session check
-  if (isCallback || isWebhook || isApiRoute) {
+  if (isCallback || isWebhook || isApiRoute || isManifest || isServiceWorker) {
     return response
   }
 
@@ -48,6 +56,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|manifest.json|manifest.webmanifest|serwist|workbox-|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 }
