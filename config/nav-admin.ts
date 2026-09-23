@@ -24,30 +24,34 @@ export type NavItem = {
 }
 
 export type NavGroup = {
+  type: "group"
   label: string
   icon: LucideIcon
   items: NavItem[]
 }
 
-export const adminNav: NavGroup[] = [
+export type NavLink = {
+  type: "link"
+  label: string
+  href: string
+  icon: LucideIcon
+}
+
+export type NavEntry = NavGroup | NavLink
+
+export const adminNav: NavEntry[] = [
   {
-    label: "Dashboard",
+    type: "link",
+    label: "Overview",
+    href: "/admin/overview",
     icon: LayoutDashboard,
-    items: [
-      { label: "Overview", href: "/admin/overview", icon: LayoutDashboard },
-      { label: "Audit Log", href: "/admin/audit", icon: ScrollText },
-    ],
   },
+  { type: "link", label: "Members", href: "/admin/members", icon: Users },
+  { type: "link", label: "Accounts", href: "/admin/accounts", icon: UserCog },
+  { type: "link", label: "Coaches", href: "/admin/coaches", icon: Award },
+
   {
-    label: "People",
-    icon: Users,
-    items: [
-      { label: "Members", href: "/admin/members", icon: Users },
-      { label: "Accounts", href: "/admin/accounts", icon: UserCog },
-      { label: "Coaches", href: "/admin/coaches", icon: Award },
-    ],
-  },
-  {
+    type: "group",
     label: "Academy",
     icon: GraduationCap,
     items: [
@@ -57,23 +61,20 @@ export const adminNav: NavGroup[] = [
       { label: "Curriculum", href: "/admin/curriculum", icon: FileText },
     ],
   },
+
   {
-    label: "Operations",
-    icon: ClipboardList,
-    items: [
-      {
-        label: "Appointments",
-        href: "/admin/appointments",
-        icon: CalendarCheck,
-      },
-    ],
+    type: "link",
+    label: "Appointments",
+    href: "/admin/appointments",
+    icon: CalendarCheck,
   },
+
+  { type: "link", label: "Finance", href: "/admin/finance", icon: CreditCard },
   {
-    label: "System",
-    icon: Settings,
-    items: [
-      { label: "Finance", href: "/admin/finance", icon: CreditCard },
-      { label: "Notifications", href: "/admin/notifications", icon: Bell },
-    ],
+    type: "link",
+    label: "Notifications",
+    href: "/admin/notifications",
+    icon: Bell,
   },
+  { type: "link", label: "Audit Log", href: "/admin/audit", icon: ScrollText },
 ]

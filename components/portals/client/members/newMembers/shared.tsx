@@ -3,16 +3,19 @@ export function Field({
   children,
   hint,
   error,
+  required,
 }: {
   label: string
   children: React.ReactNode
   hint?: string
   error?: string
+  required?: boolean
 }) {
   return (
     <div className="flex flex-col gap-1.5 border-b border-border/60 py-4 last:border-b-0">
       <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
         {label}
+        {required && <span className="ml-1 text-destructive">*</span>}
       </span>
       {children}
       {error ? (

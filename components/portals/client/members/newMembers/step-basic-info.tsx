@@ -36,14 +36,11 @@ export function StepBasicInfo() {
         We will use this to check eligibility for programmes.
       </p>
 
-      <Field label="Full name" error={errors.fullName?.message}>
+      <Field label="Full name" required error={errors.fullName?.message}>
         <Input placeholder="Child's full name" {...register("fullName")} />
       </Field>
 
-      <Field
-        label="Date of birth"
-        error={errors.dob?.message as string | undefined}
-      >
+      <Field label="Date of birth" required error={errors.dob?.message}>
         <Controller
           control={control}
           name="dob"
@@ -84,7 +81,7 @@ export function StepBasicInfo() {
         />
       </Field>
 
-      <Field label="Gender" error={errors.gender?.message}>
+      <Field label="Gender" required error={errors.gender?.message}>
         <Controller
           control={control}
           name="gender"
@@ -113,7 +110,11 @@ export function StepBasicInfo() {
         <Input placeholder="e.g. Grade 5" {...register("schoolGrade")} />
       </Field>
 
-      <Field label="ID / birth certificate number">
+      <Field
+        label="ID / birth certificate number"
+        required
+        error={errors.idOrBirthCertNumber?.message}
+      >
         <Input
           placeholder="Child's ID or birth certificate number"
           {...register("idOrBirthCertNumber")}

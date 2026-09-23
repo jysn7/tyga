@@ -1,10 +1,11 @@
 "use client"
 
-import { PanelLeftOpen, Search, CircleHelp } from "lucide-react"
+import { PanelLeftOpen, CircleHelp } from "lucide-react"
 import { useAppStore } from "@/stores/useAppStore"
 import { UserDropdown } from "@/components/portals/shared/user-dropdown"
 import { NotificationsDropdown } from "@/components/portals/shared/notifications-dropdown"
 import { HelpModal } from "@/components/portals/shared/help-modal"
+import { GlobalSearch } from "@/components/portals/shared/global-search"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
 import { useEffect, useState } from "react"
 import { createClient } from "@/utils/supabase/client"
@@ -113,20 +114,13 @@ export function LayoutHeader({ user }: { user: SupabaseUser | null }) {
             </button>
           )}
 
-          <div className="group relative w-full max-w-md">
-            <Search
-              className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-foreground"
-              strokeWidth={1.75}
-            />
-            <input
-              type="search"
-              placeholder="Search programmes, golfers, sessions…"
-              className="h-9 w-full rounded-lg border border-border bg-input pr-16 pl-9 text-sm text-foreground shadow-none transition-colors placeholder:text-muted-foreground focus-visible:border-foreground/20 focus-visible:ring-0 focus-visible:outline-none [&::-webkit-search-cancel-button]:hidden"
-            />
-            <kbd className="pointer-events-none absolute top-1/2 right-2.5 hidden h-5 -translate-y-1/2 items-center gap-0.5 rounded border border-border bg-background px-1.5 font-mono text-[10px] font-medium text-muted-foreground select-none sm:flex">
-              <span className="text-xs">⌘</span>K
-            </kbd>
-          </div>
+          {loading ? (
+            <div className="h-9 w-full max-w-md animate-pulse rounded-md bg-muted/40" />
+          ) : account?.role ? (
+            <GlobalSearch role={account.role} />
+          ) : (
+            <div className="h-9 w-full max-w-md" />
+          )}
         </div>
 
         {/* Right: actions */}

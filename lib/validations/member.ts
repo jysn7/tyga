@@ -41,8 +41,8 @@ export const DOC_TYPES = [
 // staying usable for kids who only have a birth cert number.
 const idOrBirthCertNumberSchema = z
   .string()
-  .optional()
-  .refine((val) => !val || /^\d{6,13}$/.test(val), {
+  .min(1, "ID or birth certificate number is required")
+  .refine((val) => /^\d{6,13}$/.test(val), {
     message: "Must be 6–13 digits (ID number or birth certificate number)",
   })
 
@@ -189,40 +189,19 @@ export const STEPS = [
   "Documents",
 ] as const
 
+// Only required fields are listed here — optional fields never block the
+// wizard's Next button. Every field is still validated on final submit
+// against memberFormSchema.
 export const STEP_FIELDS: Record<number, (keyof MemberFormValues)[]> = {
-  0: [
-    "fullName",
-    "dob",
-    "gender",
-    "schoolName",
-    "schoolGrade",
-    "idOrBirthCertNumber",
-    "previousClub",
-  ],
+  0: ["fullName", "dob", "gender", "idOrBirthCertNumber"],
   1: [
     "emergencyContactName",
     "emergencyContactRelationship",
     "emergencyContactPhone",
-    "medicalNotes",
-    "medicalAidDetails",
-    "doctorContact",
   ],
-  2: [
-    "skillLevel",
-    "availability",
-    "interests",
-    "gearOwned",
-    "kitSizeTop",
-    "kitSizeBottom",
-    "shoeSize",
-  ],
+  2: ["skillLevel"],
   3: ["consents"],
-  4: [
-    "birthCertificateFile",
-    "idCopyFile",
-    "registrationFormFile",
-    "proofOfPaymentFile",
-  ],
+  4: ["birthCertificateFile"],
 }
 
 // ---------- RPC Input Types ----------
@@ -262,7 +241,7 @@ export function toCreateMemberInput(
     emergency_contact_phone: values.emergencyContactPhone,
     school_name: values.schoolName || null,
     school_grade: values.schoolGrade || null,
-    id_or_birth_cert_number: values.idOrBirthCertNumber || null,
+    id_or_birth_cert_number: values.idOrBirthCertNumber,
     kit_size_top: values.kitSizeTop || null,
     kit_size_bottom: values.kitSizeBottom || null,
     shoe_size: values.shoeSize || null,
@@ -415,7 +394,7 @@ export function toUpdateMemberInput(
     p_current_level_id: null,
     p_school_name: values.schoolName || null,
     p_school_grade: values.schoolGrade || null,
-    p_id_or_birth_cert_number: values.idOrBirthCertNumber || null,
+    p_id_or_birth_cert_number: values.idOrBirthCertNumber,
     p_kit_size_top: values.kitSizeTop || null,
     p_kit_size_bottom: values.kitSizeBottom || null,
     p_shoe_size: values.shoeSize || null,

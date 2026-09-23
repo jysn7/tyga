@@ -6,24 +6,38 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useAppStore } from "@/stores/useAppStore"
 import { useTheme } from "next-themes"
-import { Search, PanelLeftClose, ChevronDown } from "lucide-react"
+import { PanelLeftClose, ChevronDown } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import type { User } from "@supabase/supabase-js"
 import Image from "next/image"
 
-type NavItem = { label: string; href: string; icon: LucideIcon }
+export type NavItem = {
+  label: string
+  href: string
+  icon: LucideIcon
+}
 
-type NavGroup = {
+export type NavGroup = {
+  type: "group"
   label: string
   icon: LucideIcon
   items: NavItem[]
 }
 
+export type NavLink = {
+  type: "link"
+  label: string
+  href: string
+  icon: LucideIcon
+}
+
+export type NavEntry = NavGroup | NavLink
+
 export function Sidebar({
   items,
   user,
 }: {
-  items: NavGroup[]
+  items: NavEntry[]
   user: User | null
 }) {
   const pathname = usePathname()
@@ -31,16 +45,16 @@ export function Sidebar({
   const toggleSidebar = useAppStore((s) => s.toggleSidebar)
   const { resolvedTheme } = useTheme()
 
-  const [searchQuery, setSearchQuery] = useState("")
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
     () => {
-      // Auto-expand groups that have an active item
       const expanded: Record<string, boolean> = {}
-      items.forEach((group) => {
-        const hasActive = group.items.some((item) =>
-          pathname.startsWith(item.href)
-        )
-        if (hasActive) expanded[group.label] = true
+      items.forEach((entry) => {
+        if (entry.type === "group") {
+          const hasActive = entry.items.some((item) =>
+            pathname.startsWith(item.href)
+          )
+          if (hasActive) expanded[entry.label] = true
+        }
       })
       return expanded
     }
@@ -55,19 +69,6 @@ export function Sidebar({
       [label]: !prev[label],
     }))
   }
-
-  // Filter groups and their items based on search
-  const filteredGroups = items
-    .map((group) => ({
-      ...group,
-      items: group.items.filter((item) =>
-        item.label.toLowerCase().includes(searchQuery.toLowerCase())
-      ),
-    }))
-    .filter((group) => group.items.length > 0)
-
-  // If searching, expand all groups that have matches
-  const isSearching = searchQuery.length > 0
 
   return (
     <>
@@ -90,7 +91,7 @@ export function Sidebar({
         )}
       >
         <div className="flex h-full w-64 flex-col">
-          {/* Top Header & Collapse Toggle */}
+          {/* Header */}
           <div className="flex h-20 shrink-0 items-center justify-between px-3.5">
             <div className="flex items-center gap-2.5 overflow-hidden">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center">
@@ -125,31 +126,50 @@ export function Sidebar({
             </button>
           </div>
 
-          {/* Quick Search */}
-          <div className="px-3 pb-2">
-            <div className="relative flex items-center">
-              <Search className="absolute left-2.5 h-3.5 w-3.5 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-8 w-full rounded-md border border-border bg-input pr-3 pl-8 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none active:border-primary"
-              />
-            </div>
-          </div>
-
           {/* Navigation */}
           <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-2 py-2">
-            {filteredGroups.map((group) => {
-              const isExpanded = isSearching || expandedGroups[group.label]
-              const GroupIcon = group.icon
+            {items.map((entry) => {
+              // Standalone link
+              if (entry.type === "link") {
+                const isActive =
+                  pathname === entry.href ||
+                  pathname.startsWith(entry.href + "/")
+                const Icon = entry.icon
+                return (
+                  <Link
+                    key={entry.href}
+                    href={entry.href}
+                    className={cn(
+                      "group relative flex items-center gap-3 rounded-md px-2.5 py-2 text-xs font-medium transition-colors",
+                      isActive
+                        ? "border border-border/80 bg-card text-foreground shadow"
+                        : "text-muted-foreground hover:bg-primary/5 hover:text-foreground"
+                    )}
+                  >
+                    <Icon
+                      className={cn(
+                        "h-4 w-4 shrink-0 transition-colors",
+                        isActive
+                          ? "text-primary"
+                          : "text-muted-foreground group-hover:text-foreground"
+                      )}
+                    />
+                    <span className="truncate">{entry.label}</span>
+                    {isActive && (
+                      <span className="absolute -left-0.5 h-4 w-0.5 rounded-r-full bg-primary" />
+                    )}
+                  </Link>
+                )
+              }
+
+              // Collapsible group
+              const isExpanded = expandedGroups[entry.label]
+              const GroupIcon = entry.icon
 
               return (
-                <div key={group.label} className="flex flex-col gap-0.5">
-                  {/* Group header */}
+                <div key={entry.label} className="flex flex-col gap-0.5">
                   <button
-                    onClick={() => toggleGroup(group.label)}
+                    onClick={() => toggleGroup(entry.label)}
                     className={cn(
                       "flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-xs font-medium transition-colors",
                       "text-muted-foreground hover:bg-primary/5 hover:text-foreground",
@@ -158,7 +178,7 @@ export function Sidebar({
                   >
                     <GroupIcon className="h-4 w-4 shrink-0" />
                     <span className="flex-1 truncate text-left">
-                      {group.label}
+                      {entry.label}
                     </span>
                     <ChevronDown
                       className={cn(
@@ -168,10 +188,9 @@ export function Sidebar({
                     />
                   </button>
 
-                  {/* Group items */}
                   {isExpanded && (
                     <div className="ml-2 flex flex-col gap-0.5 border-l border-border/60 pl-2">
-                      {group.items.map((item) => {
+                      {entry.items.map((item) => {
                         const isActive = pathname.startsWith(item.href)
                         const Icon = item.icon
 
@@ -195,7 +214,6 @@ export function Sidebar({
                               )}
                             />
                             <span className="truncate">{item.label}</span>
-
                             {isActive && (
                               <span className="absolute -left-0.5 h-4 w-0.5 rounded-r-full bg-primary" />
                             )}

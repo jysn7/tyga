@@ -42,14 +42,46 @@ export function NewMemberFormProvider({
     resolver: zodResolver(memberFormSchema),
     mode: "onTouched",
     defaultValues: {
+      // Basic info
       fullName: "",
       dob: undefined,
       gender: undefined,
+      schoolName: "",
+      schoolGrade: "",
+      idOrBirthCertNumber: "",
+      previousClub: "",
+
+      // Health & safety
       medicalNotes: "",
+      medicalAidDetails: "",
+      doctorContact: "",
+      emergencyContactName: "",
+      emergencyContactRelationship: "",
+      emergencyContactPhone: "",
+
+      // About golfer
       skillLevel: undefined,
       availability: "",
       interests: "",
       gearOwned: "",
+      kitSizeTop: "",
+      kitSizeBottom: "",
+      shoeSize: "",
+
+      // Consents — must exist as an object so nested fields render correctly
+      consents: {
+        medicalEmergency: false,
+        photoVideo: false,
+        transport: false,
+        indemnity: false,
+        codeOfConduct: false,
+      },
+
+      // File fields — left undefined so `instanceof File` validation fires correctly
+      birthCertificateFile: undefined,
+      idCopyFile: undefined,
+      registrationFormFile: undefined,
+      proofOfPaymentFile: undefined,
     },
   })
 

@@ -5,10 +5,10 @@ import {
   Receipt,
   Bell,
   Settings,
-  Clock,
-  UserCog,
-  Wallet,
   CreditCard,
+  Trophy,
+  GraduationCap,
+  Clock,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -19,44 +19,47 @@ export type NavItem = {
 }
 
 export type NavGroup = {
+  type: "group"
   label: string
   icon: LucideIcon
   items: NavItem[]
 }
 
-export const clientNav: NavGroup[] = [
+export type NavLink = {
+  type: "link"
+  label: string
+  href: string
+  icon: LucideIcon
+}
+
+export type NavEntry = NavGroup | NavLink
+
+export const clientNav: NavEntry[] = [
+  // Standalone
+  { type: "link", label: "Dashboard", href: "/dashboard", icon: Home },
+  { type: "link", label: "My Members", href: "/members", icon: Users },
+  { type: "link", label: "Schedule", href: "/schedule", icon: Clock },
+
+  // Golf group
   {
-    label: "Dashboard",
-    icon: Home,
-    items: [{ label: "Overview", href: "/dashboard", icon: Home }],
-  },
-  {
-    label: "Family",
-    icon: Users,
-    items: [{ label: "My Members", href: "/members", icon: Users }],
-  },
-  {
+    type: "group",
     label: "Golf",
-    icon: Calendar,
-    items: [
-      { label: "Programmes", href: "/programmes", icon: Calendar },
-      { label: "Schedule", href: "/schedule", icon: Clock },
-    ],
+    icon: Trophy,
+    items: [{ label: "Programmes", href: "/programmes", icon: Trophy }],
   },
+
+  // Finance group
   {
+    type: "group",
     label: "Finance",
-    icon: Wallet,
+    icon: CreditCard,
     items: [
       { label: "Invoices", href: "/invoices", icon: Receipt },
       { label: "Payments", href: "/payments", icon: CreditCard },
     ],
   },
-  {
-    label: "System",
-    icon: Settings,
-    items: [
-      { label: "Notifications", href: "/notifications", icon: Bell },
-      { label: "Settings", href: "/settings", icon: UserCog },
-    ],
-  },
+
+  // Standalone
+  { type: "link", label: "Notifications", href: "/notifications", icon: Bell },
+  { type: "link", label: "Settings", href: "/settings", icon: Settings },
 ]

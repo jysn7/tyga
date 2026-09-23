@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useQueryClient } from "@tanstack/react-query"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { toast } from "@/components/ui/toast"
@@ -22,7 +22,7 @@ function getInitials(name: string) {
 }
 
 export function AdminMemberTableRow({ member }: { member: AdminMember }) {
-  const router = useRouter()
+  const queryClient = useQueryClient()
   const [saving, setSaving] = useState(false)
   const isArchived = member.archivedAt !== null
 
@@ -43,13 +43,14 @@ export function AdminMemberTableRow({ member }: { member: AdminMember }) {
       const { error } = await supabase.rpc(fn, { p_member_id: member.id })
       if (error) throw error
 
+      await queryClient.invalidateQueries({ queryKey: ["admin-members"] })
+
       toast.add({
         id: toastId,
         title: isArchived ? "Member restored" : "Member archived",
         type: "success",
         timeout: 4000,
       })
-      router.refresh()
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Something went wrong"
@@ -105,8 +106,7 @@ export function AdminMemberTableRow({ member }: { member: AdminMember }) {
       <td className="px-4 py-3 text-right">
         <Button
           size="sm"
-          variant="ghost"
-          className="h-7 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground"
+          variant="outline"
           disabled={saving}
           onClick={handleToggleArchive}
         >

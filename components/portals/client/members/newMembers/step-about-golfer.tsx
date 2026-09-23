@@ -30,6 +30,7 @@ export function StepAboutGolfer() {
 
       <Field
         label="Self-reported skill level"
+        required
         error={errors.skillLevel?.message}
       >
         <Controller
