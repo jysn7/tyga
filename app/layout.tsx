@@ -1,8 +1,30 @@
+import type { Metadata, Viewport } from "next"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
 import { Toaster } from "@/components/ui/toast"
 import { Providers } from "@/components/provider"
+
+export const metadata: Metadata = {
+  title: "TYGA Junior Golf",
+  description: "Junior golf programme management for TYGA",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "TYGA",
+  },
+  icons: {
+    icon: "/icons/icon-192.png",
+    apple: "/icons/apple-touch-icon.png",
+  },
+}
+
+export const viewport: Viewport = {
+  themeColor: "#1f1f1f",
+  width: "device-width",
+  initialScale: 1,
+}
 
 export default function RootLayout({
   children,
