@@ -16,6 +16,7 @@ export type NavItem = {
 }
 
 export type NavGroup = {
+  type: "group"
   label: string
   icon: LucideIcon
   items: NavItem[]
@@ -23,11 +24,13 @@ export type NavGroup = {
 
 export const coachNav: NavGroup[] = [
   {
+    type: "group",
     label: "Dashboard",
     icon: Home,
     items: [{ label: "Overview", href: "/coach/overview", icon: Home }],
   },
   {
+    type: "group",
     label: "Coaching",
     icon: ClipboardList,
     items: [
@@ -36,6 +39,7 @@ export const coachNav: NavGroup[] = [
     ],
   },
   {
+    type: "group",
     label: "People",
     icon: Users,
     items: [
@@ -44,6 +48,7 @@ export const coachNav: NavGroup[] = [
     ],
   },
   {
+    type: "group",
     label: "System",
     icon: Settings,
     items: [

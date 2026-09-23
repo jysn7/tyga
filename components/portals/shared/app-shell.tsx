@@ -5,10 +5,10 @@ import { LayoutHeader } from "./layout-header"
 import { clientNav } from "@/config/nav-client"
 import { coachNav } from "@/config/nav-coach"
 import { adminNav } from "@/config/nav-admin"
-import type { NavGroup } from "@/config/nav-admin"
+import type { NavEntry } from "./sidebar"
 import type { User } from "@supabase/supabase-js"
 
-const navMap: Record<string, NavGroup[]> = {
+const navMap: Record<string, NavEntry[]> = {
   client: clientNav,
   coach: coachNav,
   admin: adminNav,
