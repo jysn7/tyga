@@ -3,9 +3,9 @@ import Link from "next/link"
 import type { ChildSummary } from "@/hooks/client/use-parent-overview"
 
 const ACCENTS = [
-  { wash: "bg-blue/15", text: "text-foreground" },
-  { wash: "bg-pink/15", text: "text-foreground" },
-  { wash: "bg-orange/15", text: "text-foreground" },
+  { wash: "bg-blue/15", text: "text-blue", dot: "bg-blue" },
+  { wash: "bg-green/15", text: "text-green", dot: "bg-green" },
+  { wash: "bg-purple/15", text: "text-purple", dot: "bg-purple" },
 ]
 
 export function ChildCard({
@@ -48,11 +48,10 @@ export function ChildCard({
       {/* Next session */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
-          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-input">
-            <Clock
-              className="h-3 w-3 text-muted-foreground"
-              strokeWidth={1.75}
-            />
+          <div
+            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${accent.wash}`}
+          >
+            <Clock className={`h-3 w-3 ${accent.text}`} strokeWidth={1.75} />
           </div>
           <span className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
             Next session
@@ -81,7 +80,7 @@ export function ChildCard({
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-1.5">
             <TrendingUp
-              className="h-3 w-3 text-muted-foreground"
+              className={`h-3 w-3 ${accent.text}`}
               strokeWidth={1.75}
             />
             <span className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
@@ -95,10 +94,7 @@ export function ChildCard({
 
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-1.5">
-            <Trophy
-              className="h-3 w-3 text-muted-foreground"
-              strokeWidth={1.75}
-            />
+            <Trophy className={`h-3 w-3 ${accent.text}`} strokeWidth={1.75} />
             <span className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
               Badges
             </span>

@@ -41,7 +41,7 @@ export function UpcomingSessionsList({
                 </span>
               </div>
 
-              <div className="h-8 w-px shrink-0 bg-border" />
+              <div className="h-8 w-px shrink-0 bg-blue/40" />
 
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-foreground">
@@ -54,7 +54,7 @@ export function UpcomingSessionsList({
                 </div>
               </div>
 
-              <div className="hidden shrink-0 items-center gap-1.5 rounded-full bg-background px-2.5 py-1 text-xs text-muted-foreground sm:flex">
+              <div className="hidden shrink-0 items-center gap-1.5 rounded-full bg-pink/15 px-2.5 py-1 text-xs text-pink sm:flex">
                 <MapPin className="h-3 w-3" />
                 <span className="max-w-[120px] truncate">{s.venue}</span>
               </div>
