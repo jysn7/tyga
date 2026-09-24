@@ -48,7 +48,7 @@ export function ParentOverview() {
         }
       />
 
-      {/* Stat tiles */}
+      {/* Stat tiles — each with its own Google color */}
       {statsLoading || !stats ? (
         <div className="flex h-24 items-center justify-center">
           <Loader />
@@ -56,21 +56,25 @@ export function ParentOverview() {
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <StatTile
+            color="blue"
             label="Active members"
             value={String(stats.activeMembers)}
             icon={Users}
           />
           <StatTile
+            color="green"
             label="Upcoming sessions"
             value={String(stats.upcomingSessions)}
             icon={Calendar}
           />
           <StatTile
+            color="yellow"
             label="Outstanding balance"
             value={`R${stats.outstandingBalance.toLocaleString()}`}
             icon={CreditCard}
           />
           <StatTile
+            color="purple"
             label="Badges this month"
             value={String(stats.badgesThisMonth)}
             icon={Trophy}
@@ -107,9 +111,9 @@ export function ParentOverview() {
               </div>
             ) : enrolledChildren.length === 0 ? (
               <div className="flex flex-col items-center gap-3 rounded-xl bg-card p-8 text-center shadow">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-input">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-light dark:bg-blue/10">
                   <Calendar
-                    className="h-4.5 w-4.5 text-muted-foreground"
+                    className="h-4.5 w-4.5 text-blue"
                     strokeWidth={1.75}
                   />
                 </div>

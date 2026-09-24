@@ -87,35 +87,26 @@ export function MiniCalendar({
   }
 
   return (
-    <section className="relative isolate overflow-hidden rounded-xl bg-yellow p-5 shadow">
+    <section className="relative isolate overflow-hidden rounded-xl bg-yellow-light p-5 shadow">
       {/* Decorative shapes */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
       >
-        {/* Large soft circle top-right */}
-        <div className="absolute -top-12 -right-12 h-40 w-40 rounded-full bg-yellow-foreground/[0.06]" />
-
-        {/* Smaller circle bottom-left */}
-        <div className="absolute -bottom-10 -left-10 h-28 w-28 rounded-full bg-yellow-foreground/[0.08]" />
-
-        {/* Blurred blob top-left */}
-        <div className="absolute top-16 -left-16 h-32 w-32 rounded-full bg-yellow-foreground/[0.05] blur-2xl" />
-
-        {/* Thin ring bottom-right */}
-        <div className="absolute right-8 -bottom-16 h-36 w-36 rounded-full border border-yellow-foreground/10" />
-
-        {/* Diagonal stripe accent */}
-        <div className="absolute top-6 right-6 h-16 w-16 rotate-12 rounded-2xl bg-yellow-foreground/[0.04]" />
+        <div className="absolute -top-12 -right-12 h-40 w-40 rounded-full bg-yellow/10" />
+        <div className="absolute -bottom-10 -left-10 h-28 w-28 rounded-full bg-yellow/15" />
+        <div className="absolute top-16 -left-16 h-32 w-32 rounded-full bg-yellow/10 blur-2xl" />
+        <div className="absolute right-8 -bottom-16 h-36 w-36 rounded-full border border-yellow/20" />
+        <div className="absolute top-6 right-6 h-16 w-16 rotate-12 rounded-2xl bg-yellow/10" />
       </div>
 
       {/* Header */}
       <div className="relative flex items-center justify-between">
         <div className="flex min-w-0 flex-col gap-0.5">
-          <h2 className="truncate text-sm font-semibold tracking-tight text-yellow-foreground">
+          <h2 className="truncate text-sm font-semibold tracking-tight text-foreground">
             {monthLabel}
           </h2>
-          <span className="truncate text-xs text-yellow-foreground/70">
+          <span className="truncate text-xs text-muted-foreground">
             {monthCount === 0
               ? "No sessions"
               : `${monthCount} session${monthCount === 1 ? "" : "s"} this month`}
@@ -126,7 +117,7 @@ export function MiniCalendar({
             type="button"
             onClick={() => goMonth(-1)}
             title="Previous month"
-            className="flex h-7 w-7 items-center justify-center rounded-md text-yellow-foreground/70 transition-colors hover:bg-yellow-foreground/10 hover:text-yellow-foreground"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-yellow/15 hover:text-foreground"
           >
             <ChevronLeft className="h-3.5 w-3.5" strokeWidth={1.75} />
           </button>
@@ -134,7 +125,7 @@ export function MiniCalendar({
             type="button"
             onClick={() => goMonth(1)}
             title="Next month"
-            className="flex h-7 w-7 items-center justify-center rounded-md text-yellow-foreground/70 transition-colors hover:bg-yellow-foreground/10 hover:text-yellow-foreground"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-yellow/15 hover:text-foreground"
           >
             <ChevronRight className="h-3.5 w-3.5" strokeWidth={1.75} />
           </button>
@@ -146,7 +137,7 @@ export function MiniCalendar({
         {WEEKDAYS.map((d, i) => (
           <span
             key={i}
-            className="flex h-6 items-center justify-center text-[10px] font-medium tracking-wider text-yellow-foreground/60 uppercase"
+            className="flex h-6 items-center justify-center text-[10px] font-medium tracking-wider text-muted-foreground uppercase"
           >
             {d}
           </span>
@@ -171,19 +162,19 @@ export function MiniCalendar({
                     type="button"
                     className={`relative flex h-8 w-full items-center justify-center rounded-md text-xs font-medium transition-colors ${
                       isToday
-                        ? "bg-yellow-foreground text-yellow"
+                        ? "bg-yellow text-yellow-foreground"
                         : hasSessions
-                          ? "bg-foreground text-card shadow hover:bg-yellow-foreground/25"
+                          ? "bg-yellow/30 text-foreground hover:bg-yellow/40"
                           : isPast
-                            ? "text-yellow-foreground/40"
-                            : "text-yellow-foreground/70 hover:bg-yellow-foreground/10 hover:text-yellow-foreground"
+                            ? "text-muted-foreground/40"
+                            : "text-foreground/70 hover:bg-yellow/15 hover:text-foreground"
                     }`}
                   >
                     {day}
                     {hasSessions && (
                       <span
                         className={`absolute bottom-0.5 h-1 w-1 rounded-full ${
-                          isToday ? "bg-yellow" : "bg-yellow-foreground/60"
+                          isToday ? "bg-yellow-foreground" : "bg-yellow"
                         }`}
                       />
                     )}
@@ -256,11 +247,11 @@ export function MiniCalendar({
         ))}
       </div>
 
-      <div className="relative mt-4 h-px bg-yellow-foreground/15" />
+      <div className="relative mt-4 h-px bg-yellow/30" />
 
       <Link
         href="/schedule"
-        className="relative mt-4 flex h-9 items-center justify-center gap-1.5 rounded-lg border border-card bg-card text-xs font-medium text-foreground transition-colors duration-300 hover:bg-yellow hover:text-card"
+        className="relative mt-4 flex h-9 items-center justify-center gap-1.5 rounded-lg bg-yellow text-xs font-medium text-yellow-foreground transition-colors duration-300 hover:bg-yellow/90"
       >
         View full schedule
         <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
