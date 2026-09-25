@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, Sparkles } from "lucide-react"
 
 export default function Page() {
   return (
@@ -9,16 +9,9 @@ export default function Page() {
         aria-hidden
         className="pointer-events-none absolute inset-0 overflow-hidden"
       >
-        {/* Large soft circle top-right */}
         <div className="absolute -top-32 -right-32 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
-
-        {/* Smaller circle bottom-left */}
         <div className="absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-primary/5 blur-3xl" />
-
-        {/* Thin ring accent */}
         <div className="absolute top-1/4 right-1/4 h-64 w-64 rounded-full border border-border/60" />
-
-        {/* Diagonal accent */}
         <div className="absolute bottom-1/4 left-1/4 h-24 w-24 rotate-12 rounded-3xl bg-primary/5" />
       </div>
 
@@ -45,7 +38,7 @@ export default function Page() {
         {/* CTA */}
         <Link
           href="/auth/signin"
-          className="group inline-flex h-12 items-center gap-2 rounded-xl bg-primary px-7 text-sm font-medium text-primary-foreground shadow-lg transition-all hover:bg-primary/90 hover:shadow-xl"
+          className="group inline-flex h-12 items-center gap-2 rounded-lg bg-primary px-7 text-sm font-medium text-primary-foreground shadow transition-all hover:bg-primary/90 hover:shadow-xl"
         >
           Sign in
           <ArrowRight

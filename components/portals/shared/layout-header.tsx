@@ -100,7 +100,7 @@ export function LayoutHeader({ user }: { user: SupabaseUser | null }) {
 
   return (
     <>
-      <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 rounded-t-xl bg-background px-4 sm:px-6">
+      <header className="sticky top-0 z-20 flex h-20 shrink-0 items-center gap-3 rounded-t-xl border-b border-border/50 bg-background px-4 sm:px-6">
         {/* Left: toggle + search */}
         <div className="flex min-w-0 flex-1 items-center gap-2">
           {!sidebarOpen && (
