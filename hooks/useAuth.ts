@@ -84,7 +84,7 @@ export function useAuth(options: UseAuthOptions = {}) {
           userRole === "admin"
             ? "/admin/overview"
             : userRole === "coach"
-              ? "/coach"
+              ? "/coach/overview"
               : "/dashboard"
         router.replace(portalPath)
         return

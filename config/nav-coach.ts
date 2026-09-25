@@ -1,11 +1,14 @@
 import {
   Home,
-  ClipboardList,
   Users,
   Calendar,
-  UserCog,
-  Settings,
   Bell,
+  Settings,
+  ClipboardList,
+  GraduationCap,
+  Trophy,
+  UserCog,
+  Clock,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -22,38 +25,54 @@ export type NavGroup = {
   items: NavItem[]
 }
 
-export const coachNav: NavGroup[] = [
+export type NavLink = {
+  type: "link"
+  label: string
+  href: string
+  icon: LucideIcon
+}
+
+export type NavEntry = NavGroup | NavLink
+
+export const coachNav: NavEntry[] = [
+  // Standalone
+  { type: "link", label: "Dashboard", href: "/coach/overview", icon: Home },
   {
-    type: "group",
-    label: "Dashboard",
-    icon: Home,
-    items: [{ label: "Overview", href: "/coach/overview", icon: Home }],
+    type: "link",
+    label: "My Sessions",
+    href: "/coach/sessions",
+    icon: Calendar,
   },
+  { type: "link", label: "My Roster", href: "/coach/roster", icon: Users },
+
+  // Coaching group
   {
     type: "group",
     label: "Coaching",
     icon: ClipboardList,
     items: [
-      { label: "My Sessions", href: "/coach/sessions", icon: Calendar },
-      { label: "My Roster", href: "/coach/roster", icon: Users },
+      { label: "Programmes", href: "/coach/programmes", icon: GraduationCap },
+      { label: "Achievements", href: "/coach/achievements", icon: Trophy },
     ],
   },
+
+  // People group
   {
     type: "group",
     label: "People",
     icon: Users,
     items: [
       { label: "Members", href: "/coach/members", icon: Users },
-      { label: "Appointments", href: "/coach/appointments", icon: Calendar },
+      { label: "Appointments", href: "/coach/appointments", icon: Clock },
     ],
   },
+
+  // Standalone
   {
-    type: "group",
-    label: "System",
-    icon: Settings,
-    items: [
-      { label: "Profile", href: "/coach/profile", icon: UserCog },
-      { label: "Notifications", href: "/coach/notifications", icon: Bell },
-    ],
+    type: "link",
+    label: "Notifications",
+    href: "/coach/notifications",
+    icon: Bell,
   },
+  { type: "link", label: "Settings", href: "/coach/settings", icon: Settings },
 ]

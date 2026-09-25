@@ -11,14 +11,14 @@ export async function proxy(request: NextRequest) {
 
   const path = request.nextUrl.pathname
 
-  // ✅ Public routes that don't need session checks
+  // Public routes that don't need session checks
   const isAuthPage = path.startsWith("/auth/")
   const isCallback = path === "/auth/callback"
   const isWebhook = path.startsWith("/api/paystack/webhook")
   const isApiRoute = path.startsWith("/api/")
   const isAdminPage = path.startsWith("/admin")
 
-  // ✅ PWA assets — must bypass auth or the SW/manifest fetch gets redirected
+  // PWA assets — must bypass auth or the SW/manifest fetch gets redirected
   const isManifest =
     path === "/manifest.json" || path === "/manifest.webmanifest"
   const isServiceWorker =
@@ -26,7 +26,7 @@ export async function proxy(request: NextRequest) {
     path.startsWith("/serwist/") ||
     path.startsWith("/workbox-")
 
-  // ✅ Allow these to pass through without session check
+  // Allow these to pass through without session check
   if (isCallback || isWebhook || isApiRoute || isManifest || isServiceWorker) {
     return response
   }
