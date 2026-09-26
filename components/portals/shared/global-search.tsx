@@ -126,7 +126,7 @@ export function GlobalSearch({ role }: { role: "parent" | "coach" | "admin" }) {
               }}
               onFocus={() => setOpen(true)}
               placeholder="Search programmes, golfers, sessions…"
-              className="h-9 w-full rounded-lg border border-border bg-input pr-3.5 pl-9 text-sm text-foreground shadow-none transition-colors placeholder:text-muted-foreground focus-visible:border-primary/20 focus-visible:ring-1 focus-visible:outline-primary"
+              className="h-9 w-full rounded-lg border border-border bg-input pr-3.5 pl-9 text-sm text-foreground shadow-none transition-colors placeholder:text-muted-foreground focus-visible:border-primary/20 focus-visible:ring-1 focus-visible:outline-primary md:max-w-108"
             />
           </div>
         }
@@ -135,7 +135,7 @@ export function GlobalSearch({ role }: { role: "parent" | "coach" | "admin" }) {
       <PopoverContent
         align="start"
         sideOffset={6}
-        className="w-[var(--radix-popover-trigger-width)] min-w-[28rem] overflow-hidden rounded-xl border border-border/60 bg-popover p-0 shadow-lg"
+        className="w-[var(--radix-popover-trigger-width)] max-w-[calc(100vw-1.5rem)] min-w-[var(--radix-popover-trigger-width)] overflow-hidden rounded-xl border border-border/60 bg-popover p-0 shadow-lg sm:min-w-[28rem]"
       >
         <Command shouldFilter={false} className="bg-transparent">
           <CommandList className="max-h-96 overflow-y-auto p-1.5">
@@ -146,7 +146,7 @@ export function GlobalSearch({ role }: { role: "parent" | "coach" | "admin" }) {
             )}
 
             {showEmpty && (
-              <div className="flex flex-col items-center gap-2.5 px-4 py-8 text-center">
+              <div className="flex w-full flex-col items-center gap-2.5 px-4 py-8 text-center">
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-input">
                   <SearchX
                     className="h-4 w-4 text-muted-foreground"

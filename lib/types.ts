@@ -245,22 +245,7 @@ export interface Appointment {
   notes: string | null
 }
 
-// lib/types.ts additions
-export type ProgrammeListItem = {
-  id: number
-  name: string
-  type: string
-  levelId: number | null
-  levelName: string | null
-  venueId: number
-  venueName: string
-  recurrenceRule: string | null
-  price: number
-  capacity: number | null
-  enrolledCount: number
-  maxRatio: number | null
-  alreadyEnrolled: boolean
-}
+// lib/types.ts additio
 
 // lib/types.ts
 export type ProgrammeCoachDetail = {
@@ -268,6 +253,27 @@ export type ProgrammeCoachDetail = {
   name: string
   role: string
   avatar_url: string | null
+}
+
+export type ProgrammeListItem = {
+  id: number
+  name: string
+  type: string
+  levelId: number | null
+  levelName: string | null
+  venueId: number | null
+  venueName: string | null
+  recurrenceRule: string | null
+  price: number
+  capacity: number
+  enrolledCount: number
+  maxRatio: number | null
+  minAge: number
+  maxAge: number
+  genderRestriction: string | null
+  description: string | null
+  imageUrl: string | null
+  alreadyEnrolled: boolean
 }
 
 export type ProgrammeDetail = ProgrammeListItem & {
@@ -289,6 +295,8 @@ export type ProgrammeDetail = ProgrammeListItem & {
   capacity: number
   enrolledCount: number
   maxRatio: number | null
+  description: string | null
+  imageUrl: string | null
   coaches: ProgrammeCoachDetail[]
   curriculumModules: { id: number; name: string; category: string }[]
   upcomingSessions: ProgrammeSession[]

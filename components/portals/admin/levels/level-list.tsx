@@ -80,14 +80,14 @@ export function LevelList({
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border/60 bg-card/80 shadow">
-      <table className="w-full border-collapse">
+    <div className="overflow-x-auto rounded-lg bg-card shadow">
+      <table className="w-full min-w-[720px] border-collapse">
         <thead>
           <tr className="border-b border-border/60 bg-foreground/80 text-left text-[11px] font-medium tracking-wider text-background uppercase">
-            <th className="px-4 py-2.5 font-medium">Level</th>
-            <th className="px-4 py-2.5 font-medium">Age range</th>
-            <th className="px-4 py-2.5 font-medium">Goal</th>
-            <th className="px-4 py-2.5" />
+            <th className="px-4 py-2 font-medium">Level</th>
+            <th className="px-4 py-2 font-medium">Age range</th>
+            <th className="px-4 py-2 font-medium">Goal</th>
+            <th className="px-4 py-2" />
           </tr>
         </thead>
         <tbody>
@@ -96,50 +96,56 @@ export function LevelList({
             return (
               <tr
                 key={level.id}
-                className={`border-b border-border/60 text-sm last:border-b-0 hover:bg-accent/40 ${
+                className={`border-b border-border/60 text-sm transition-colors last:border-b-0 hover:bg-accent/40 ${
                   isArchived ? "opacity-50" : ""
                 }`}
               >
-                <td className="px-4 py-3">
+                <td className="px-4 py-2">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-foreground">
+                    <span className="text-sm font-semibold tracking-tight text-foreground">
                       {level.name}
                     </span>
                     {isArchived && (
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                      <span className="rounded-full bg-input px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
                         Archived
                       </span>
                     )}
                   </div>
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
+
+                <td className="px-4 py-2 whitespace-nowrap text-muted-foreground">
                   {level.defaultAgeMin && level.defaultAgeMax
                     ? `${level.defaultAgeMin}–${level.defaultAgeMax}`
                     : "—"}
                 </td>
-                <td className="max-w-xs truncate px-4 py-3 text-muted-foreground">
+
+                <td className="max-w-xs truncate px-4 py-2 text-muted-foreground">
                   {level.goal ?? "—"}
                 </td>
-                <td className="px-4 py-3">
+
+                <td className="px-4 py-2">
                   <div className="flex items-center justify-end gap-1">
                     <button
                       type="button"
                       onClick={() => onEdit(level)}
                       title="Edit"
-                      className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-transparent text-muted-foreground transition-colors hover:border-border hover:bg-accent hover:text-foreground"
+                      className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                     >
-                      <Pencil className="h-3.5 w-3.5" />
+                      <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} />
                     </button>
                     <button
                       type="button"
                       onClick={() => handleToggleArchive(level)}
                       title={isArchived ? "Restore" : "Archive"}
-                      className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-transparent text-muted-foreground transition-colors hover:border-border hover:bg-accent hover:text-foreground"
+                      className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                     >
                       {isArchived ? (
-                        <ArchiveRestore className="h-3.5 w-3.5" />
+                        <ArchiveRestore
+                          className="h-3.5 w-3.5"
+                          strokeWidth={1.75}
+                        />
                       ) : (
-                        <Archive className="h-3.5 w-3.5" />
+                        <Archive className="h-3.5 w-3.5" strokeWidth={1.75} />
                       )}
                     </button>
                     <button
@@ -147,9 +153,9 @@ export function LevelList({
                       onClick={() => handleDelete(level)}
                       disabled={deletingId === level.id}
                       title="Delete permanently"
-                      className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-transparent text-muted-foreground transition-colors hover:border-destructive hover:bg-destructive/10 hover:text-destructive disabled:pointer-events-none disabled:opacity-40"
+                      className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:pointer-events-none disabled:opacity-40"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
                     </button>
                   </div>
                 </td>

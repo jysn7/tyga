@@ -1,12 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
+import Image from "next/image"
 import {
   CalendarPlus,
   Settings,
   ChevronLeft,
   ChevronRight,
   CalendarDays,
+  ImagePlus,
+  X,
 } from "lucide-react"
 import {
   Dialog,
@@ -17,6 +20,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
   SelectContent,
@@ -25,6 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { toast } from "@/components/ui/toast"
+import { createClient } from "@/utils/supabase/client"
 import {
   useCreateProgramme,
   useUpdateProgramme,
@@ -73,6 +78,8 @@ export function ProgrammePanel({
 }) {
   const [activeStep, setActiveStep] = useState<StepId>("basic")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Basic info fields
   const [name, setName] = useState(() => programme?.name ?? "")
@@ -91,6 +98,12 @@ export function ProgrammePanel({
   )
   const [genderRestriction, setGenderRestriction] = useState<string>(
     () => programme?.genderRestriction ?? "any"
+  )
+  const [description, setDescription] = useState(
+    () => programme?.description ?? ""
+  )
+  const [imageUrl, setImageUrl] = useState<string | null>(
+    () => programme?.imageUrl ?? null
   )
 
   // Details fields
@@ -120,6 +133,45 @@ export function ProgrammePanel({
   const canSubmitBasic = name && type && venueId && minAge && maxAge
   const isStepValid = activeStep === "basic" ? canSubmitBasic : true
 
+  async function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploading(true)
+    const supabase = createClient()
+    const ext = file.name.split(".").pop() ?? "jpg"
+    const path = `${crypto.randomUUID()}.${ext}`
+
+    const { error: uploadError } = await supabase.storage
+      .from("programme-images")
+      .upload(path, file, { upsert: false, cacheControl: "3600" })
+
+    if (uploadError) {
+      toast.add({
+        title: "Failed to upload image",
+        description: uploadError.message,
+        type: "error",
+        timeout: 5000,
+      })
+      setIsUploading(false)
+      return
+    }
+
+    const { data } = supabase.storage
+      .from("programme-images")
+      .getPublicUrl(path)
+
+    setImageUrl(data.publicUrl)
+    setIsUploading(false)
+
+    // Reset input so selecting the same file twice works
+    if (fileInputRef.current) fileInputRef.current.value = ""
+  }
+
+  function handleRemoveImage() {
+    setImageUrl(null)
+  }
+
   async function handleSubmit() {
     setIsSubmitting(true)
     const input = {
@@ -136,6 +188,8 @@ export function ProgrammePanel({
       price: price ? Number(price) : 0,
       capacity: capacity ? Number(capacity) : 0,
       maxRatio: maxRatio ? Number(maxRatio) : null,
+      description: description || null,
+      imageUrl,
     }
 
     try {
@@ -264,6 +318,72 @@ export function ProgrammePanel({
         <div className="flex max-h-[60vh] flex-col gap-4 overflow-y-auto pr-1">
           {activeStep === "basic" && (
             <>
+              {/* Image picker */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-normal text-muted-foreground">
+                  Cover image
+                </label>
+                <div className="flex items-center gap-3">
+                  <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-input">
+                    {imageUrl ? (
+                      <Image
+                        src={imageUrl}
+                        alt="Programme cover"
+                        fill
+                        sizes="64px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <ImagePlus
+                        className="h-5 w-5 text-muted-foreground"
+                        strokeWidth={1.75}
+                      />
+                    )}
+                  </div>
+                  <div className="flex flex-1 flex-col gap-1.5">
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading}
+                        className="text-xs"
+                      >
+                        <ImagePlus className="mr-1 h-3.5 w-3.5" />
+                        {isUploading
+                          ? "Uploading..."
+                          : imageUrl
+                            ? "Replace"
+                            : "Upload image"}
+                      </Button>
+                      {imageUrl && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleRemoveImage}
+                          className="text-xs text-muted-foreground hover:text-destructive"
+                        >
+                          <X className="mr-1 h-3.5 w-3.5" />
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                    <span className="text-[11px] text-muted-foreground">
+                      JPG, PNG, or WebP · up to 5 MB
+                    </span>
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/avif"
+                    onChange={handleImageSelect}
+                    className="hidden"
+                  />
+                </div>
+              </div>
+
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-normal text-muted-foreground">
                   Programme name
@@ -273,6 +393,19 @@ export function ProgrammePanel({
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Saturday Junior Clinic"
                   className="h-11 rounded-lg border border-border bg-input px-3.5 text-sm text-foreground shadow-none focus-visible:ring-0"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-normal text-muted-foreground">
+                  Description
+                </label>
+                <Textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="What is this programme about?"
+                  rows={3}
+                  className="resize-none rounded-lg border border-border bg-input px-3.5 py-2.5 text-sm text-foreground shadow-none focus-visible:ring-0"
                 />
               </div>
 
@@ -482,7 +615,7 @@ export function ProgrammePanel({
           </Button>
           <Button
             variant="secondary"
-            disabled={!isStepValid || isSaving}
+            disabled={!isStepValid || isSaving || isUploading}
             onClick={handleNext}
             className="text-xs"
           >

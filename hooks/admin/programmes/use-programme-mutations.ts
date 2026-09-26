@@ -35,6 +35,8 @@ export type ProgrammeInput = {
   price?: number
   capacity?: number
   maxRatio?: number | null
+  description?: string | null
+  imageUrl?: string | null
 }
 
 function useInvalidateProgrammes() {
@@ -48,7 +50,7 @@ export function useCreateProgramme() {
 
   return useMutation({
     mutationFn: async (input: ProgrammeInput) => {
-      const { data, error } = await supabase.rpc("admin_create_programme", {
+      const payload = {
         p_name: input.name,
         p_type: input.type,
         p_venue_id: input.venueId,
@@ -57,13 +59,34 @@ export function useCreateProgramme() {
         p_max_age: input.maxAge ?? null,
         p_gender_restriction: input.genderRestriction ?? "any",
         p_recurrence_rule: input.recurrenceRule ?? null,
-        p_term_start: input.termStart ?? null,
-        p_term_end: input.termEnd ?? null,
         p_price: input.price ?? 0,
         p_capacity: input.capacity ?? 0,
         p_max_ratio: input.maxRatio ?? null,
-      })
-      if (error) throw error
+        p_description: input.description ?? null,
+        p_image_url: input.imageUrl ?? null,
+      }
+
+      console.log("[useCreateProgramme] payload:", payload)
+
+      const { data, error } = await supabase.rpc(
+        "admin_create_programme",
+        payload
+      )
+
+      if (error) {
+        console.error("[useCreateProgramme] RPC error:", {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+        })
+        console.error(
+          "[useCreateProgramme] full error:",
+          JSON.stringify(error, null, 2)
+        )
+        throw error
+      }
+
       return data as number
     },
     onSuccess: invalidate,
@@ -76,7 +99,7 @@ export function useUpdateProgramme() {
 
   return useMutation({
     mutationFn: async (input: Partial<ProgrammeInput> & { id: number }) => {
-      const { error } = await supabase.rpc("admin_update_programme", {
+      const payload = {
         p_programme_id: input.id,
         p_name: input.name ?? null,
         p_type: input.type ?? null,
@@ -91,8 +114,37 @@ export function useUpdateProgramme() {
         p_price: input.price ?? null,
         p_capacity: input.capacity ?? null,
         p_max_ratio: input.maxRatio ?? null,
-      })
-      if (error) throw error
+        p_description: input.description ?? null,
+        p_image_url: input.imageUrl ?? null,
+      }
+
+      console.log("[useUpdateProgramme] payload sent to RPC:", payload)
+      console.log(
+        "[useUpdateProgramme] payload keys:",
+        Object.keys(payload).join(", ")
+      )
+
+      const { data, error } = await supabase.rpc(
+        "admin_update_programme",
+        payload
+      )
+
+      if (error) {
+        console.error("[useUpdateProgramme] RPC error:", {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+        })
+        console.error(
+          "[useUpdateProgramme] full error:",
+          JSON.stringify(error, null, 2)
+        )
+        throw error
+      }
+
+      console.log("[useUpdateProgramme] success:", data)
+      return data
     },
     onSuccess: invalidate,
   })

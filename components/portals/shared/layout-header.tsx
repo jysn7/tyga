@@ -100,9 +100,10 @@ export function LayoutHeader({ user }: { user: SupabaseUser | null }) {
 
   return (
     <>
-      <header className="sticky top-0 z-20 flex h-20 shrink-0 items-center gap-3 rounded-t-xl border-b border-border/50 bg-background px-4 sm:px-6">
-        {/* Left: toggle + search */}
-        <div className="flex min-w-0 flex-1 items-center gap-2">
+      <header className="sticky top-0 z-20 flex shrink-0 flex-col gap-3 rounded-t-xl border-b border-border/50 bg-background px-4 py-3 sm:h-20 sm:flex-row sm:items-center sm:gap-3 sm:px-6 sm:py-0">
+        {/* Top row: toggle + actions */}
+        <div className="flex w-full items-center gap-3">
+          {/* Left: toggle (mobile + desktop) */}
           {!sidebarOpen && (
             <button
               type="button"
@@ -114,31 +115,48 @@ export function LayoutHeader({ user }: { user: SupabaseUser | null }) {
             </button>
           )}
 
+          {/* Desktop-only search — sits inline next to toggle */}
+          <div className="hidden min-w-0 flex-1 sm:block">
+            {loading ? (
+              <div className="h-9 w-full max-w-md animate-pulse rounded-md bg-muted/40" />
+            ) : account?.role ? (
+              <GlobalSearch role={account.role} />
+            ) : (
+              <div className="h-9 w-full max-w-md" />
+            )}
+          </div>
+
+          {/* Spacer so actions pin right on mobile when search is hidden */}
+          <div className="flex-1 sm:hidden" />
+
+          {/* Right: actions */}
+          <div className="flex shrink-0 items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setHelpOpen(true)}
+              title="Help"
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            >
+              <CircleHelp className="h-4 w-4" strokeWidth={1.75} />
+            </button>
+
+            <NotificationsDropdown
+              notifications={sampleNotifications}
+              unreadCount={2}
+            />
+            <UserDropdown user={user} account={account} loading={loading} />
+          </div>
+        </div>
+
+        {/* Bottom row (mobile only): full-width search */}
+        <div className="w-full sm:hidden">
           {loading ? (
-            <div className="h-9 w-full max-w-md animate-pulse rounded-md bg-muted/40" />
+            <div className="h-9 w-full animate-pulse rounded-md bg-muted/40" />
           ) : account?.role ? (
             <GlobalSearch role={account.role} />
           ) : (
-            <div className="h-9 w-full max-w-md" />
+            <div className="h-9 w-full" />
           )}
-        </div>
-
-        {/* Right: actions */}
-        <div className="flex shrink-0 items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => setHelpOpen(true)}
-            title="Help"
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            <CircleHelp className="h-4 w-4" strokeWidth={1.75} />
-          </button>
-
-          <NotificationsDropdown
-            notifications={sampleNotifications}
-            unreadCount={2}
-          />
-          <UserDropdown user={user} account={account} loading={loading} />
         </div>
       </header>
 

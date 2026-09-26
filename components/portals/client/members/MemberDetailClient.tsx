@@ -37,39 +37,52 @@ export function MemberDetailClient({ memberId }: { memberId: string }) {
   const isAssessed = member.currentLevelName !== null
 
   return (
-    <div className="flex w-full flex-col gap-8">
+    <div className="flex w-full flex-col gap-6">
       <Link
         href="/members"
-        className="flex w-fit items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        className="flex w-fit items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
       >
-        <ChevronLeft className="h-4 w-4" />
-        Back to members
+        <ChevronLeft className="h-3.5 w-3.5" strokeWidth={1.75} />/ members /{" "}
+        {memberId}
       </Link>
 
-      <div className="flex items-center gap-4">
-        <Avatar className="h-16 w-16 shrink-0 rounded-full">
-          <AvatarFallback className="bg-pink text-xl font-medium text-background">
-            {getInitials(member.fullName)}
-          </AvatarFallback>
-        </Avatar>
+      {/* Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+        <div className="flex items-start gap-4">
+          <Avatar className="h-14 w-14 shrink-0 rounded-full border-0 ring-0">
+            <AvatarFallback className="rounded-full bg-pink text-base font-semibold text-primary-foreground">
+              {getInitials(member.fullName)}
+            </AvatarFallback>
+          </Avatar>
 
-        <div className="flex min-w-0 flex-col gap-1">
-          <h1 className="truncate text-xl font-semibold tracking-tight text-foreground">
-            {member.fullName}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {getAge(member.dob)} years old ·{" "}
-            {isAssessed ? member.currentLevelName : "Not yet assessed"} ·{" "}
-            <span className="capitalize">{member.gender}</span>
-          </p>
-          {!member.onboardingComplete && (
-            <p className="text-xs font-medium text-amber-600">
-              Registration incomplete
-            </p>
-          )}
+          <div className="flex min-w-0 flex-col gap-1.5">
+            <h1 className="truncate text-2xl font-semibold tracking-tight text-foreground">
+              {member.fullName}
+            </h1>
+
+            {/* Metadata row — Notion-style inline properties */}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+              <span>{getAge(member.dob)} years</span>
+              <span className="text-border">|</span>
+              <span className="capitalize">{member.gender}</span>
+              <span className="text-border">|</span>
+              <span className="inline-flex items-center rounded-full bg-yellow px-2 py-0.5 text-[11px] font-light text-primary-foreground">
+                {isAssessed ? member.currentLevelName : "Not yet assessed"}
+              </span>
+            </div>
+
+            {!member.onboardingComplete && (
+              <div className="flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-orange" />
+                <span className="text-xs font-medium text-orange">
+                  Registration incomplete
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="ml-auto">
+        <div className="sm:ml-auto">
           <EditMemberPanel member={member} />
         </div>
       </div>

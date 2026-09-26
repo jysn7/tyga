@@ -2,11 +2,13 @@
 
 import { useState } from "react"
 import { PageHeader } from "@/components/portals/shared/page-header"
+import { SearchInput } from "@/components/portals/shared/search-input"
 import { ProgrammeList } from "@/components/portals/client/programmes/programme-list"
 import { EnrollModal } from "@/components/portals/client/programmes/enroll-modal"
 import { Loader } from "@/components/portals/shared/loader"
 import { useProgrammes } from "@/hooks/client/use-programmes"
 import { useMembers } from "@/hooks/use-members"
+import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import {
   Select,
   SelectContent,
@@ -16,10 +18,23 @@ import {
 } from "@/components/ui/select"
 import type { ProgrammeListItem } from "@/lib/types"
 
+const TYPE_OPTIONS = [
+  { label: "All types", value: "all" },
+  { label: "Development", value: "development" },
+  { label: "Community", value: "weekly_community" },
+  { label: "Holiday Camp", value: "holiday_camp" },
+  { label: "Clinic", value: "clinic" },
+  { label: "Corporate", value: "corporate" },
+  { label: "League", value: "league" },
+] as const
+
 export default function ProgrammesPage() {
   const { data: members, isLoading: membersLoading } = useMembers()
 
   const [selectedMemberId, setSelectedMemberId] = useState<string>("all")
+  const [searchInput, setSearchInput] = useState("")
+  const debouncedSearch = useDebouncedValue(searchInput)
+  const [typeFilter, setTypeFilter] = useState<string>("all")
   const [enrollTarget, setEnrollTarget] = useState<ProgrammeListItem | null>(
     null
   )
@@ -38,6 +53,20 @@ export default function ProgrammesPage() {
       ? "All programmes"
       : (members?.find((m) => String(m.id) === selectedMemberId)?.fullName ??
         "Select a member")
+
+  // Client-side filters
+  const filteredProgrammes = (programmes ?? []).filter((p) => {
+    const matchesSearch = debouncedSearch
+      ? p.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        (p.description ?? "")
+          .toLowerCase()
+          .includes(debouncedSearch.toLowerCase())
+      : true
+
+    const matchesType = typeFilter === "all" ? true : p.type === typeFilter
+
+    return matchesSearch && matchesType
+  })
 
   function handleEnroll(programme: ProgrammeListItem) {
     setEnrollTarget(programme)
@@ -78,12 +107,41 @@ export default function ProgrammesPage() {
         }
       />
 
+      {/* Search + filters */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <SearchInput
+          value={searchInput}
+          onChange={setSearchInput}
+          placeholder="Search programmes..."
+          className="flex-1 sm:max-w-sm"
+        />
+
+        <Select
+          value={typeFilter}
+          onValueChange={(v) => setTypeFilter(v ?? "all")}
+        >
+          <SelectTrigger className="h-9 w-full text-sm sm:w-44">
+            <SelectValue placeholder="All types" />
+          </SelectTrigger>
+          <SelectContent>
+            {TYPE_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       {isLoading ? (
         <div className="flex h-64 items-center justify-center">
           <Loader />
         </div>
       ) : (
-        <ProgrammeList programmes={programmes ?? []} onEnroll={handleEnroll} />
+        <ProgrammeList
+          programmes={filteredProgrammes}
+          onEnroll={handleEnroll}
+        />
       )}
 
       <EnrollModal

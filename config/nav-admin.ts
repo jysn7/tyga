@@ -12,8 +12,6 @@ import {
   GraduationCap,
   FileText,
   CreditCard,
-  Settings,
-  ClipboardList,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 

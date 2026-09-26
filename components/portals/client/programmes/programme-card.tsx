@@ -1,6 +1,6 @@
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { MapPin, ArrowUpRight } from "lucide-react"
+import Image from "next/image"
+import { MapPin, ArrowUpRight, GraduationCap } from "lucide-react"
 
 export type Programme = {
   id: string
@@ -22,6 +22,8 @@ export type Programme = {
   capacity: number
   enrolledCount: number
   maxRatio: number
+  description?: string | null
+  imageUrl?: string | null
 }
 
 const typeLabels: Record<Programme["type"], string> = {
@@ -33,6 +35,11 @@ const typeLabels: Record<Programme["type"], string> = {
   league: "League",
 }
 
+function truncate(text: string, max: number) {
+  if (text.length <= max) return text
+  return text.slice(0, max).trimEnd() + "…"
+}
+
 export function ProgrammeCard({ programme }: { programme: Programme }) {
   const isFull = programme.enrolledCount >= programme.capacity
   const spotsLeft = programme.capacity - programme.enrolledCount
@@ -42,76 +49,107 @@ export function ProgrammeCard({ programme }: { programme: Programme }) {
   )
 
   return (
-    <div className="group relative flex h-full flex-col justify-between overflow-hidden rounded-lg bg-card p-5 shadow transition-all duration-200 hover:border-border hover:shadow-xs">
-      {/* Top Header */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-muted-foreground">
-            {typeLabels[programme.type]}
-          </span>
-          <h3 className="line-clamp-1 text-base font-medium tracking-tight text-foreground">
-            {programme.name}
-          </h3>
-        </div>
-        <div className="shrink-0 text-right">
-          <span className="text-base font-semibold text-foreground">
-            R{programme.price}
-          </span>
-          <span className="text-xs text-muted-foreground">/term</span>
+    <Link
+      href={`/programmes/${programme.id}`}
+      className="group flex h-full flex-col overflow-hidden rounded-lg border border-border/60 bg-card transition-colors hover:border-border"
+    >
+      {/* Cover image with overlay */}
+      <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
+        {programme.imageUrl ? (
+          <Image
+            src={programme.imageUrl}
+            alt={programme.name}
+            fill
+            sizes="(max-width: 768px) 100vw, 33vw"
+            className="object-cover"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-blue-light">
+            <GraduationCap className="h-6 w-6 text-blue" strokeWidth={1.75} />
+          </div>
+        )}
+
+        {/* Dark gradient overlay from bottom → middle */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-foreground/90 via-foreground/40 to-transparent" />
+
+        {/* Overlaid content pinned to bottom */}
+        <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-4">
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <span className="text-[10px] font-medium tracking-wider text-background/70 uppercase">
+              {typeLabels[programme.type]}
+            </span>
+            <h3 className="line-clamp-1 text-sm font-semibold tracking-tight text-background">
+              {programme.name}
+            </h3>
+          </div>
+          <ArrowUpRight
+            className="h-4 w-4 shrink-0 text-background/70 opacity-0 transition-opacity group-hover:opacity-100"
+            strokeWidth={1.75}
+          />
         </div>
       </div>
 
-      {/* Primary Details */}
-      <div className="my-4 flex flex-col gap-2.5">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <MapPin className="h-3.5 w-3.5 shrink-0" />
-          <span className="truncate">{programme.venueName}</span>
-          <span>·</span>
-          <span className="shrink-0">{programme.levelName}</span>
-        </div>
+      {/* Body */}
+      <div className="flex flex-1 flex-col gap-3 p-4">
+        {/* Description truncated */}
+        {programme.description ? (
+          <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+            {truncate(programme.description, 120)}
+          </p>
+        ) : (
+          <p className="text-xs leading-relaxed text-muted-foreground/60 italic">
+            No description provided.
+          </p>
+        )}
 
-        {/* Capacity Micro-indicator */}
-        <div className="flex flex-col gap-1.5 pt-1">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">
-              {programme.enrolledCount}/{programme.capacity} enrolled
-            </span>
-            <span
-              className={
-                isFull
-                  ? "font-medium text-destructive"
-                  : "text-muted-foreground"
-              }
-            >
-              {isFull ? "Full" : `${spotsLeft} spots left`}
+        {/* Meta row */}
+        <div className="mt-auto flex flex-col gap-2.5">
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <MapPin className="h-3 w-3 shrink-0" strokeWidth={1.75} />
+            <span className="truncate">{programme.venueName}</span>
+            <span className="text-border">·</span>
+            <span className="shrink-0">{programme.levelName}</span>
+            <span className="text-border">·</span>
+            <span className="shrink-0">
+              {programme.minAge}–{programme.maxAge}y
             </span>
           </div>
-          <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full bg-foreground transition-all duration-300"
-              style={{ width: `${fillPercentage}%` }}
-            />
+
+          {/* Capacity micro-indicator */}
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="text-muted-foreground">
+                {programme.enrolledCount}/{programme.capacity} enrolled
+              </span>
+              <span
+                className={
+                  isFull
+                    ? "font-medium text-destructive"
+                    : "text-muted-foreground"
+                }
+              >
+                {isFull ? "Full" : `${spotsLeft} spots left`}
+              </span>
+            </div>
+            <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className={`h-full transition-all duration-300 ${
+                  isFull ? "bg-destructive" : "bg-foreground"
+                }`}
+                style={{ width: `${fillPercentage}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Price row */}
+          <div className="flex items-baseline justify-between pt-1">
+            <span className="text-[11px] text-muted-foreground">Per term</span>
+            <span className="text-sm font-semibold text-foreground">
+              R{programme.price}
+            </span>
           </div>
         </div>
       </div>
-
-      {/* Footer Actions */}
-      <div className="flex items-center gap-2 pt-2">
-        <Button disabled={isFull} className="h-9 flex-1">
-          <Link href={`/programmes/${programme.id}`}>
-            {isFull ? "Waitlist" : "Enroll"}
-          </Link>
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-9 w-9 border-border/60 bg-card"
-        >
-          <Link href={`/programmes/${programme.id}`}>
-            <ArrowUpRight className="h-4 w-4" />
-          </Link>
-        </Button>
-      </div>
-    </div>
+    </Link>
   )
 }

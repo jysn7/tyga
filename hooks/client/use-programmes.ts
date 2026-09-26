@@ -26,6 +26,8 @@ type ProgrammeListRow = {
   min_age?: number | null
   max_age?: number | null
   gender_restriction?: string | null
+  description?: string | null
+  image_url?: string | null
   already_enrolled?: boolean
 }
 
@@ -97,6 +99,8 @@ export function useProgrammes(
         minAge: row.min_age ?? 0,
         maxAge: row.max_age ?? 0,
         genderRestriction: row.gender_restriction ?? null,
+        description: row.description ?? null,
+        imageUrl: row.image_url ?? null,
         alreadyEnrolled: row.already_enrolled ?? false,
       })) as ProgrammeListItem[]
     },
@@ -175,6 +179,8 @@ export function useProgrammeDetail(
         capacity: row.capacity ?? 0,
         enrolledCount: Number(row.enrolled_count ?? 0),
         maxRatio: row.max_ratio ?? null,
+        description: row.description ?? null,
+        imageUrl: row.image_url ?? null,
         coaches: Array.isArray(row.coaches) ? row.coaches : [],
         curriculumModules: Array.isArray(row.curriculum_modules)
           ? row.curriculum_modules
@@ -210,7 +216,7 @@ export function useEnrollableMembers(programmeId: number) {
       return ((data as EnrollableMemberRow[] | null) ?? []).map((row) => ({
         id: row.id,
         fullName: row.full_name,
-        isEligible: row.is_eligible, // ← the key line
+        isEligible: row.is_eligible,
         reason: row.reason,
         programmeFull: row.programme_full,
       })) as EnrollableMember[]

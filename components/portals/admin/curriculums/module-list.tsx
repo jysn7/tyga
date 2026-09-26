@@ -20,6 +20,16 @@ const CATEGORY_LABELS: Record<
   format: "Format",
 }
 
+const CATEGORY_STYLES: Record<
+  NonNullable<CurriculumModule["category"]>,
+  string
+> = {
+  technical: "bg-teal",
+  physical: "bg-yellow",
+  mental_character: "bg-purple",
+  format: "bg-orange",
+}
+
 export function ModuleList({
   modules,
   onEdit,
@@ -84,14 +94,14 @@ export function ModuleList({
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border/60 bg-card/80 shadow">
-      <table className="w-full border-collapse">
+    <div className="overflow-x-auto rounded-lg bg-card shadow">
+      <table className="w-full min-w-[720px] border-collapse">
         <thead>
           <tr className="border-b border-border/60 bg-foreground/80 text-left text-[11px] font-medium tracking-wider text-background uppercase">
-            <th className="px-4 py-2.5 font-medium">Module</th>
-            <th className="px-4 py-2.5 font-medium">Level</th>
-            <th className="px-4 py-2.5 font-medium">Category</th>
-            <th className="px-4 py-2.5" />
+            <th className="px-4 py-2 font-medium">Module</th>
+            <th className="px-4 py-2 font-medium">Level</th>
+            <th className="px-4 py-2 font-medium">Category</th>
+            <th className="px-4 py-2" />
           </tr>
         </thead>
         <tbody>
@@ -100,53 +110,69 @@ export function ModuleList({
             return (
               <tr
                 key={module.id}
-                className={`border-b border-border/60 text-sm last:border-b-0 hover:bg-accent/40 ${
+                className={`border-b border-border/60 text-sm transition-colors last:border-b-0 hover:bg-accent/40 ${
                   isArchived ? "opacity-50" : ""
                 }`}
               >
-                <td className="px-4 py-3">
+                <td className="px-4 py-2">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-foreground">
+                    <span className="text-sm font-semibold tracking-tight text-foreground">
                       {module.name}
                     </span>
                     {module.isMilestone && (
-                      <span className="flex items-center justify-center rounded bg-pink px-2 py-0.5 text-[10px] font-medium text-card">
+                      <span className="inline-flex items-center rounded-full bg-pink px-2 py-0.5 text-[10px] font-medium text-secondary">
                         Milestone
                       </span>
                     )}
                     {isArchived && (
-                      <span className="rounded border border-accent bg-input px-2 py-0.5 text-[10px] text-muted-foreground">
+                      <span className="inline-flex items-center rounded-full bg-input px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
                         Archived
                       </span>
                     )}
                   </div>
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
+
+                <td className="px-4 py-2 whitespace-nowrap text-muted-foreground">
                   {module.levelName}
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
-                  {module.category ? CATEGORY_LABELS[module.category] : "—"}
+
+                <td className="px-4 py-2 whitespace-nowrap">
+                  {module.category ? (
+                    <span
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium text-secondary ${
+                        CATEGORY_STYLES[module.category]
+                      }`}
+                    >
+                      {CATEGORY_LABELS[module.category]}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
+                  )}
                 </td>
-                <td className="px-4 py-3">
+
+                <td className="px-4 py-2">
                   <div className="flex items-center justify-end gap-1">
                     <button
                       type="button"
                       onClick={() => onEdit(module)}
                       title="Edit"
-                      className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-transparent text-muted-foreground transition-colors hover:border-border hover:bg-accent hover:text-foreground"
+                      className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                     >
-                      <Pencil className="h-3.5 w-3.5" />
+                      <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} />
                     </button>
                     <button
                       type="button"
                       onClick={() => handleToggleArchive(module)}
                       title={isArchived ? "Restore" : "Archive"}
-                      className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-transparent text-muted-foreground transition-colors hover:border-border hover:bg-accent hover:text-foreground"
+                      className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                     >
                       {isArchived ? (
-                        <ArchiveRestore className="h-3.5 w-3.5" />
+                        <ArchiveRestore
+                          className="h-3.5 w-3.5"
+                          strokeWidth={1.75}
+                        />
                       ) : (
-                        <Archive className="h-3.5 w-3.5" />
+                        <Archive className="h-3.5 w-3.5" strokeWidth={1.75} />
                       )}
                     </button>
                     <button
@@ -154,9 +180,9 @@ export function ModuleList({
                       onClick={() => handleDelete(module)}
                       disabled={deletingId === module.id}
                       title="Delete permanently"
-                      className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-transparent text-muted-foreground transition-colors hover:border-destructive hover:bg-destructive/10 hover:text-destructive disabled:pointer-events-none disabled:opacity-40"
+                      className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:pointer-events-none disabled:opacity-40"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
                     </button>
                   </div>
                 </td>

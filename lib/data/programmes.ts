@@ -1286,6 +1286,8 @@ export async function getAllProgrammes(): Promise<Programme[]> {
     capacity: p.capacity,
     enrolledCount: p.enrolledCount,
     maxRatio: p.maxRatio,
+    description: p.description ?? null,
+    imageUrl: p.imageUrl ?? null,
   }))
 }
 

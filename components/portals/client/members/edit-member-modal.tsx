@@ -159,7 +159,7 @@ export function EditMemberPanel({ member }: { member: EditableMember }) {
       <Button
         variant="secondary"
         size="sm"
-        className="gap-1.5 rounded-md text-xs font-medium"
+        className="w-full md:w-fit"
         onClick={() => setOpen(true)}
       >
         <Pencil className="h-3.5 w-3.5" />

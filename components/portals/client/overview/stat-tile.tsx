@@ -1,7 +1,15 @@
 import type { LucideIcon } from "lucide-react"
 
 type StatColor =
-  "blue" | "green" | "yellow" | "red" | "purple" | "teal" | "orange" | "pink"
+  | "blue"
+  | "green"
+  | "yellow"
+  | "red"
+  | "purple"
+  | "teal"
+  | "orange"
+  | "pink"
+  | "gray"
 
 const colorMap: Record<StatColor, { bg: string; chip: string; icon: string }> =
   {
@@ -11,9 +19,9 @@ const colorMap: Record<StatColor, { bg: string; chip: string; icon: string }> =
       icon: "text-blue-light",
     },
     green: {
-      bg: "bg-green-light",
-      chip: "bg-green/50",
-      icon: "text-green-light",
+      bg: "bg-primary/70",
+      chip: "bg-primary/50",
+      icon: "text-prmary/80",
     },
     yellow: {
       bg: "bg-yellow-light",
@@ -45,6 +53,11 @@ const colorMap: Record<StatColor, { bg: string; chip: string; icon: string }> =
       chip: "bg-pink/50",
       icon: "text-pink-light",
     },
+    gray: {
+      bg: "bg-foreground/80",
+      chip: "bg-foreground/50",
+      icon: "text-secondary",
+    },
   }
 
 export function StatTile({
@@ -52,28 +65,49 @@ export function StatTile({
   value,
   icon: Icon,
   color = "blue",
+  compact = false,
 }: {
   label: string
   value: string
   icon: LucideIcon
   color?: StatColor
+  compact?: boolean
 }) {
   const c = colorMap[color]
 
   return (
     <div
-      className={`flex flex-col gap-3 rounded-xl p-4 text-foreground shadow ${c.bg}`}
+      className={`flex h-full flex-col justify-between rounded-xl shadow ${c.bg} ${
+        compact ? "gap-2 p-3 sm:gap-3 sm:p-4" : "gap-3 p-4"
+      }`}
     >
       <div
-        className={`flex h-9 w-9 items-center justify-center rounded-lg ${c.chip}`}
+        className={`flex items-center justify-center rounded-lg ${c.chip} ${
+          compact ? "h-7 w-7 sm:h-9 sm:w-9" : "h-9 w-9"
+        }`}
       >
-        <Icon className={`h-4 w-4 ${c.icon}`} strokeWidth={1.75} />
+        <Icon
+          className={`${c.icon} ${
+            compact ? "h-3.5 w-3.5 sm:h-4 sm:w-4" : "h-4 w-4"
+          }`}
+          strokeWidth={1.75}
+        />
       </div>
       <div className="flex flex-col gap-0.5">
-        <span className="text-2xl font-semibold tracking-tight text-foreground">
+        <span
+          className={`font-semibold tracking-tight ${
+            compact ? "text-lg sm:text-2xl" : "text-2xl"
+          } ${color === "gray" ? "text-secondary" : "text-foreground"}`}
+        >
           {value}
         </span>
-        <span className="text-xs text-muted-foreground">{label}</span>
+        <span
+          className={`${compact ? "text-[11px] sm:text-xs" : "text-xs"} ${
+            color === "gray" ? "text-secondary/70" : "text-muted-foreground"
+          }`}
+        >
+          {label}
+        </span>
       </div>
     </div>
   )

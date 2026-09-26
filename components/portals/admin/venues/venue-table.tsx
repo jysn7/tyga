@@ -22,10 +22,10 @@ const typeLabel: Record<string, string> = {
 }
 
 const typeColors: Record<string, string> = {
-  course: "bg-blue/10 text-blue",
-  practice_ground: "bg-green/10 text-green",
-  range: "bg-orange/10 text-orange",
-  school: "bg-pink/10 text-pink",
+  course: "bg-green/15 text-green",
+  practice_ground: "bg-blue/15 text-blue",
+  range: "bg-orange/15 text-orange",
+  school: "bg-purple/15 text-purple",
 }
 
 export function VenueTable({ venues }: { venues: AdminVenue[] }) {
@@ -48,69 +48,71 @@ export function VenueTable({ venues }: { venues: AdminVenue[] }) {
 
   return (
     <>
-      <Table>
-        <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            <TableHead>Venue</TableHead>
-            <TableHead>Address</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead className="w-10" />
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {venues.map((venue) => (
-            <TableRow
-              key={venue.id}
-              className="group cursor-pointer"
-              onClick={() => handleEdit(venue)}
-            >
-              <TableCell>
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted/60">
-                    <MapPin
-                      className="h-4 w-4 text-muted-foreground"
-                      strokeWidth={1.75}
-                    />
-                  </div>
-                  <span className="text-sm font-medium text-foreground">
-                    {venue.name}
-                  </span>
-                </div>
-              </TableCell>
-
-              <TableCell>
-                <span className="text-sm text-muted-foreground">
-                  {venue.address || "No address provided"}
-                </span>
-              </TableCell>
-
-              <TableCell>
-                <span
-                  className={`rounded-full px-2.5 py-0.5 text-[10px] font-medium ${
-                    typeColors[venue.type ?? ""] ||
-                    "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {typeLabel[venue.type ?? ""] ?? venue.type ?? "Unknown"}
-                </span>
-              </TableCell>
-
-              <TableCell>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleEdit(venue)
-                  }}
-                  className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-colors group-hover:opacity-100 hover:bg-accent hover:text-foreground"
-                  title="Edit venue"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                </button>
-              </TableCell>
+      <div className="overflow-x-auto rounded-lg bg-card shadow">
+        <Table className="min-w-[640px]">
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead>Venue</TableHead>
+              <TableHead>Address</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead className="w-10" />
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {venues.map((venue) => (
+              <TableRow
+                key={venue.id}
+                className="group cursor-pointer transition-colors"
+                onClick={() => handleEdit(venue)}
+              >
+                <TableCell>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue">
+                      <MapPin
+                        className="h-3.5 w-3.5 text-foreground"
+                        strokeWidth={1.75}
+                      />
+                    </div>
+                    <span className="text-sm font-semibold tracking-tight text-foreground">
+                      {venue.name}
+                    </span>
+                  </div>
+                </TableCell>
+
+                <TableCell>
+                  <span className="text-sm text-muted-foreground">
+                    {venue.address || "No address provided"}
+                  </span>
+                </TableCell>
+
+                <TableCell>
+                  <span
+                    className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ${
+                      typeColors[venue.type ?? ""] ||
+                      "bg-input text-muted-foreground"
+                    }`}
+                  >
+                    {typeLabel[venue.type ?? ""] ?? venue.type ?? "Unknown"}
+                  </span>
+                </TableCell>
+
+                <TableCell>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleEdit(venue)
+                    }}
+                    className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    title="Edit venue"
+                  >
+                    <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} />
+                  </button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
       <VenueFormPanel
         key={`${editingVenue?.id ?? "new"}-${editOpen ? "open" : "closed"}`}

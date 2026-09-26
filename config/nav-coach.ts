@@ -7,7 +7,6 @@ import {
   ClipboardList,
   GraduationCap,
   Trophy,
-  UserCog,
   Clock,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"

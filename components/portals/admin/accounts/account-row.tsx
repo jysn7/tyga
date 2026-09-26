@@ -119,11 +119,11 @@ export function AccountTableRow({ account }: { account: Account }) {
   }
 
   return (
-    <tr className="border-b border-border/60 text-sm last:border-b-0 hover:bg-accent/40">
-      <td className="px-4 py-3">
+    <tr className="border-b border-border/60 text-sm transition-colors last:border-b-0 hover:bg-accent/40">
+      <td className="px-4 py-2">
         <div className="flex items-center gap-3">
           <Avatar className="h-8 w-8 shrink-0 rounded-full">
-            <AvatarFallback className="bg-muted text-xs font-medium text-muted-foreground">
+            <AvatarFallback className="rounded-full bg-green/15 text-[11px] font-semibold text-green">
               {getInitials(account.fullName)}
             </AvatarFallback>
           </Avatar>
@@ -135,11 +135,11 @@ export function AccountTableRow({ account }: { account: Account }) {
         </div>
       </td>
 
-      <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
+      <td className="px-4 py-2 whitespace-nowrap text-muted-foreground">
         {account.email}
       </td>
 
-      <td className="px-4 py-3">
+      <td className="px-4 py-2">
         <Select
           value={account.role}
           onValueChange={(v) => handleRoleChange(v as Account["role"])}
@@ -156,7 +156,7 @@ export function AccountTableRow({ account }: { account: Account }) {
         </Select>
       </td>
 
-      <td className="px-4 py-3">
+      <td className="px-4 py-2">
         <div className="flex items-center gap-2">
           <Switch
             checked={account.active}

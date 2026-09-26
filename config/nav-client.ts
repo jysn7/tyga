@@ -1,13 +1,11 @@
 import {
   Home,
   Users,
-  Calendar,
   Receipt,
   Bell,
   Settings,
   CreditCard,
   Trophy,
-  GraduationCap,
   Clock,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"

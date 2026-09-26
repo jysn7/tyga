@@ -74,6 +74,12 @@ export function EditProgrammePanel({
   const [genderRestriction, setGenderRestriction] = useState<string>(
     () => programme?.genderRestriction ?? "any"
   )
+  const [description, setDescription] = useState(
+    () => programme?.description ?? ""
+  )
+  const [imageUrl, setImageUrl] = useState<string | null>(
+    () => programme?.imageUrl ?? null
+  )
   const [recurrenceRule, setRecurrenceRule] = useState(
     () => programme?.recurrenceRule ?? ""
   )
@@ -106,6 +112,8 @@ export function EditProgrammePanel({
     minAge: string
     maxAge: string
     genderRestriction: string
+    description: string
+    imageUrl: string | null
     recurrenceRule: string
     termStart: string
     termEnd: string
@@ -128,6 +136,8 @@ export function EditProgrammePanel({
       price: data.price ? Number(data.price) : 0,
       capacity: data.capacity ? Number(data.capacity) : 0,
       maxRatio: data.maxRatio ? Number(data.maxRatio) : null,
+      description: data.description || null,
+      imageUrl: data.imageUrl,
     }
     try {
       await updateProgramme.mutateAsync({ ...input, id: programme!.id })
@@ -222,6 +232,10 @@ export function EditProgrammePanel({
                 setMaxAge={setMaxAge}
                 genderRestriction={genderRestriction}
                 setGenderRestriction={setGenderRestriction}
+                description={description}
+                setDescription={setDescription}
+                imageUrl={imageUrl}
+                setImageUrl={setImageUrl}
                 recurrenceRule={recurrenceRule}
                 setRecurrenceRule={setRecurrenceRule}
                 termStart={termStart}

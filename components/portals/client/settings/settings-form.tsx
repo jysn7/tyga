@@ -1,7 +1,8 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
+import { parsePhoneNumberFromString, AsYouType } from "libphonenumber-js"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
@@ -10,31 +11,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { toast } from "@/components/ui/toast"
 import { createClient } from "@/utils/supabase/client"
 import { saveAccountSettings } from "@/lib/functions/save-account-settings"
-
-function Field({
-  label,
-  children,
-  hint,
-}: {
-  label: string
-  children: React.ReactNode
-  hint?: string
-}) {
-  return (
-    <div className="flex flex-col gap-1.5 border-b border-border/60 py-4 last:border-b-0">
-      <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-        {label}
-      </span>
-      {children}
-      {hint && (
-        <span className="pt-0.5 text-xs text-muted-foreground">{hint}</span>
-      )}
-    </div>
-  )
-}
-
-const fieldStyles =
-  "border-none bg-muted/80 pl-2 shadow-none text-[15px] text-foreground focus-visible:ring-0 placeholder:text-muted-foreground/50"
+import { Field, fieldStyles } from "@/components/portals/shared/field"
+import { Camera, ShieldAlert, Check } from "lucide-react"
 
 const NOTIFICATION_TYPES: { key: string; label: string }[] = [
   { key: "session_reminder", label: "Session reminders" },
@@ -47,6 +25,34 @@ const NOTIFICATION_TYPES: { key: string; label: string }[] = [
   },
   { key: "announcement", label: "Announcements" },
 ]
+
+function validatePhone(raw: string): {
+  ok: boolean
+  formatted?: string
+  e164?: string
+  error?: string
+} {
+  const trimmed = raw.trim()
+  if (trimmed === "") {
+    return { ok: false, error: "Phone number is required" }
+  }
+
+  const parsed = parsePhoneNumberFromString(trimmed, "ZA")
+
+  if (!parsed) {
+    return { ok: false, error: "Enter a valid phone number" }
+  }
+
+  if (!parsed.isValid()) {
+    return { ok: false, error: "That doesn't look like a valid number" }
+  }
+
+  return {
+    ok: true,
+    formatted: parsed.formatNational(),
+    e164: parsed.number,
+  }
+}
 
 function getInitials(name: string) {
   return name
@@ -79,6 +85,20 @@ export function SettingsForm({ account }: { account: AccountSettings }) {
   const [isSaving, setIsSaving] = useState(false)
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
   const [savedAt, setSavedAt] = useState<number | null>(null)
+
+  const phoneValidation = useMemo(() => validatePhone(phone), [phone])
+  const phoneTouched = phone.length > 0
+
+  const fullNameValid = fullName.trim().length >= 2
+
+  const canSave =
+    phoneValidation.ok && fullNameValid && !isSaving && !isUploadingAvatar
+
+  function handlePhoneChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const raw = e.target.value
+    const formatted = new AsYouType("ZA").input(raw)
+    setPhone(formatted || raw)
+  }
 
   function togglePref(key: string) {
     setPrefs((prev) => ({ ...prev, [key]: !prev[key] }))
@@ -113,8 +133,6 @@ export function SettingsForm({ account }: { account: AccountSettings }) {
         data: { publicUrl },
       } = supabase.storage.from("avatars").getPublicUrl(filePath)
 
-      // Cache-bust so the new image shows immediately, since the path
-      // itself doesn't change on re-upload (upsert overwrites the same file)
       const bustedUrl = `${publicUrl}?t=${Date.now()}`
 
       const { error: rpcError } = await supabase.rpc("set_my_avatar", {
@@ -149,6 +167,16 @@ export function SettingsForm({ account }: { account: AccountSettings }) {
   }
 
   async function handleSave() {
+    if (!phoneValidation.ok) {
+      toast.add({
+        title: "Check your phone number",
+        description: phoneValidation.error,
+        type: "error",
+        timeout: 4000,
+      })
+      return
+    }
+
     setIsSaving(true)
     const toastId = "settings-save-status"
 
@@ -165,7 +193,12 @@ export function SettingsForm({ account }: { account: AccountSettings }) {
         Array.from(changedPrefKeys).map((key) => [key, prefs[key]])
       )
 
-      await saveAccountSettings({ fullName, phone, address, changedPrefs })
+      await saveAccountSettings({
+        fullName,
+        phone: phoneValidation.e164 ?? phone,
+        address,
+        changedPrefs,
+      })
 
       toast.add({
         id: toastId,
@@ -198,55 +231,83 @@ export function SettingsForm({ account }: { account: AccountSettings }) {
       <TabsList className="w-fit">
         <TabsTrigger value="profile">Profile</TabsTrigger>
         <TabsTrigger value="notifications">Notifications</TabsTrigger>
+        <TabsTrigger value="account">Account</TabsTrigger>
       </TabsList>
 
       <TabsContent value="profile" className="mt-0">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[220px_1fr]">
-          {/* Left column — avatar */}
-          <div className="flex flex-col items-center gap-3 p-6 lg:items-start">
-            <Avatar className="h-48 w-48 rounded-full">
-              {avatarUrl && <AvatarImage src={avatarUrl} alt={fullName} />}
-              <AvatarFallback className="bg-pink text-2xl font-medium text-primary-foreground">
-                {getInitials(fullName)}
-              </AvatarFallback>
-            </Avatar>
+        <div className="flex flex-col gap-6">
+          {/* Profile photo */}
+          <section className="flex flex-col gap-3">
+            <div className="flex flex-col gap-0.5">
+              <h2 className="text-sm font-semibold tracking-tight text-foreground">
+                Profile photo
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                This is how you&apos;ll appear across the app
+              </p>
+            </div>
+            <div className="flex flex-col items-start gap-4 rounded-xl bg-card p-5 shadow sm:flex-row sm:items-center">
+              <Avatar className="h-16 w-16 shrink-0 rounded-full">
+                {avatarUrl && <AvatarImage src={avatarUrl} alt={fullName} />}
+                <AvatarFallback className="bg-pink/15 text-base font-semibold text-pink">
+                  {getInitials(fullName)}
+                </AvatarFallback>
+              </Avatar>
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              className="hidden"
-              onChange={handleAvatarChange}
-            />
+              <div className="flex flex-1 flex-col gap-1.5">
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 rounded-md text-xs"
+                    disabled={isUploadingAvatar}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Camera className="mr-1 h-3.5 w-3.5" strokeWidth={1.75} />
+                    {isUploadingAvatar ? "Uploading…" : "Change photo"}
+                  </Button>
+                </div>
+                <span className="text-[11px] text-muted-foreground">
+                  JPG, PNG, or WEBP · 2 MB max
+                </span>
+              </div>
 
-            <Button
-              size="sm"
-              variant="secondary"
-              className="rounded-md text-xs"
-              disabled={isUploadingAvatar}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              {isUploadingAvatar ? "Uploading…" : "Change photo"}
-            </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={handleAvatarChange}
+              />
+            </div>
+          </section>
 
-            <p className="text-center text-xs text-muted-foreground italic lg:text-left">
-              JPG, PNG, or WEBP. 2MB max.
-            </p>
-          </div>
-
-          {/* Right column — editable details */}
-          <section className="rounded-xl bg-secondary p-4 shadow">
-            <h2 className="pb-1 text-sm font-medium text-foreground">
-              Profile
-            </h2>
-            <div className="flex flex-col">
-              <Field label="Full name">
+          {/* Profile details */}
+          <section className="flex flex-col gap-3">
+            <div className="flex flex-col gap-0.5">
+              <h2 className="text-sm font-semibold tracking-tight text-foreground">
+                Profile details
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Update your personal information
+              </p>
+            </div>
+            <div className="flex flex-col rounded-xl bg-card p-5 shadow">
+              <Field
+                label="Full name"
+                error={
+                  fullName.length > 0 && !fullNameValid
+                    ? "Name must be at least 2 characters"
+                    : undefined
+                }
+              >
                 <Input
                   className={fieldStyles}
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                 />
               </Field>
+
               <Field
                 label="Email"
                 hint="Contact TYGA to change your login email"
@@ -255,13 +316,34 @@ export function SettingsForm({ account }: { account: AccountSettings }) {
                   {account.email}
                 </span>
               </Field>
-              <Field label="Phone">
-                <Input
-                  className={fieldStyles}
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                />
+
+              <Field
+                label="Phone"
+                hint="Any country — defaults to South Africa if no country code"
+                error={
+                  phoneTouched && !phoneValidation.ok
+                    ? phoneValidation.error
+                    : undefined
+                }
+              >
+                <div className="relative">
+                  <Input
+                    className={fieldStyles}
+                    type="tel"
+                    inputMode="tel"
+                    value={phone}
+                    onChange={handlePhoneChange}
+                    placeholder="082 123 4567"
+                  />
+                  {phoneTouched && phoneValidation.ok && (
+                    <Check
+                      className="pointer-events-none absolute top-1/2 right-3 h-3.5 w-3.5 -translate-y-1/2 text-green"
+                      strokeWidth={2}
+                    />
+                  )}
+                </div>
               </Field>
+
               <Field label="Address">
                 <Input
                   className={fieldStyles}
@@ -270,55 +352,105 @@ export function SettingsForm({ account }: { account: AccountSettings }) {
                 />
               </Field>
             </div>
-
-            <div className="flex items-center justify-end gap-3 pt-4">
-              {savedAt && !isSaving && (
-                <span className="text-xs text-muted-foreground">Saved</span>
-              )}
-              <Button
-                size="sm"
-                className="rounded-md px-5 text-sm"
-                disabled={isSaving}
-                onClick={handleSave}
-              >
-                {isSaving ? "Saving…" : "Save changes"}
-              </Button>
-            </div>
           </section>
-        </div>
-      </TabsContent>
 
-      <TabsContent value="notifications" className="mt-0">
-        <section className="rounded-xl bg-secondary p-4 shadow">
-          <h2 className="pb-1 text-sm font-medium text-foreground">
-            Notifications
-          </h2>
-          <div className="flex flex-col">
-            {NOTIFICATION_TYPES.map(({ key, label }) => (
-              <div
-                key={key}
-                className="flex items-center justify-between border-b border-border/60 py-2.5 last:border-b-0"
-              >
-                <span className="text-[15px] text-foreground">{label}</span>
-                <Switch
-                  checked={prefs[key]}
-                  onCheckedChange={() => togglePref(key)}
-                />
-              </div>
-            ))}
-          </div>
-
-          <div className="flex items-center justify-end gap-3 pt-4">
+          {/* Save bar */}
+          <div className="flex items-center justify-end gap-3">
             {savedAt && !isSaving && (
               <span className="text-xs text-muted-foreground">Saved</span>
             )}
             <Button
               size="sm"
-              className="rounded-md px-5 text-sm"
+              className="h-9 rounded-md bg-foreground px-5 text-xs font-medium text-background hover:bg-foreground/90"
+              disabled={!canSave}
+              onClick={handleSave}
+            >
+              {isSaving ? "Saving…" : "Save changes"}
+            </Button>
+          </div>
+        </div>
+      </TabsContent>
+
+      <TabsContent value="notifications" className="mt-0">
+        <div className="flex flex-col gap-6">
+          <section className="flex flex-col gap-3">
+            <div className="flex flex-col gap-0.5">
+              <h2 className="text-sm font-semibold tracking-tight text-foreground">
+                Notifications
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Choose which updates you&apos;d like to receive
+              </p>
+            </div>
+            <div className="flex flex-col rounded-xl bg-card p-5 shadow">
+              {NOTIFICATION_TYPES.map(({ key, label }, i) => (
+                <div
+                  key={key}
+                  className={`flex items-center justify-between border-b border-border/60 py-3 last:border-b-0 ${
+                    i === 0 ? "pt-0" : ""
+                  } ${i === NOTIFICATION_TYPES.length - 1 ? "pb-0" : ""}`}
+                >
+                  <span className="text-sm text-foreground">{label}</span>
+                  <Switch
+                    checked={prefs[key]}
+                    onCheckedChange={() => togglePref(key)}
+                  />
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <div className="flex items-center justify-end gap-3">
+            {savedAt && !isSaving && (
+              <span className="text-xs text-muted-foreground">Saved</span>
+            )}
+            <Button
+              size="sm"
+              className="h-9 rounded-md bg-foreground px-5 text-xs font-medium text-background hover:bg-foreground/90"
               disabled={isSaving}
               onClick={handleSave}
             >
               {isSaving ? "Saving…" : "Save changes"}
+            </Button>
+          </div>
+        </div>
+      </TabsContent>
+
+      <TabsContent value="account" className="mt-0">
+        <section className="flex flex-col gap-3">
+          <div className="flex items-start gap-2">
+            <ShieldAlert
+              className="mt-0.5 h-3.5 w-3.5 shrink-0 text-destructive"
+              strokeWidth={1.75}
+            />
+            <div className="flex flex-col gap-0.5">
+              <h2 className="text-sm font-semibold tracking-tight text-foreground">
+                Deactivate account
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                This will disable your account and sign you out everywhere.
+                Contact TYGA to reactivate.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-col items-start gap-3 rounded-xl bg-card p-5 shadow sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-sm font-medium text-foreground">
+                Deactivate my account
+              </span>
+              <span className="text-xs text-muted-foreground">
+                You&apos;ll lose access until TYGA reactivates it.
+              </span>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled
+              className="h-9 shrink-0 rounded-md border-destructive/40 text-xs font-medium text-destructive disabled:opacity-60"
+              title="Contact TYGA to deactivate your account"
+            >
+              Deactivate account
             </Button>
           </div>
         </section>

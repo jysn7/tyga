@@ -15,12 +15,19 @@ const COACH_TYPE_LABELS: Record<NonNullable<Coach["coachType"]>, string> = {
   volunteer: "Volunteer",
 }
 
+const COACH_TYPE_STYLES: Record<NonNullable<Coach["coachType"]>, string> = {
+  head_coach: "bg-yellow",
+  assistant_coach: "bg-purple",
+  volunteer: "bg-teal",
+}
+
 function getInitials(name: string) {
   return name
     .split(" ")
     .map((n) => n[0])
     .slice(0, 2)
     .join("")
+    .toUpperCase()
 }
 
 export function CoachTableRow({
@@ -47,8 +54,6 @@ export function CoachTableRow({
 
     try {
       const supabase = createClient()
-      // Deactivation goes through admin_deactivate_coach (coach-specific path);
-      // reactivation just flips the linked account back on.
       const { error } = next
         ? await supabase.rpc("admin_set_account_active", {
             p_account_id: coach.accountId,
@@ -81,35 +86,61 @@ export function CoachTableRow({
   }
 
   return (
-    <tr className="border-b border-border/60 text-sm last:border-b-0 hover:bg-accent/40">
-      <td className="px-4 py-3">
+    <tr
+      className={`group border-b border-border/60 text-sm transition-colors last:border-b-0 hover:bg-accent/40 ${
+        !coach.active ? "opacity-60" : ""
+      }`}
+    >
+      {/* Coach */}
+      <td className="px-4 py-2">
         <div className="flex items-center gap-3">
-          <Avatar className="h-8 w-8 shrink-0 rounded-full">
-            <AvatarFallback className="bg-orange/80 text-xs font-medium text-primary-foreground">
+          <Avatar className="h-9 w-9 shrink-0 rounded-lg">
+            <AvatarFallback className="rounded-full bg-orange/15 text-[11px] font-semibold text-orange">
               {getInitials(coach.fullName)}
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0">
-            <p className="truncate font-medium text-foreground">
+            <p className="truncate text-sm font-semibold tracking-tight text-foreground">
               {coach.fullName}
             </p>
           </div>
         </div>
       </td>
 
-      <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
+      {/* Email */}
+      <td className="px-4 py-2 whitespace-nowrap text-muted-foreground">
         {coach.email}
       </td>
 
-      <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
-        {coach.coachType ? COACH_TYPE_LABELS[coach.coachType] : "—"}
+      {/* Coach type */}
+      <td className="px-4 py-2 whitespace-nowrap">
+        {coach.coachType ? (
+          <span
+            className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium text-secondary ${
+              COACH_TYPE_STYLES[coach.coachType]
+            }`}
+          >
+            {COACH_TYPE_LABELS[coach.coachType]}
+          </span>
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        )}
       </td>
 
-      <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
-        {coach.maxStudentRatio ?? "—"}
+      {/* Max ratio */}
+      <td className="px-4 py-2 whitespace-nowrap">
+        {coach.maxStudentRatio != null ? (
+          <span className="text-sm text-foreground">
+            1<span className="text-muted-foreground">:</span>
+            {coach.maxStudentRatio}
+          </span>
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        )}
       </td>
 
-      <td className="px-4 py-3">
+      {/* Active + Edit */}
+      <td className="px-4 py-2">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Switch
@@ -125,9 +156,9 @@ export function CoachTableRow({
             type="button"
             onClick={() => onEdit(coach)}
             title="Edit coach"
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-all hover:bg-accent hover:text-foreground"
           >
-            <Pencil className="h-3.5 w-3.5" />
+            <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} />
           </button>
         </div>
       </td>

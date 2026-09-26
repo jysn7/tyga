@@ -1,15 +1,22 @@
 "use client"
 
 import Link from "next/link"
-import { Calendar, Users, CreditCard, Trophy } from "lucide-react"
+import {
+  Calendar,
+  Users,
+  CreditCard,
+  Trophy,
+  Receipt,
+  GraduationCap,
+} from "lucide-react"
 import { PageHeader } from "@/components/portals/shared/page-header"
 import { Loader } from "@/components/portals/shared/loader"
 import { StatTile } from "@/components/portals/client/overview/stat-tile"
 import { OutstandingInvoiceBanner } from "@/components/portals/client/overview/outstanding-invoice-banner"
 import { ChildCard } from "@/components/portals/client/overview/child-card"
-import { UpcomingSessionsList } from "@/components/portals/client/overview/upcoming-sessions-list"
 import { RecentProgressList } from "@/components/portals/client/overview/recent-progress-list"
 import { MiniCalendar } from "@/components/portals/client/overview/mini-calendar"
+import { ProgrammeCarousel } from "@/components/portals/client/overview/programme-carousel"
 import {
   useParentStats,
   useParentChildren,
@@ -17,6 +24,14 @@ import {
   useParentProgress,
   useParentOutstandingInvoices,
 } from "@/hooks/client/use-parent-overview"
+import { useProgrammes } from "@/hooks/client/use-programmes"
+
+const QUICK_LINKS = [
+  { label: "Schedule", href: "/schedule", icon: Calendar },
+  { label: "Members", href: "/members", icon: Users },
+  { label: "Programmes", href: "/programmes", icon: GraduationCap },
+  { label: "Invoices", href: "/invoices", icon: Receipt },
+]
 
 export function ParentOverview() {
   const { data: stats, isLoading: statsLoading } = useParentStats()
@@ -27,13 +42,17 @@ export function ParentOverview() {
   const { data: invoices, isLoading: invoicesLoading } =
     useParentOutstandingInvoices()
 
-  // Only children who have an upcoming session, limited to 2
+  const { data: programmes, isLoading: programmesLoading } = useProgrammes(
+    null,
+    true
+  )
+
   const enrolledChildren = (children ?? [])
     .filter((c) => c.nextSession)
     .slice(0, 2)
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <PageHeader
         title="Welcome back"
         description="Here's what's happening with your family"
@@ -48,58 +67,81 @@ export function ParentOverview() {
         }
       />
 
-      {/* Stat tiles — each with its own Google color */}
-      {statsLoading || !stats ? (
-        <div className="flex h-24 items-center justify-center">
-          <Loader />
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <StatTile
-            color="blue"
-            label="Active members"
-            value={String(stats.activeMembers)}
-            icon={Users}
-          />
-          <StatTile
-            color="green"
-            label="Upcoming sessions"
-            value={String(stats.upcomingSessions)}
-            icon={Calendar}
-          />
-          <StatTile
-            color="yellow"
-            label="Outstanding balance"
-            value={`R${stats.outstandingBalance.toLocaleString()}`}
-            icon={CreditCard}
-          />
-          <StatTile
-            color="purple"
-            label="Badges this month"
-            value={String(stats.badgesThisMonth)}
-            icon={Trophy}
-          />
-        </div>
-      )}
-
-      {/* Outstanding invoice banner */}
-      {!invoicesLoading && invoices && (
-        <OutstandingInvoiceBanner invoices={invoices} />
-      )}
-
-      {/* Two-column: main content + sidebar */}
+      {/* Two-column: main content (scrolls) + sidebar (sticky) */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Main column */}
-        <div className="flex flex-col gap-6 lg:col-span-2">
-          {/* Upcoming lessons */}
+        {/* Main column — stats, programmes, members, invoices */}
+        <div className="flex w-full flex-col gap-6 lg:col-span-2">
+          {/* Stats */}
+          {statsLoading || !stats ? (
+            <div className="flex min-h-50 items-center justify-center">
+              <Loader />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <StatTile
+                  color="green"
+                  label="Outstanding balance"
+                  value={`R${stats.outstandingBalance.toLocaleString()}`}
+                  icon={CreditCard}
+                  compact
+                />
+              </div>
+
+              <StatTile
+                color="gray"
+                label="Active members"
+                value={String(stats.activeMembers)}
+                icon={Users}
+                compact
+              />
+              <StatTile
+                color="gray"
+                label="Badges this month"
+                value={String(stats.badgesThisMonth)}
+                icon={Trophy}
+                compact
+              />
+            </div>
+          )}
+
+          {/* Outstanding invoice banner */}
+          {!invoicesLoading && invoices && (
+            <OutstandingInvoiceBanner invoices={invoices} />
+          )}
+
+          {/* Programme carousel */}
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold tracking-tight text-foreground">
-                Upcoming lessons
+                Explore programmes
+              </h2>
+              <Link
+                href="/programmes"
+                className="text-xs font-medium text-information underline transition-colors hover:text-information/70"
+              >
+                View all
+              </Link>
+            </div>
+
+            {programmesLoading ? (
+              <div className="flex h-56 items-center justify-center rounded-xl bg-card shadow">
+                <Loader />
+              </div>
+            ) : (
+              <ProgrammeCarousel programmes={programmes ?? []} />
+            )}
+          </div>
+
+          {/* Enrolled members */}
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold tracking-tight text-foreground">
+                Enrolled members
               </h2>
               <Link
                 href="/members"
-                className="text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                className="text-xs font-medium text-information underline transition-colors hover:text-information/70"
               >
                 View all members
               </Link>
@@ -119,10 +161,11 @@ export function ParentOverview() {
                 </div>
                 <div className="flex flex-col gap-0.5">
                   <span className="text-sm font-semibold text-foreground">
-                    No upcoming lessons
+                    No enrolled members
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    Your children don&apos;t have any sessions scheduled yet.
+                    Your children aren&apos;t actively enrolled in any
+                    programmes yet.
                   </span>
                 </div>
               </div>
@@ -134,35 +177,56 @@ export function ParentOverview() {
               </div>
             )}
           </div>
-
-          {/* Upcoming sessions list */}
-          {sessionsLoading ? (
-            <div className="flex h-32 items-center justify-center">
-              <Loader />
-            </div>
-          ) : (
-            <UpcomingSessionsList sessions={sessions ?? []} />
-          )}
         </div>
 
-        {/* Sidebar */}
-        <div className="flex flex-col gap-6 lg:col-span-1">
+        {/* Sidebar — sticky, full-height content in this column */}
+        <aside className="flex w-full flex-col gap-6 lg:sticky lg:top-6 lg:col-span-1 lg:self-start">
+          {/* Mini calendar */}
           {sessionsLoading ? (
-            <div className="flex h-64 items-center justify-center rounded-xl bg-card shadow">
+            <div className="flex min-h-70 items-center justify-center rounded-xl bg-card shadow">
               <Loader />
             </div>
           ) : (
             <MiniCalendar sessions={sessions ?? []} />
           )}
 
+          {/* Recent progress */}
           {progressLoading ? (
-            <div className="flex h-32 items-center justify-center">
+            <div className="flex h-32 w-full items-center justify-center">
               <Loader />
             </div>
           ) : (
             <RecentProgressList items={progress ?? []} />
           )}
-        </div>
+
+          {/* Quick links */}
+          <div className="flex w-full flex-col gap-2">
+            <span className="px-1 text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
+              Quick links
+            </span>
+            <div className="flex w-full flex-col gap-1">
+              {QUICK_LINKS.map((link) => {
+                const Icon = link.icon
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="group flex w-full items-center gap-2.5 rounded-lg bg-card px-3 py-2 text-xs font-medium text-foreground shadow transition-colors hover:border-border hover:bg-accent/50 md:py-4"
+                  >
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-blue-light">
+                      <Icon className="h-3 w-3 text-blue" strokeWidth={1.75} />
+                    </span>
+                    <span className="flex-1 text-left">{link.label}</span>
+                    <GraduationCap
+                      className="h-3 w-3 shrink-0 text-muted-foreground/40 transition-transform group-hover:translate-x-0.5"
+                      strokeWidth={1.75}
+                    />
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        </aside>
       </div>
     </div>
   )

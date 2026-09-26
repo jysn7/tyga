@@ -91,7 +91,7 @@ export default function AdminCoachesPage() {
             {/* Pending invites as outline button with badge */}
             <Button
               size="lg"
-              className="bg-pink text-secondary"
+              className="bg-green text-secondary"
               onClick={() => setInvitesPanelOpen(true)}
             >
               <Mail className="h-3.5 w-3.5" />

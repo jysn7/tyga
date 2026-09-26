@@ -26,6 +26,8 @@ export type AdminProgramme = {
   price: number
   capacity: number
   maxRatio: number | null
+  description: string | null
+  imageUrl: string | null
   enrolledCount: number
   archivedAt: string | null
   createdAt: string
@@ -48,6 +50,8 @@ type ProgrammeRow = {
   price: number
   capacity: number
   max_ratio: number | null
+  description: string | null
+  image_url: string | null
   enrolled_count: number
   archived_at: string | null
   created_at: string
@@ -71,6 +75,8 @@ function toProgramme(row: ProgrammeRow): AdminProgramme {
     price: row.price,
     capacity: row.capacity,
     maxRatio: row.max_ratio,
+    description: row.description,
+    imageUrl: row.image_url,
     enrolledCount: row.enrolled_count,
     archivedAt: row.archived_at,
     createdAt: row.created_at,
@@ -275,6 +281,7 @@ export function useGetSessions(programmeId?: number) {
     },
   })
 }
+
 // ---------- Session Modules ----------
 
 export type SessionModule = {
@@ -302,7 +309,8 @@ export function useGetSessionModules(sessionId: number | undefined) {
   })
 }
 
-// ------------ Session Coaches -
+// ---------- Session Coaches ----------
+
 export type SessionCoach = {
   coachId: number
   fullName: string

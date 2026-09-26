@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { MapPin, Pencil, Trash2 } from "lucide-react"
+import { Pencil, Trash2 } from "lucide-react"
 import { toast } from "@/components/ui/toast"
 import { useDeleteVenue } from "@/hooks/admin/venues/use-venue-mutations"
 import type { AdminVenue } from "@/hooks/admin/venues/use-venues"
@@ -11,6 +11,13 @@ const TYPE_LABELS: Record<AdminVenue["type"], string> = {
   practice_ground: "Practice ground",
   range: "Driving range",
   school: "School facility",
+}
+
+const TYPE_STYLES: Record<AdminVenue["type"], string> = {
+  course: "bg-green",
+  practice_ground: "bg-yellow",
+  range: "bg-orange",
+  school: "bg-purple",
 }
 
 export function VenueRow({
@@ -45,47 +52,55 @@ export function VenueRow({
   }
 
   return (
-    <tr className="border-b border-border/60 text-sm last:border-b-0 hover:bg-accent/40">
-      <td className="px-4 py-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue/40">
-            <MapPin className="h-3.5 w-3.5 text-foreground" />
-          </div>
-          <div className="min-w-0">
-            <p className="truncate font-medium text-foreground">{venue.name}</p>
-            <p className="truncate text-xs text-muted-foreground">
-              {venue.address}
-            </p>
-          </div>
-        </div>
+    <tr className="border-b border-border/60 text-sm transition-colors last:border-b-0 hover:bg-accent/40">
+      {/* Venue */}
+      <td className="px-4 py-2">
+        <span className="text-sm font-semibold tracking-tight text-foreground">
+          {venue.name}
+        </span>
       </td>
 
-      <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
-        {TYPE_LABELS[venue.type]}
+      {/* Address */}
+      <td className="px-4 py-2 text-muted-foreground">
+        <span className="line-clamp-1">{venue.address || "—"}</span>
       </td>
 
-      <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
-        {venue.programmeCount} programme{venue.programmeCount === 1 ? "" : "s"}
+      {/* Type */}
+      <td className="px-4 py-2 whitespace-nowrap">
+        <span
+          className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium text-secondary ${TYPE_STYLES[venue.type]}`}
+        >
+          {TYPE_LABELS[venue.type]}
+        </span>
       </td>
 
-      <td className="px-4 py-3">
+      {/* Programmes */}
+      <td className="px-4 py-2 whitespace-nowrap text-muted-foreground">
+        {venue.programmeCount}{" "}
+        <span className="text-xs">
+          programme{venue.programmeCount === 1 ? "" : "s"}
+        </span>
+      </td>
+
+      {/* Actions */}
+      <td className="px-4 py-2">
         <div className="flex items-center justify-end gap-1">
           <button
             type="button"
             onClick={() => onEdit(venue)}
             title="Edit"
-            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
-            <Pencil className="h-3.5 w-3.5" />
+            <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} />
           </button>
           <button
             type="button"
-            onClick={handleDelete}
+            onClick={() => handleDelete()}
             disabled={deleting}
             title="Delete"
-            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:pointer-events-none disabled:opacity-40"
+            className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:pointer-events-none disabled:opacity-40"
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
           </button>
         </div>
       </td>
