@@ -220,9 +220,22 @@ export default function SignupPage() {
           </form>
         </div>
 
-        <p className="text-center font-mono text-[11px] text-muted-foreground/60">
-          TYGA Portal &bull; Press{" "}
-          <kbd className="rounded bg-muted px-1 py-0.5">d</kbd> for theme
+        <p className="text-center text-[11px] text-muted-foreground/60">
+          By signing up, you agree to our{" "}
+          <Link
+            href="/help/terms"
+            className="text-information underline underline-offset-2 transition-colors hover:text-foreground"
+          >
+            Terms of Service
+          </Link>{" "}
+          and{" "}
+          <Link
+            href="/help/privacy"
+            className="text-information underline underline-offset-2 transition-colors hover:text-foreground"
+          >
+            Privacy Policy
+          </Link>
+          .
         </p>
       </div>
     </div>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useQueryClient } from "@tanstack/react-query"
 import { Archive, ArchiveRestore, ExternalLink } from "lucide-react"
@@ -24,11 +25,17 @@ function getInitials(name: string) {
 }
 
 export function AdminMemberTableRow({ member }: { member: AdminMember }) {
+  const router = useRouter()
   const queryClient = useQueryClient()
   const [saving, setSaving] = useState(false)
   const isArchived = member.archivedAt !== null
 
-  async function handleToggleArchive() {
+  function handleRowClick() {
+    router.push(`/admin/members/${member.id}`)
+  }
+
+  async function handleToggleArchive(e: React.MouseEvent) {
+    e.stopPropagation() // don't trigger the row click
     setSaving(true)
     const toastId = `member-archive-${member.id}`
     const fn = isArchived ? "admin_unarchive_member" : "admin_archive_member"
@@ -70,7 +77,8 @@ export function AdminMemberTableRow({ member }: { member: AdminMember }) {
 
   return (
     <tr
-      className={`group border-b border-border/60 text-sm transition-colors last:border-b-0 hover:bg-accent/40 ${
+      onClick={handleRowClick}
+      className={`group cursor-pointer border-b border-border/60 text-sm transition-colors last:border-b-0 hover:bg-accent/40 ${
         isArchived ? "opacity-50" : ""
       }`}
     >
@@ -78,7 +86,7 @@ export function AdminMemberTableRow({ member }: { member: AdminMember }) {
       <td className="px-4 py-2">
         <div className="flex items-center gap-3">
           <Avatar className="h-9 w-9 shrink-0 rounded-lg">
-            <AvatarFallback className="rounded-rounded bg-green-light text-[11px] font-semibold text-green">
+            <AvatarFallback className="rounded-lg bg-input text-[11px] font-semibold text-muted-foreground">
               {getInitials(member.fullName)}
             </AvatarFallback>
           </Avatar>
@@ -108,7 +116,7 @@ export function AdminMemberTableRow({ member }: { member: AdminMember }) {
       {/* Level */}
       <td className="px-4 py-2 whitespace-nowrap">
         {member.currentLevelName ? (
-          <span className="inline-flex items-center rounded-full bg-yellow px-2 py-0.5 text-[11px] font-medium text-secondary">
+          <span className="inline-flex items-center rounded-full bg-yellow/20 px-2 py-0.5 text-[11px] font-medium text-foreground">
             {member.currentLevelName}
           </span>
         ) : (
@@ -137,7 +145,8 @@ export function AdminMemberTableRow({ member }: { member: AdminMember }) {
 
           <Link
             href={`/admin/members/${member.id}`}
-            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-all group-hover:opacity-100 hover:bg-accent hover:text-foreground"
+            onClick={(e) => e.stopPropagation()}
+            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             title="View member"
           >
             <ExternalLink className="h-3.5 w-3.5" strokeWidth={1.75} />

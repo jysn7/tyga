@@ -1,95 +1,112 @@
 import { useQuery } from "@tanstack/react-query"
 import { createClient } from "@/utils/supabase/client"
+import type { MemberQuestionnaire } from "@/lib/types"
 
 export type MemberDetail = {
-  id: string
-  fullName: string
-  dob: string
-  gender: "male" | "female" | "any"
-  schoolName: string | null
-  schoolGrade: string | null
-  idOrBirthCertNumber: string | null
-  kitSizeTop: string | null
-  kitSizeBottom: string | null
-  shoeSize: string | null
-  previousClub: string | null
-  medicalNotes: string | null
-  medicalAidDetails: string | null
-  doctorContact: string | null
-  emergencyContactName: string | null
-  emergencyContactRelationship: string | null
-  emergencyContactPhone: string | null
-  currentLevelName: string | null
-  nextSessionLabel: string | null
-  activeEnrollmentCount: number
-  onboardingComplete: boolean
-}
-
-export type MemberWithDetailsRow = {
-  id: number
-  full_name: string
-  dob: string
-  gender: "male" | "female" | "any"
-  school_name: string | null
-  school_grade: string | null
-  id_or_birth_cert_number: string | null
-  kit_size_top: string | null
-  kit_size_bottom: string | null
-  shoe_size: string | null
-  previous_club: string | null
-  medical_notes: string | null
-  medical_aid_details: string | null
-  doctor_contact: string | null
-  emergency_contact_name: string | null
-  emergency_contact_relationship: string | null
-  emergency_contact_phone: string | null
-  current_level_name: string | null
-  next_session_label: string | null
-  active_enrollment_count: number
-  onboarding_complete: boolean
-}
-
-// Exported so useMembers (the list version) can reuse the exact same
-// mapping instead of duplicating it — one conversion, two call sites.
-export function toMemberDetail(row: MemberWithDetailsRow): MemberDetail {
-  return {
-    id: String(row.id),
-    fullName: row.full_name,
-    dob: row.dob,
-    gender: row.gender,
-    schoolName: row.school_name,
-    schoolGrade: row.school_grade,
-    idOrBirthCertNumber: row.id_or_birth_cert_number,
-    kitSizeTop: row.kit_size_top,
-    kitSizeBottom: row.kit_size_bottom,
-    shoeSize: row.shoe_size,
-    previousClub: row.previous_club,
-    medicalNotes: row.medical_notes,
-    medicalAidDetails: row.medical_aid_details,
-    doctorContact: row.doctor_contact,
-    emergencyContactName: row.emergency_contact_name,
-    emergencyContactRelationship: row.emergency_contact_relationship,
-    emergencyContactPhone: row.emergency_contact_phone,
-    currentLevelName: row.current_level_name,
-    nextSessionLabel: row.next_session_label,
-    activeEnrollmentCount: row.active_enrollment_count,
-    onboardingComplete: row.onboarding_complete,
+  member: {
+    id: number
+    account_id: string
+    full_name: string
+    dob: string
+    gender: "male" | "female" | "any"
+    current_level_id: number | null
+    school_name: string | null
+    school_grade: string | null
+    id_or_birth_cert_number: string | null
+    previous_club: string | null
+    medical_notes: string | null
+    medical_aid_details: string | null
+    doctor_contact: string | null
+    emergency_contact_name: string | null
+    emergency_contact_relationship: string | null
+    emergency_contact_phone: string | null
+    kit_size_top: string | null
+    kit_size_bottom: string | null
+    shoe_size: string | null
+    onboarding_complete: boolean
+    archived_at: string | null
+    created_at: string
   }
+  account: {
+    id: string
+    full_name: string | null
+    email: string | null
+    phone: string | null
+    address: string | null
+    avatar_url: string | null
+  } | null
+  level: {
+    id: number
+    name: string
+    goal: string | null
+    focus_summary: string | null
+  } | null
+  questionnaire: MemberQuestionnaire | null
+  consents: {
+    id: number
+    consent_type: string
+    signed: boolean
+    signed_at: string | null
+    document_url: string | null
+  }[]
+  documents: {
+    id: number
+    doc_type: string
+    file_url: string
+    uploaded_at: string
+  }[]
+  enrollments: {
+    id: number
+    status: string
+    subsidised: boolean | null
+    programme_id: number
+    programme_name: string
+    venue_id: number
+    venue_name: string | null
+    joined_at: string | null
+  }[]
+  progressions: {
+    id: number
+    from_level_id: number
+    from_level_name: string | null
+    to_level_id: number
+    to_level_name: string | null
+    date: string
+    badge_complete: boolean
+    notes: string | null
+  }[]
+  attendance_summary: {
+    total: number
+    present: number
+    absent: number
+    late: number
+    excused: number
+  }
+  recent_attendance: {
+    id: number
+    status: string
+    marked_at: string
+    session_date: string
+    start_time: string | null
+    end_time: string | null
+    programme_name: string
+    venue_name: string | null
+  }[]
 }
 
-export function useMember(id: string) {
+export function useMemberDetail(memberId: number, enabled = true) {
   const supabase = createClient()
 
   return useQuery({
-    queryKey: ["members", id],
+    queryKey: ["member-detail", memberId],
+    enabled: enabled && Number.isFinite(memberId) && memberId > 0,
     queryFn: async (): Promise<MemberDetail> => {
-      const { data, error } = await supabase
-        .rpc("get_my_members_with_details", { p_member_id: Number(id) })
-        .single<MemberWithDetailsRow>()
-
+      const { data, error } = await supabase.rpc("parent_get_member_detail", {
+        p_member_id: memberId,
+      })
       if (error) throw new Error(error.message)
-      return toMemberDetail(data)
+      return data as MemberDetail
     },
-    enabled: !!id,
+    staleTime: 30_000,
   })
 }

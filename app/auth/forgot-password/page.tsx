@@ -155,9 +155,16 @@ export default function ForgotPasswordPage() {
           </Link>
         </form>
 
-        <p className="text-center font-mono text-[11px] text-muted-foreground/60">
-          TYGA Portal &bull; Press{" "}
-          <kbd className="rounded bg-muted px-1 py-0.5">d</kbd> for theme
+        <p className="text-center text-[11px] text-muted-foreground/60">
+          We&apos;ll only use your email to help you regain access to your
+          account. See our{" "}
+          <Link
+            href="/help/privacy"
+            className="text-information underline underline-offset-2 transition-colors hover:text-foreground"
+          >
+            Privacy Policy
+          </Link>
+          .
         </p>
       </div>
     </div>

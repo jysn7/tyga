@@ -44,8 +44,8 @@ const colorMap: Record<StatColor, { bg: string; chip: string; icon: string }> =
       icon: "text-teal-light",
     },
     orange: {
-      bg: "bg-orange-light",
-      chip: "bg-orange/50",
+      bg: "bg-orange",
+      chip: "bg-secondary",
       icon: "text-orange-light",
     },
     pink: {
@@ -54,9 +54,9 @@ const colorMap: Record<StatColor, { bg: string; chip: string; icon: string }> =
       icon: "text-pink-light",
     },
     gray: {
-      bg: "bg-foreground/80",
-      chip: "bg-foreground/50",
-      icon: "text-secondary",
+      bg: "bg-foreground/80 dark:bg-foreground",
+      chip: "bg-secondary",
+      icon: "text-foreground",
     },
   }
 
@@ -103,7 +103,7 @@ export function StatTile({
         </span>
         <span
           className={`${compact ? "text-[11px] sm:text-xs" : "text-xs"} ${
-            color === "gray" ? "text-secondary/70" : "text-muted-foreground"
+            color === "gray" ? "text-secondary/70" : "text-foreground"
           }`}
         >
           {label}

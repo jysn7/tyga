@@ -13,6 +13,7 @@ export async function proxy(request: NextRequest) {
 
   // Public routes that don't need session checks
   const isAuthPage = path.startsWith("/auth/")
+  const isHelpPage = path === "/help" || path.startsWith("/help/")
   const isCallback = path === "/auth/callback"
   const isWebhook = path.startsWith("/api/paystack/webhook")
   const isApiRoute = path.startsWith("/api/")
@@ -31,7 +32,7 @@ export async function proxy(request: NextRequest) {
     return response
   }
 
-  const isProtectedPage = !isAuthPage
+  const isProtectedPage = !isAuthPage && !isHelpPage
 
   if (!session && isProtectedPage) {
     return NextResponse.redirect(new URL("/auth/signin", request.url))

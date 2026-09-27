@@ -55,50 +55,51 @@ const fieldStyles =
 const triggerStyles =
   "h-auto w-full justify-start border-none bg-transparent pl-2 text-[15px] font-normal text-foreground shadow-none hover:bg-transparent"
 
+// Minimal shape the panel needs — matches MemberDetail["member"]
 export type EditableMember = {
-  id: number | string
-  fullName: string
+  id: number
+  full_name: string
   dob: string
   gender: "male" | "female" | "any"
-  medicalNotes: string | null
-  medicalAidDetails: string | null
-  doctorContact: string | null
-  emergencyContactName: string | null
-  emergencyContactRelationship: string | null
-  emergencyContactPhone: string | null
-  schoolName: string | null
-  schoolGrade: string | null
-  idOrBirthCertNumber: string | null
-  previousClub: string | null
-  kitSizeTop: string | null
-  kitSizeBottom: string | null
-  shoeSize: string | null
+  medical_notes: string | null
+  medical_aid_details: string | null
+  doctor_contact: string | null
+  emergency_contact_name: string | null
+  emergency_contact_relationship: string | null
+  emergency_contact_phone: string | null
+  school_name: string | null
+  school_grade: string | null
+  id_or_birth_cert_number: string | null
+  previous_club: string | null
+  kit_size_top: string | null
+  kit_size_bottom: string | null
+  shoe_size: string | null
 }
 
 function toDefaultValues(member: EditableMember): MemberEditValues {
   return {
-    fullName: member.fullName,
+    fullName: member.full_name,
     dob: new Date(member.dob),
     gender: member.gender,
-    medicalNotes: member.medicalNotes ?? "",
-    medicalAidDetails: member.medicalAidDetails ?? "",
-    doctorContact: member.doctorContact ?? "",
-    emergencyContactName: member.emergencyContactName ?? "",
-    emergencyContactRelationship: member.emergencyContactRelationship ?? "",
-    emergencyContactPhone: member.emergencyContactPhone ?? "",
-    schoolName: member.schoolName ?? "",
-    schoolGrade: member.schoolGrade ?? "",
-    idOrBirthCertNumber: member.idOrBirthCertNumber ?? "",
-    previousClub: member.previousClub ?? "",
-    kitSizeTop: member.kitSizeTop ?? "",
-    kitSizeBottom: member.kitSizeBottom ?? "",
-    shoeSize: member.shoeSize ?? "",
+    medicalNotes: member.medical_notes ?? "",
+    medicalAidDetails: member.medical_aid_details ?? "",
+    doctorContact: member.doctor_contact ?? "",
+    emergencyContactName: member.emergency_contact_name ?? "",
+    emergencyContactRelationship: member.emergency_contact_relationship ?? "",
+    emergencyContactPhone: member.emergency_contact_phone ?? "",
+    schoolName: member.school_name ?? "",
+    schoolGrade: member.school_grade ?? "",
+    idOrBirthCertNumber: member.id_or_birth_cert_number ?? "",
+    previousClub: member.previous_club ?? "",
+    kitSizeTop: member.kit_size_top ?? "",
+    kitSizeBottom: member.kit_size_bottom ?? "",
+    shoeSize: member.shoe_size ?? "",
   }
 }
 
 export function EditMemberPanel({ member }: { member: EditableMember }) {
   const [open, setOpen] = useState(false)
-  const updateMember = useUpdateMember(Number(member.id))
+  const updateMember = useUpdateMember(member.id)
 
   const {
     register,
@@ -190,10 +191,7 @@ export function EditMemberPanel({ member }: { member: EditableMember }) {
             <Input {...register("fullName")} />
           </Field>
 
-          <Field
-            label="Date of birth"
-            error={errors.dob?.message as string | undefined}
-          >
+          <Field label="Date of birth" error={errors.dob?.message}>
             <Controller
               control={control}
               name="dob"

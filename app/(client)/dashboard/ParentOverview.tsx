@@ -80,7 +80,7 @@ export function ParentOverview() {
             <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <StatTile
-                  color="green"
+                  color="orange"
                   label="Outstanding balance"
                   value={`R${stats.outstandingBalance.toLocaleString()}`}
                   icon={CreditCard}

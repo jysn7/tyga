@@ -124,10 +124,10 @@ export type Member = {
 export interface MemberQuestionnaire {
   id: number
   member_id: number
-  availability: Record<string, unknown> | null // jsonb
+  availability: Record<string, string | undefined> | null
   self_reported_skill_level: string | null
-  interests: Record<string, unknown> | null // jsonb
-  gear_owned: Record<string, unknown> | null // jsonb
+  interests: Record<string, string | undefined> | null
+  gear_owned: Record<string, string | undefined> | null
   submitted_at: string | null
 }
 
