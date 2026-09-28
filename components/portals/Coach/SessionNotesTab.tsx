@@ -1,6 +1,6 @@
 "use client"
 import { useState } from "react"
-import { useSessionMutations } from "@/hooks/use-sessions-mutations"
+import { useSaveSessionNotes } from "@/hooks/coach/use-sessions-mutations"
 
 export function SessionNotesTab({
   sessionId,
@@ -10,18 +10,15 @@ export function SessionNotesTab({
   initialNotes: string
 }) {
   const [notes, setNotes] = useState(initialNotes || "")
-  const { saveNotes } = useSessionMutations()
-  const [isSaving, setIsSaving] = useState(false)
+  const saveNotes = useSaveSessionNotes()
 
   const handleSave = async () => {
-    setIsSaving(true)
     try {
-      await saveNotes(sessionId, notes)
+      await saveNotes.mutateAsync({ sessionId, notes })
       alert("Notes saved successfully!")
     } catch (error) {
       console.error("Failed to save notes", error)
     }
-    setIsSaving(false)
   }
 
   return (
@@ -30,10 +27,10 @@ export function SessionNotesTab({
         <h3 className="text-lg font-bold">Session Notes</h3>
         <button
           onClick={handleSave}
-          disabled={isSaving}
+          disabled={saveNotes.isPending}
           className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground"
         >
-          {isSaving ? "Saving..." : "Save Notes"}
+          {saveNotes.isPending ? "Saving..." : "Save Notes"}
         </button>
       </div>
 
