@@ -1,7 +1,6 @@
 "use client"
 
 import { Suspense, use, useState } from "react"
-import { Mail } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { useTheme } from "next-themes"
@@ -41,9 +40,6 @@ function VerifyEmailContent({
               priority
             />
           )}
-        </div>
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <Mail className="h-6 w-6" />
         </div>
         <div className="space-y-1">
           <h1 className="text-xl font-semibold tracking-tight text-foreground">

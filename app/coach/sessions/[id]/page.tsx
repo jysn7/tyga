@@ -2,7 +2,6 @@
 
 import { useParams, notFound } from "next/navigation"
 import Link from "next/link"
-import { format } from "date-fns"
 import {
   ChevronLeft,
   CalendarDays,
@@ -38,15 +37,15 @@ const STATUS_OPTIONS = [
     value: "present",
     label: "Present",
     icon: CheckCircle2,
-    color: "text-primary",
-    bg: "bg-primary/10",
+    color: "text-green",
+    bg: "bg-green-light",
   },
   {
     value: "late",
     label: "Late",
     icon: Clock3,
     color: "text-orange",
-    bg: "bg-orange/10",
+    bg: "bg-orange-light",
   },
   {
     value: "excused",
@@ -59,8 +58,8 @@ const STATUS_OPTIONS = [
     value: "absent",
     label: "Absent",
     icon: XCircle,
-    color: "text-destructive",
-    bg: "bg-destructive/10",
+    color: "text-rose",
+    bg: "bg-rose/50",
   },
 ] as const
 
@@ -231,6 +230,57 @@ function RosterTab({ sessionId }: { sessionId: number }) {
     )
   }
 
+  // FIX: single-member mark now toasts on success and error.
+  function handleMark(
+    memberId: number,
+    memberName: string,
+    status: (typeof STATUS_OPTIONS)[number]["value"]
+  ) {
+    mark.mutate(
+      { sessionId, memberId, status },
+      {
+        onSuccess: () =>
+          toast.add({
+            title: "Attendance marked",
+            description: `${memberName} — ${status}`,
+            type: "success",
+            timeout: 3000,
+          }),
+        onError: (err) =>
+          toast.add({
+            title: "Failed to mark attendance",
+            description:
+              err instanceof Error ? err.message : "Something went wrong",
+            type: "error",
+            timeout: 5000,
+          }),
+      }
+    )
+  }
+
+  // FIX: bulk mark now toasts on success and error.
+  function handleBulkMark() {
+    bulk.mutate(
+      { sessionId, status: "present" },
+      {
+        onSuccess: () =>
+          toast.add({
+            title: "All members marked present",
+            type: "success",
+            timeout: 3000,
+          }),
+        onError: (err) =>
+          toast.add({
+            title: "Failed to mark attendance",
+            description:
+              err instanceof Error ? err.message : "Something went wrong",
+            type: "error",
+            timeout: 5000,
+          }),
+      }
+    )
+  }
+
   return (
     <section className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
@@ -241,7 +291,7 @@ function RosterTab({ sessionId }: { sessionId: number }) {
           variant="outline"
           size="sm"
           disabled={bulk.isPending}
-          onClick={() => bulk.mutate({ sessionId, status: "present" })}
+          onClick={handleBulkMark}
           className="h-8 text-xs"
         >
           {bulk.isPending ? "Marking…" : "Mark all present"}
@@ -268,11 +318,7 @@ function RosterTab({ sessionId }: { sessionId: number }) {
                       type="button"
                       disabled={mark.isPending}
                       onClick={() =>
-                        mark.mutate({
-                          sessionId,
-                          memberId: m.member_id,
-                          status: opt.value,
-                        })
+                        handleMark(m.member_id, m.full_name, opt.value)
                       }
                       title={opt.label}
                       className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors ${
@@ -366,10 +412,8 @@ function CurriculumTab({ sessionId }: { sessionId: number }) {
                     )}
                   </div>
                   <span
-                    className={`shrink-0 rounded-md px-2 py-0.5 text-[11px] font-medium ${
-                      mod.is_tagged
-                        ? "bg-primary/10 text-primary"
-                        : "bg-input text-muted-foreground"
+                    className={`shrink-0 rounded-md px-2 py-0.5 text-[11px] font-medium text-primary-foreground dark:text-secondary ${
+                      mod.is_tagged ? "bg-green-light" : "bg-orange-light"
                     }`}
                   >
                     {mod.is_tagged ? "Tagged" : "Not tagged"}

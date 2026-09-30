@@ -28,7 +28,6 @@ import { BasicInfoSection } from "./sections/basic-info-section"
 import { CoachesSection } from "./sections/coaches-section"
 import { SessionsSection } from "./sections/sessions-section"
 import { CurriculumSection } from "./sections/curriculum-section"
-
 const SECTIONS = [
   { id: "basic", label: "Basic info", icon: Settings },
   { id: "coaches", label: "Coaches", icon: Users },
@@ -93,13 +92,21 @@ export function EditProgrammePanel({
     () => programme?.maxRatio?.toString() ?? ""
   )
 
+  // Track which session the curriculum panel is inspecting, so
+  // useGetSessionModules can fetch by session_id (not programme_id).
+  const [activeSessionId, setActiveSessionId] = useState<number | null>(null)
+
   const { data: assignedCoaches, refetch: refetchCoaches } =
     useGetProgrammeCoaches(programme?.id)
   const { data: sessions, refetch: refetchSessions } = useGetSessions(
     programme?.id
   )
+
+  // FIX: pass the nullable id straight through. The hook's `enabled`
+  // guard handles null/undefined; passing `?? 0` was only masking the
+  // fact that the signature used to be `number | undefined`.
   const { data: sessionModules, refetch: refetchModules } =
-    useGetSessionModules(programme?.id)
+    useGetSessionModules(activeSessionId)
 
   const updateProgramme = useUpdateProgramme()
   const isSaving = updateProgramme.isPending || isSubmitting
@@ -274,9 +281,11 @@ export function EditProgrammePanel({
 
             {activeSection === "curriculum" && (
               <CurriculumSection
-                levels={levels}
+                key={programme.id}
+                programmeLevelId={programme.levelId}
                 sessions={sessions}
-                sessionModules={sessionModules}
+                sessionModules={activeSessionId ? sessionModules : undefined}
+                onSessionChange={setActiveSessionId}
                 onModulesChange={refetchModules}
               />
             )}

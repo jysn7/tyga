@@ -1,40 +1,36 @@
-import { CheckCircle2, Circle } from "lucide-react"
+import { cn } from "@/lib/utils"
 
-export type StatusVariant = "success" | "warning" | "danger" | "neutral"
+export type StatusVariant =
+  "success" | "warning" | "danger" | "neutral" | "info" | "teal" | "purple"
 
-interface StatusPillProps {
-  label: string
-  variant?: StatusVariant
+const VARIANT_CLASSES: Record<StatusVariant, string> = {
+  success: "bg-green-light text-secondary",
+  warning: "bg-orange-light text-secondary",
+  danger: "bg-destructive/10 text-destructive",
+  neutral: "bg-input text-muted-foreground",
+  info: "bg-blue-light text-secondary",
+  teal: "bg-teal-light text-secondary",
+  purple: "bg-purple-light text-secondary",
 }
 
-export function StatusPill({ label, variant = "neutral" }: StatusPillProps) {
+export function StatusPill({
+  label,
+  variant = "neutral",
+  className,
+}: {
+  label: string
+  variant?: StatusVariant
+  className?: string
+}) {
   return (
-    <div className="flex items-center gap-2">
-      {variant === "success" && (
-        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+    <span
+      className={cn(
+        "inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium whitespace-nowrap",
+        VARIANT_CLASSES[variant],
+        className
       )}
-      {variant === "warning" && (
-        <Circle className="h-2.5 w-2.5 fill-amber-500 text-amber-500" />
-      )}
-      {variant === "danger" && (
-        <Circle className="h-2.5 w-2.5 fill-rose-500 text-rose-500" />
-      )}
-      {variant === "neutral" && (
-        <Circle className="h-2.5 w-2.5 fill-zinc-400 text-zinc-400" />
-      )}
-      <span
-        className={`text-sm font-medium ${
-          variant === "success"
-            ? "text-emerald-600"
-            : variant === "warning"
-              ? "text-amber-600"
-              : variant === "danger"
-                ? "text-rose-600"
-                : "text-zinc-600"
-        }`}
-      >
-        {label}
-      </span>
-    </div>
+    >
+      {label}
+    </span>
   )
 }

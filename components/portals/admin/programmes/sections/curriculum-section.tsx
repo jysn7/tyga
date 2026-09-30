@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Loader } from "@/components/portals/shared/loader"
 import { toast } from "@/components/ui/toast"
 import { useTagSessionCurriculum } from "@/hooks/admin/programmes/use-programme-mutations"
-import type { Level } from "@/hooks/admin/levels/use-levels"
+import { useGetLevelModules } from "@/hooks/admin/programmes/use-programmes"
 import type {
   Session,
   SessionModule,
@@ -20,29 +20,55 @@ import type {
 import { BookOpen, CalendarDays, Layers } from "lucide-react"
 
 export function CurriculumSection({
-  levels,
+  programmeLevelId,
   sessions,
   sessionModules,
+  onSessionChange,
   onModulesChange,
 }: {
-  levels: Level[]
+  programmeLevelId: number | null
   sessions: Session[] | undefined
   sessionModules: SessionModule[] | undefined
+  onSessionChange: (sessionId: number | null) => void
   onModulesChange: () => void
 }) {
   const [selectedSessionId, setSelectedSessionId] = useState<string>("")
   const [selectedModuleIds, setSelectedModuleIds] = useState<string[]>([])
   const tagModules = useTagSessionCurriculum()
 
+  // FIX: modules come from the programme's level, not from all levels.
+  // `useGetLevelModules` calls admin_get_level_modules(p_level_id) and
+  // is disabled when levelId is null/0.
+  const { data: levelModules, isLoading: modulesLoading } =
+    useGetLevelModules(programmeLevelId)
+
+  // Notify the parent which session is selected so it can fetch the
+  // correct `sessionModules` for that session.
+  function handleSessionChange(value: string | null) {
+    const next = value ?? ""
+    setSelectedSessionId(next)
+    setSelectedModuleIds([])
+    onSessionChange(next ? Number(next) : null)
+  }
+
+  // Multi-select toggle. Because the RPC replaces the full set, the
+  // user must be able to add and remove modules in one go.
+  function toggleModule(moduleId: string) {
+    setSelectedModuleIds((prev) =>
+      prev.includes(moduleId)
+        ? prev.filter((id) => id !== moduleId)
+        : [...prev, moduleId]
+    )
+  }
+
   async function handleTagModules() {
-    if (!selectedSessionId || selectedModuleIds.length === 0) return
+    if (!selectedSessionId) return
     try {
       await tagModules.mutateAsync({
         sessionId: Number(selectedSessionId),
         moduleIds: selectedModuleIds.map(Number),
       })
       toast.add({ title: "Modules tagged", type: "success", timeout: 4000 })
-      setSelectedModuleIds([])
       onModulesChange()
     } catch (err: unknown) {
       const message =
@@ -57,6 +83,7 @@ export function CurriculumSection({
   }
 
   const modulesForSession = sessionModules || []
+  const availableModules = levelModules ?? []
 
   return (
     <div className="flex flex-col gap-5">
@@ -85,10 +112,7 @@ export function CurriculumSection({
           <span className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
             Session
           </span>
-          <Select
-            value={selectedSessionId}
-            onValueChange={(value) => setSelectedSessionId(value ?? "")}
-          >
+          <Select value={selectedSessionId} onValueChange={handleSessionChange}>
             <SelectTrigger className="h-11 w-full rounded-lg border border-border bg-input px-3.5 text-sm text-foreground shadow-none focus-visible:ring-0">
               <SelectValue placeholder="Select a session…" />
             </SelectTrigger>
@@ -120,43 +144,53 @@ export function CurriculumSection({
           <span className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
             Module
           </span>
-          <div className="flex items-center gap-2">
-            <Select
-              value={selectedModuleIds[0] || ""}
-              onValueChange={(v) => setSelectedModuleIds(v ? [v] : [])}
-            >
-              <SelectTrigger className="h-11 flex-1 rounded-lg border border-border bg-input px-3.5 text-sm text-foreground shadow-none focus-visible:ring-0">
-                <SelectValue placeholder="Select a module…" />
-              </SelectTrigger>
-              <SelectContent>
-                {levels
-                  .flatMap((l) => l.modules || [])
-                  .map((m) => (
-                    <SelectItem key={m.id} value={m.id.toString()}>
-                      <span className="flex items-center gap-2">
-                        <Layers
-                          className="h-3.5 w-3.5 text-muted-foreground"
-                          strokeWidth={1.75}
-                        />
-                        {m.name}
-                      </span>
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
+          {/* Chip-style multi-select so the user edits the full set in
+              one place, matching the replace semantics of the RPC.
+              Source is the programme's level modules only. */}
+          {modulesLoading ? (
+            <Loader />
+          ) : availableModules.length === 0 ? (
+            <div className="rounded-lg border border-border/60 bg-muted/20 px-3.5 py-3 text-xs text-muted-foreground">
+              {programmeLevelId
+                ? "This level has no curriculum modules."
+                : "Set a level on this programme to see its modules."}
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-1.5 rounded-lg border border-border bg-input p-2">
+              {availableModules.map((m) => {
+                const id = m.id.toString()
+                const selected = selectedModuleIds.includes(id)
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => toggleModule(id)}
+                    className={
+                      "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs transition-colors " +
+                      (selected
+                        ? "bg-foreground text-background"
+                        : "bg-muted/40 text-muted-foreground hover:bg-muted")
+                    }
+                  >
+                    <Layers className="h-3 w-3" strokeWidth={1.75} />
+                    {m.name}
+                  </button>
+                )
+              })}
+            </div>
+          )}
 
-            <Button
-              onClick={handleTagModules}
-              disabled={
-                !selectedSessionId ||
-                selectedModuleIds.length === 0 ||
-                tagModules.isPending
-              }
-              className="h-11 shrink-0 px-5 text-sm"
-            >
-              {tagModules.isPending ? "Tagging…" : "Tag module"}
-            </Button>
-          </div>
+          <Button
+            onClick={handleTagModules}
+            disabled={
+              !selectedSessionId ||
+              tagModules.isPending ||
+              availableModules.length === 0
+            }
+            className="h-11 w-full shrink-0 px-5 text-sm"
+          >
+            {tagModules.isPending ? "Saving…" : "Save modules"}
+          </Button>
         </div>
       </div>
 

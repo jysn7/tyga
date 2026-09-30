@@ -292,19 +292,112 @@ export type SessionModule = {
   isMilestone: boolean
 }
 
-export function useGetSessionModules(sessionId: number | undefined) {
+export function useGetSessionModules(sessionId: number | null | undefined) {
   const supabase = createClient()
 
+  const enabled =
+    typeof sessionId === "number" &&
+    Number.isInteger(sessionId) &&
+    sessionId > 0
+
   return useQuery({
-    queryKey: ["admin-session-modules", sessionId],
-    enabled: !!sessionId,
+    queryKey: ["admin-session-modules", sessionId ?? "none"],
+    enabled,
     queryFn: async (): Promise<SessionModule[]> => {
-      if (!sessionId) return []
-      const { data, error } = await supabase.rpc("admin_get_session_modules", {
-        p_session_id: sessionId,
+      // 🔍 debug
+      console.log("[useGetSessionModules] firing", {
+        sessionId,
+        enabled,
+        key: ["admin-session-modules", sessionId ?? "none"],
       })
-      if (error) throw error
+
+      const { data, error } = await supabase.rpc("admin_get_session_modules", {
+        p_session_id: sessionId!,
+      })
+
+      if (error) {
+        // 🔍 debug
+        console.error("[useGetSessionModules] RPC error", {
+          sessionId,
+          message: error.message,
+          details: (error as { details?: unknown }).details,
+          hint: (error as { hint?: unknown }).hint,
+          code: (error as { code?: unknown }).code,
+          raw: error,
+        })
+        throw error
+      }
+
       return data as SessionModule[]
+    },
+  })
+}
+
+// ---------- Level Modules ----------
+
+export type LevelModule = {
+  id: number
+  name: string
+  category: string
+  description: string | null
+  isMilestone: boolean
+  levelId: number
+}
+
+type LevelModuleRow = {
+  id: number
+  name: string
+  category: string
+  description: string | null
+  is_milestone: boolean
+  level_id: number
+}
+
+function toLevelModule(row: LevelModuleRow): LevelModule {
+  return {
+    id: row.id,
+    name: row.name,
+    category: row.category,
+    description: row.description,
+    isMilestone: row.is_milestone,
+    levelId: row.level_id,
+  }
+}
+
+export function useGetLevelModules(levelId: number | null | undefined) {
+  const supabase = createClient()
+
+  const enabled =
+    typeof levelId === "number" && Number.isInteger(levelId) && levelId >= 0
+
+  return useQuery({
+    queryKey: ["admin-level-modules", levelId],
+    enabled,
+    queryFn: async (): Promise<LevelModule[]> => {
+      // 🔍 debug
+      console.log("[useGetLevelModules] firing", {
+        levelId,
+        enabled,
+      })
+
+      const { data, error } = await supabase.rpc("admin_get_level_modules", {
+        p_level_id: levelId!,
+      })
+
+      if (error) {
+        // 🔍 debug
+        console.error("[useGetLevelModules] RPC error", {
+          levelId,
+          message: error.message,
+          details: (error as { details?: unknown }).details,
+          hint: (error as { hint?: unknown }).hint,
+          code: (error as { code?: unknown }).code,
+          raw: error,
+        })
+        throw error
+      }
+
+      return (data as LevelModuleRow[]).map(toLevelModule)
     },
   })
 }

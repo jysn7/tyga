@@ -6,7 +6,8 @@ import {
   Settings,
   CreditCard,
   Trophy,
-  Clock,
+  CalendarDays,
+  CalendarClock,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -36,14 +37,21 @@ export const clientNav: NavEntry[] = [
   // Standalone
   { type: "link", label: "Dashboard", href: "/dashboard", icon: Home },
   { type: "link", label: "My Members", href: "/members", icon: Users },
-  { type: "link", label: "Schedule", href: "/schedule", icon: Clock },
 
-  // Golf group
+  // Golf group — programmes + schedule + appointments
   {
     type: "group",
     label: "Golf",
     icon: Trophy,
-    items: [{ label: "Programmes", href: "/programmes", icon: Trophy }],
+    items: [
+      { label: "Programmes", href: "/programmes", icon: Trophy },
+      { label: "My Schedule", href: "/my-schedule", icon: CalendarDays },
+      {
+        label: "My Appointments",
+        href: "/my-appointments",
+        icon: CalendarClock,
+      },
+    ],
   },
 
   // Finance group

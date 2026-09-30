@@ -7,7 +7,8 @@ import {
   ClipboardList,
   GraduationCap,
   Trophy,
-  Clock,
+  CalendarDays,
+  CalendarClock,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -36,22 +37,21 @@ export type NavEntry = NavGroup | NavLink
 export const coachNav: NavEntry[] = [
   // Standalone
   { type: "link", label: "Dashboard", href: "/coach/overview", icon: Home },
-  {
-    type: "link",
-    label: "My Sessions",
-    href: "/coach/sessions",
-    icon: Calendar,
-  },
-  { type: "link", label: "My Roster", href: "/coach/roster", icon: Users },
 
-  // Coaching group
+  // Coaching group — programmes, sessions, schedule, appointments
   {
     type: "group",
     label: "Coaching",
     icon: ClipboardList,
     items: [
       { label: "Programmes", href: "/coach/programmes", icon: GraduationCap },
-      { label: "Achievements", href: "/coach/achievements", icon: Trophy },
+      { label: "My Sessions", href: "/coach/sessions", icon: Calendar },
+      { label: "My Schedule", href: "/coach/my-schedule", icon: CalendarDays },
+      {
+        label: "Appointments",
+        href: "/coach/appointments",
+        icon: CalendarClock,
+      },
     ],
   },
 
@@ -61,8 +61,9 @@ export const coachNav: NavEntry[] = [
     label: "People",
     icon: Users,
     items: [
+      { label: "My Roster", href: "/coach/roster", icon: Users },
       { label: "Members", href: "/coach/members", icon: Users },
-      { label: "Appointments", href: "/coach/appointments", icon: Clock },
+      { label: "Achievements", href: "/coach/achievements", icon: Trophy },
     ],
   },
 

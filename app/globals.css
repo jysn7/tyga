@@ -44,6 +44,7 @@
     --color-yellow-light: var(--yellow-light);
     --color-green-light: var(--green-light);
     --color-purple-light: var(--purple-light);
+    --color-orange-light: var(--orange-light);
     --color-ring: var(--ring);
     --color-input: var(--input);
     --color-border: var(--border);
@@ -119,6 +120,7 @@
   --red-light: #fce8e6;
   --yellow-light: #fef7e0;
   --green-light: #e6f4ea;
+  --orange-light: #fdf0d9;
   --purple-light: #f3e8fd;
   --radius: 0.625rem;
   --sidebar: #ffffff;
@@ -178,8 +180,9 @@
   --blue-light: #1e2a4a;
   --red-light: #3a1e1e;
   --yellow-light: #3a3018;
-  --green-light: #1e2e20;
+  --green-light: #669a6d;
   --purple-light: #2a1e3a;
+  --orange-light: #ac7d58;
   --sidebar: #121212;
   --sidebar-foreground: #ededed;
   --sidebar-primary: #d1ff70;
