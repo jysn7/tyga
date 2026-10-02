@@ -39,6 +39,8 @@ export function BookSlotDialog({
   const book = useBookSlot()
   const { data: members, isLoading: membersLoading } = useMembers()
 
+  const selectedMember = members?.find((m) => m.id === memberId)
+
   function handleBook() {
     if (!memberId) return
     book.mutate(
@@ -93,7 +95,9 @@ export function BookSlotDialog({
                 onValueChange={(v) => setMemberId(v ?? "")}
               >
                 <SelectTrigger className="h-11 w-full">
-                  <SelectValue placeholder="Select a child…" />
+                  <SelectValue placeholder="Select a child…">
+                    {selectedMember?.fullName}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {members.map((m) => (
@@ -115,7 +119,11 @@ export function BookSlotDialog({
           >
             Cancel
           </Button>
-          <Button onClick={handleBook} disabled={!memberId || book.isPending}>
+          <Button
+            variant="secondary"
+            onClick={handleBook}
+            disabled={!memberId || book.isPending}
+          >
             {book.isPending ? "Booking…" : "Confirm booking"}
           </Button>
         </DialogFooter>

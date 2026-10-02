@@ -4,13 +4,13 @@ export type StatusVariant =
   "success" | "warning" | "danger" | "neutral" | "info" | "teal" | "purple"
 
 const VARIANT_CLASSES: Record<StatusVariant, string> = {
-  success: "bg-green-light text-secondary",
-  warning: "bg-orange-light text-secondary",
-  danger: "bg-destructive/10 text-destructive",
+  success: "bg-green-light dark:text-secondary",
+  warning: "bg-orange-light dark:text-secondary",
+  danger: "bg-rose/50 dark:text-secondary",
   neutral: "bg-input text-muted-foreground",
-  info: "bg-blue-light text-secondary",
-  teal: "bg-teal-light text-secondary",
-  purple: "bg-purple-light text-secondary",
+  info: "bg-blue-light dark:text-secondary",
+  teal: "bg-teal-light dark:text-secondary",
+  purple: "bg-purple-light dark:text-secondary",
 }
 
 export function StatusPill({

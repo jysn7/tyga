@@ -13,7 +13,6 @@ import {
   ExternalLink,
   Settings,
   CreditCard,
-  Layers,
   HelpCircle,
   Keyboard,
   Loader2,
@@ -193,16 +192,6 @@ export function UserDropdown({
             </Link>
           </DropdownMenuItem>
 
-          <DropdownMenuItem>
-            <Link
-              href="/integrations"
-              className="flex w-full cursor-pointer items-center gap-2"
-            >
-              <Layers className="h-4 w-4 text-muted-foreground" />
-              Integrations
-            </Link>
-          </DropdownMenuItem>
-
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <SunMoon className="h-4 w-4 text-muted-foreground" />
@@ -231,7 +220,7 @@ export function UserDropdown({
 
         <DropdownMenuItem>
           <Link
-            href="/golfers/enroll"
+            href="/programmes"
             className="flex w-full cursor-pointer items-center gap-2"
           >
             <Users className="h-4 w-4 text-muted-foreground" />

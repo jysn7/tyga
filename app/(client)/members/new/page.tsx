@@ -13,9 +13,7 @@ import {
 import { useCreateMember } from "@/hooks/use-create-member"
 import { StepBasicInfo } from "@/components/portals/client/members/newMembers/step-basic-info"
 import { StepHealthSafety } from "@/components/portals/client/members/newMembers/step-health-safety"
-import { StepAboutGolfer } from "@/components/portals/client/members/newMembers/step-about-golfer"
 import { StepConsent } from "@/components/portals/client/members/newMembers/step-consent"
-import { StepDocuments } from "@/components/portals/client/members/newMembers/step-documents"
 
 function NewMemberFormContent() {
   const router = useRouter()
@@ -29,7 +27,7 @@ function NewMemberFormContent() {
     toast.add({
       id: toastId,
       title: "Creating member...",
-      description: "Uploading documents and saving consent — please wait",
+      description: "Saving member information and consent...",
       type: "loading",
       timeout: 0,
     })
@@ -65,6 +63,7 @@ function NewMemberFormContent() {
       await handleSubmit(onSubmit)()
       return
     }
+
     await next()
   }
 
@@ -73,6 +72,7 @@ function NewMemberFormContent() {
       router.push("/members")
       return
     }
+
     back()
   }
 
@@ -100,9 +100,7 @@ function NewMemberFormContent() {
       <div className="flex-1">
         {step === 0 && <StepBasicInfo />}
         {step === 1 && <StepHealthSafety />}
-        {step === 2 && <StepAboutGolfer />}
-        {step === 3 && <StepConsent />}
-        {step === 4 && <StepDocuments />}
+        {step === 2 && <StepConsent />}
       </div>
 
       <div className="mt-8 flex items-center justify-between border-t border-border/60 pt-5">
@@ -113,10 +111,10 @@ function NewMemberFormContent() {
           <ChevronLeft className="h-4 w-4" />
           Back
         </button>
+
         <Button
           size="sm"
           variant="secondary"
-
           disabled={isPending}
           onClick={handleNext}
         >

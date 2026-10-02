@@ -1,14 +1,19 @@
 "use client"
 
 import { PanelLeftOpen, CircleHelp } from "lucide-react"
+import { useEffect, useState } from "react"
+import type { User as SupabaseUser } from "@supabase/supabase-js"
+
+import { createClient } from "@/utils/supabase/client"
 import { useAppStore } from "@/stores/useAppStore"
+
 import { UserDropdown } from "@/components/portals/shared/user-dropdown"
 import { NotificationsDropdown } from "@/components/portals/shared/notifications-dropdown"
 import { HelpModal } from "@/components/portals/shared/help-modal"
 import { GlobalSearch } from "@/components/portals/shared/global-search"
-import type { User as SupabaseUser } from "@supabase/supabase-js"
-import { useEffect, useState } from "react"
-import { createClient } from "@/utils/supabase/client"
+
+import { ParentOnboardingOverlay } from "./parent-onboarding-overlay"
+import { CoachOnboardingOverlay } from "./coach-onboarding-overlay"
 
 const sampleNotifications = [
   {
@@ -53,6 +58,7 @@ type Account = {
   address: string | null
   avatar_url: string | null
   active: boolean
+  onboarding_seen: boolean
   created_at: string
 }
 
@@ -63,6 +69,8 @@ export function LayoutHeader({ user }: { user: SupabaseUser | null }) {
   const [account, setAccount] = useState<Account | null>(null)
   const [loading, setLoading] = useState(true)
   const [helpOpen, setHelpOpen] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(false)
+
   const supabase = createClient()
 
   useEffect(() => {
@@ -71,7 +79,6 @@ export function LayoutHeader({ user }: { user: SupabaseUser | null }) {
         setLoading(true)
 
         if (!user) {
-          setLoading(false)
           return
         }
 
@@ -81,12 +88,18 @@ export function LayoutHeader({ user }: { user: SupabaseUser | null }) {
 
         if (error) {
           console.error("Error fetching account:", error)
-          setLoading(false)
           return
         }
 
         if (data) {
           setAccount(data)
+
+          const eligibleForOnboarding =
+            data.role === "parent" || data.role === "coach"
+
+          if (eligibleForOnboarding && !data.onboarding_seen) {
+            setShowOnboarding(true)
+          }
         }
       } catch (error) {
         console.error("Error:", error)
@@ -98,12 +111,44 @@ export function LayoutHeader({ user }: { user: SupabaseUser | null }) {
     fetchAccount()
   }, [user, supabase])
 
+  async function handleOnboardingClose() {
+    if (!account) {
+      setShowOnboarding(false)
+      return
+    }
+
+    const { error } = await supabase
+      .from("accounts")
+      .update({
+        onboarding_seen: true,
+      })
+      .eq("id", account.id)
+
+    if (error) {
+      console.error("Failed to update onboarding_seen:", error)
+    }
+
+    setAccount((prev) =>
+      prev
+        ? {
+            ...prev,
+            onboarding_seen: true,
+          }
+        : prev
+    )
+
+    setShowOnboarding(false)
+  }
+
+  const onboardingRole =
+    account?.role === "parent" || account?.role === "coach"
+      ? account.role
+      : null
+
   return (
     <>
       <header className="sticky top-0 z-20 flex shrink-0 flex-col gap-3 rounded-t-xl border-b border-border/50 bg-background px-4 py-3 sm:h-20 sm:flex-row sm:items-center sm:gap-3 sm:px-6 sm:py-0">
-        {/* Top row: toggle + actions */}
         <div className="flex w-full items-center gap-3">
-          {/* Left: toggle (mobile + desktop) */}
           {!sidebarOpen && (
             <button
               type="button"
@@ -115,7 +160,6 @@ export function LayoutHeader({ user }: { user: SupabaseUser | null }) {
             </button>
           )}
 
-          {/* Desktop-only search — sits inline next to toggle */}
           <div className="hidden min-w-0 flex-1 sm:block">
             {loading ? (
               <div className="h-9 w-full max-w-md animate-pulse rounded-md bg-muted/40" />
@@ -126,10 +170,8 @@ export function LayoutHeader({ user }: { user: SupabaseUser | null }) {
             )}
           </div>
 
-          {/* Spacer so actions pin right on mobile when search is hidden */}
           <div className="flex-1 sm:hidden" />
 
-          {/* Right: actions */}
           <div className="flex shrink-0 items-center gap-1.5">
             <button
               type="button"
@@ -144,11 +186,11 @@ export function LayoutHeader({ user }: { user: SupabaseUser | null }) {
               notifications={sampleNotifications}
               unreadCount={2}
             />
+
             <UserDropdown user={user} account={account} loading={loading} />
           </div>
         </div>
 
-        {/* Bottom row (mobile only): full-width search */}
         <div className="w-full sm:hidden">
           {loading ? (
             <div className="h-9 w-full animate-pulse rounded-md bg-muted/40" />
@@ -159,6 +201,20 @@ export function LayoutHeader({ user }: { user: SupabaseUser | null }) {
           )}
         </div>
       </header>
+
+      {onboardingRole === "parent" && (
+        <ParentOnboardingOverlay
+          open={showOnboarding}
+          onClose={handleOnboardingClose}
+        />
+      )}
+
+      {onboardingRole === "coach" && (
+        <CoachOnboardingOverlay
+          open={showOnboarding}
+          onClose={handleOnboardingClose}
+        />
+      )}
 
       <HelpModal open={helpOpen} onOpenChange={setHelpOpen} />
     </>

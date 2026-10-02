@@ -16,7 +16,7 @@ import {
   useCancelAppointment,
   type ParentAppointment,
 } from "@/hooks/client/use-parent-appointments"
-import { useAcademySettings } from "@/hooks/lookups/use-academy-settings"
+import { useBehaviourSettings } from "@/hooks/lookups/use-academy-settings"
 import { CancelDialog } from "./cancel-dialog"
 
 function statusMeta(status: string): {
@@ -41,11 +41,10 @@ function statusMeta(status: string): {
 
 export function MyAppointmentsTab() {
   const { data: appointments, isLoading } = useParentAppointments()
-  const { data: settings } = useAcademySettings()
+  const { cancellationCutoffHours: cutoffHours } = useBehaviourSettings()
   const cancel = useCancelAppointment()
   const [cancelling, setCancelling] = useState<ParentAppointment | null>(null)
 
-  const cutoffHours = settings?.cancellationCutoffHours ?? 24
   const cutoffTime = useMemo(() => {
     const now = new Date()
     now.setHours(now.getHours() + cutoffHours)
@@ -134,7 +133,6 @@ function AppointmentCard({
     appointmentTime !== null && appointmentTime < cutoffTime
 
   const cancellable = appt.status === "requested" || appt.status === "scheduled"
-
   const canCancel = cancellable && !isInsideCutoff
 
   const { label, variant } = statusMeta(appt.status)

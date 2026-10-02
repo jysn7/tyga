@@ -96,27 +96,34 @@ export interface SensitiveDataAccessLog {
 }
 
 // People & Progression
+// People & Progression
 export type Member = {
   id: number
   account_id: string
+
   full_name: string
   dob: string
   gender: "male" | "female" | "any"
+
   current_level_id: number | null
-  gear_owned: string | null
+
   school_name: string | null
   school_grade: string | null
-  id_or_birth_cert_number: string | null
+
   kit_size_top: string | null
   kit_size_bottom: string | null
   shoe_size: string | null
+
   previous_club: string | null
+
   medical_notes: string | null
   medical_aid_details: string | null
   doctor_contact: string | null
+
   emergency_contact_name: string | null
   emergency_contact_relationship: string | null
   emergency_contact_phone: string | null
+
   created_at: string
   archived_at: string | null
 }

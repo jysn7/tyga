@@ -32,8 +32,9 @@ export function StepBasicInfo() {
       <h1 className="pb-1 text-lg font-medium tracking-tight text-foreground">
         Let&apos;s add your child
       </h1>
+
       <p className="pb-4 text-sm text-muted-foreground">
-        We will use this to check eligibility for programmes.
+        We will use this information to create your child&apos;s profile.
       </p>
 
       <Field label="Full name" required error={errors.fullName?.message}>
@@ -52,6 +53,7 @@ export function StepBasicInfo() {
                   className="flex items-center gap-2 py-0.5 text-[15px] text-foreground"
                 >
                   <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+
                   {field.value ? (
                     format(field.value, "PPP")
                   ) : (
@@ -61,6 +63,7 @@ export function StepBasicInfo() {
                   )}
                 </button>
               </PopoverTrigger>
+
               <PopoverContent
                 className="w-auto border-border/60 p-0 shadow-md"
                 align="start"
@@ -90,6 +93,7 @@ export function StepBasicInfo() {
               <SelectTrigger className={triggerStyles}>
                 <SelectValue placeholder="Select gender" />
               </SelectTrigger>
+
               <SelectContent>
                 <SelectItem value="male">Male</SelectItem>
                 <SelectItem value="female">Female</SelectItem>
@@ -108,24 +112,6 @@ export function StepBasicInfo() {
 
       <Field label="School grade">
         <Input placeholder="e.g. Grade 5" {...register("schoolGrade")} />
-      </Field>
-
-      <Field
-        label="ID / birth certificate number"
-        required
-        error={errors.idOrBirthCertNumber?.message}
-      >
-        <Input
-          placeholder="Child's ID or birth certificate number"
-          {...register("idOrBirthCertNumber")}
-        />
-      </Field>
-
-      <Field label="Previous team / club">
-        <Input
-          placeholder="If your child has played elsewhere before"
-          {...register("previousClub")}
-        />
       </Field>
     </div>
   )

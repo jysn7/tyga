@@ -1,7 +1,6 @@
 import {
   Home,
   Users,
-  Receipt,
   Bell,
   Settings,
   CreditCard,
@@ -54,16 +53,8 @@ export const clientNav: NavEntry[] = [
     ],
   },
 
-  // Finance group
-  {
-    type: "group",
-    label: "Finance",
-    icon: CreditCard,
-    items: [
-      { label: "Invoices", href: "/invoices", icon: Receipt },
-      { label: "Payments", href: "/payments", icon: CreditCard },
-    ],
-  },
+  // Billing — one entry, two tabs inside
+  { type: "link", label: "Billing", href: "/billing", icon: CreditCard },
 
   // Standalone
   { type: "link", label: "Notifications", href: "/notifications", icon: Bell },

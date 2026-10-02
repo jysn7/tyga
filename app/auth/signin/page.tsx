@@ -188,7 +188,7 @@ export default function LoginPage() {
               action={
                 <Link
                   href="/auth/forgot-password"
-                  className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+                  className="text-xs text-information underline transition-colors hover:text-information/70"
                 >
                   Forgot password?
                 </Link>
@@ -204,7 +204,7 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              className="mt-6 h-10 w-full rounded-lg text-xs font-medium"
+              className="mt-6 h-10 w-full text-xs font-medium"
               disabled={loading}
             >
               {signIn.isPending ? "Signing in..." : "Sign In"}

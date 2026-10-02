@@ -50,7 +50,7 @@ export default function ProgrammesPage() {
 
   const selectedLabel =
     selectedMemberId === "all"
-      ? "All programmes"
+      ? "All members"
       : (members?.find((m) => String(m.id) === selectedMemberId)?.fullName ??
         "Select a member")
 

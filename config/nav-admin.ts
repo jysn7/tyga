@@ -12,6 +12,7 @@ import {
   GraduationCap,
   FileText,
   CreditCard,
+  Settings,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -38,16 +39,27 @@ export type NavLink = {
 export type NavEntry = NavGroup | NavLink
 
 export const adminNav: NavEntry[] = [
+  // Standalone
   {
     type: "link",
     label: "Overview",
     href: "/admin/overview",
     icon: LayoutDashboard,
   },
-  { type: "link", label: "Members", href: "/admin/members", icon: Users },
-  { type: "link", label: "Accounts", href: "/admin/accounts", icon: UserCog },
-  { type: "link", label: "Coaches", href: "/admin/coaches", icon: Award },
 
+  // People — who is in the system
+  {
+    type: "group",
+    label: "People",
+    icon: Users,
+    items: [
+      { label: "Members", href: "/admin/members", icon: Users },
+      { label: "Accounts", href: "/admin/accounts", icon: UserCog },
+      { label: "Coaches", href: "/admin/coaches", icon: Award },
+    ],
+  },
+
+  // Academy — how the academy is structured
   {
     type: "group",
     label: "Academy",
@@ -60,19 +72,34 @@ export const adminNav: NavEntry[] = [
     ],
   },
 
+  // Operations — day-to-day running
   {
-    type: "link",
-    label: "Appointments",
-    href: "/admin/appointments",
+    type: "group",
+    label: "Operations",
     icon: CalendarCheck,
+    items: [
+      {
+        label: "Appointments",
+        href: "/admin/appointments",
+        icon: CalendarCheck,
+      },
+      { label: "Finance", href: "/admin/finance", icon: CreditCard },
+    ],
   },
 
-  { type: "link", label: "Finance", href: "/admin/finance", icon: CreditCard },
+  // System — academy-wide config and records
   {
-    type: "link",
-    label: "Notifications",
-    href: "/admin/notifications",
-    icon: Bell,
+    type: "group",
+    label: "System",
+    icon: Settings,
+    items: [
+      {
+        label: "Notifications",
+        href: "/admin/notifications",
+        icon: Bell,
+      },
+      { label: "Audit Log", href: "/admin/audit", icon: ScrollText },
+      { label: "Settings", href: "/admin/settings", icon: Settings },
+    ],
   },
-  { type: "link", label: "Audit Log", href: "/admin/audit", icon: ScrollText },
 ]

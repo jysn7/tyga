@@ -28,7 +28,7 @@ import {
   type OpenSlot,
 } from "@/hooks/client/use-parent-appointments"
 import { useLevels } from "@/hooks/lookups/use-lookups"
-import { useAcademySettings } from "@/hooks/lookups/use-academy-settings"
+import { useBehaviourSettings } from "@/hooks/lookups/use-academy-settings"
 import { WeekGrid } from "@/components/portals/client/appointments/week-grid"
 import { MonthGrid } from "@/components/portals/client/appointments/month-grid"
 import { BookSlotDialog } from "@/components/portals/client/appointments/book-slot-dialog"
@@ -42,7 +42,8 @@ export function BrowseSlotsTab() {
   const [bookingSlot, setBookingSlot] = useState<OpenSlot | null>(null)
 
   const { data: levels } = useLevels()
-  const { data: settings } = useAcademySettings()
+  const { bookingLeadHours: leadHours, bookingLookaheadDays: lookaheadDays } =
+    useBehaviourSettings()
   const levelId = levelFilter === "all" ? null : Number(levelFilter)
 
   const { from, to } = useMemo(() => {
@@ -79,9 +80,6 @@ export function BrowseSlotsTab() {
   function goToday() {
     setAnchor(new Date())
   }
-
-  const leadHours = settings?.bookingLeadHours ?? 24
-  const lookaheadDays = settings?.bookingLookaheadDays ?? 56
 
   const selectedLevelName =
     levelFilter === "all"

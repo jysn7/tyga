@@ -1,6 +1,7 @@
 "use client"
 
 import { AppShell } from "@/components/portals/shared/app-shell"
+import ClientLayoutSkeleton from "@/components/portals/shared/client-layout-skeleton"
 import { useAuth } from "@/hooks/useAuth"
 
 export default function ClientLayout({
@@ -12,11 +13,8 @@ export default function ClientLayout({
 
   if (loading) {
     return (
-      <div className="flex min-h-svh items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="text-sm text-muted-foreground">Loading...</p>
-        </div>
+      <div className="animate-in duration-300 fade-in">
+        <ClientLayoutSkeleton />
       </div>
     )
   }

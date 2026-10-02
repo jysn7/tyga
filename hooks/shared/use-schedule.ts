@@ -53,13 +53,18 @@ export function useCoachSchedule(from: string, to: string) {
   })
 }
 
-export function useParentSchedule(from: string, to: string) {
+export function useParentSchedule(
+  from: string,
+  to: string,
+  memberId?: number | null
+) {
   return useQuery({
-    queryKey: ["schedule", "parent", from, to],
+    queryKey: ["schedule", "parent", from, to, memberId ?? "all"],
     queryFn: async (): Promise<ScheduleEntry[]> => {
       const { data, error } = await supabase.rpc("parent_get_full_schedule", {
         p_from: from,
         p_to: to,
+        p_member_id: memberId ?? null,
       })
       if (error) throw error
       return ((data ?? []) as ScheduleRow[]).map(toEntry)

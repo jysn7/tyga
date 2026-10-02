@@ -14,66 +14,31 @@ export function StepHealthSafety() {
   return (
     <div className="flex flex-col">
       <h1 className="pb-1 text-lg font-medium tracking-tight text-foreground">
-        Health &amp; safety
+        Golf &amp; medical information
       </h1>
+
       <p className="pb-4 text-sm text-muted-foreground">
-        Emergency contact is required. Medical notes help coaches keep your
-        child safe on the course.
+        Help us prepare the correct kit size and keep your child safe during
+        coaching sessions.
       </p>
 
-      <Field
-        label="Emergency contact name"
-        required
-        error={errors.emergencyContactName?.message}
-      >
-        <Input placeholder="Full name" {...register("emergencyContactName")} />
+      <Field label="Golf shirt size">
+        <Input placeholder="e.g. XS, S, M, L" {...register("kitSizeTop")} />
       </Field>
 
-      <Field
-        label="Relationship to child"
-        required
-        error={errors.emergencyContactRelationship?.message}
-      >
-        <Input
-          placeholder="e.g. Mother, Father, Guardian"
-          {...register("emergencyContactRelationship")}
-        />
-      </Field>
-
-      <Field
-        label="Emergency contact phone"
-        required
-        error={errors.emergencyContactPhone?.message}
-      >
-        <Input
-          placeholder="Phone number"
-          type="tel"
-          {...register("emergencyContactPhone")}
-        />
+      <Field label="Shoe size">
+        <Input placeholder="e.g. 4, 5, 6" {...register("shoeSize")} />
       </Field>
 
       <Field
         label="Medical notes"
-        hint="Only visible to coaches directly teaching your child. Access is logged."
+        error={errors.medicalNotes?.message}
+        hint="Allergies, medical conditions, medication, previous injuries, or any information coaches should be aware of."
       >
         <Textarea
           className="min-h-24 resize-none"
-          placeholder="Allergies, conditions, medication..."
+          placeholder="Optional"
           {...register("medicalNotes")}
-        />
-      </Field>
-
-      <Field label="Medical aid details">
-        <Input
-          placeholder="Scheme name and membership number"
-          {...register("medicalAidDetails")}
-        />
-      </Field>
-
-      <Field label="Doctor contact">
-        <Input
-          placeholder="Doctor's name and phone number"
-          {...register("doctorContact")}
         />
       </Field>
     </div>

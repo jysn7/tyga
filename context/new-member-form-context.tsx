@@ -22,13 +22,14 @@ const StepContext = createContext<StepContextValue | null>(null)
 
 export function useStepContext() {
   const ctx = useContext(StepContext)
+
   if (!ctx) {
     throw new Error("useStepContext must be used within NewMemberFormProvider")
   }
+
   return ctx
 }
 
-// Thin typed wrapper around RHF's context hook
 export function useMemberForm() {
   return useFormContext<MemberFormValues>()
 }
@@ -41,47 +42,43 @@ export function NewMemberFormProvider({
   const form = useForm<MemberFormValues>({
     resolver: zodResolver(memberFormSchema),
     mode: "onTouched",
+
     defaultValues: {
-      // Basic info
+      // ==========================================
+      // Step 1 - Child Information
+      // ==========================================
       fullName: "",
       dob: undefined,
       gender: undefined,
       schoolName: "",
       schoolGrade: "",
-      idOrBirthCertNumber: "",
-      previousClub: "",
 
-      // Health & safety
+      // ==========================================
+      // Step 2 - Golf & Medical
+      // ==========================================
+      shoeSize: "",
+      kitSizeTop: "",
       medicalNotes: "",
-      medicalAidDetails: "",
-      doctorContact: "",
-      emergencyContactName: "",
-      emergencyContactRelationship: "",
-      emergencyContactPhone: "",
 
-      // About golfer
+      // ==========================================
+      // Questionnaire
+      // ==========================================
       skillLevel: undefined,
       availability: "",
       interests: "",
       gearOwned: "",
-      kitSizeTop: "",
-      kitSizeBottom: "",
-      shoeSize: "",
 
-      // Consents — must exist as an object so nested fields render correctly
+      // ==========================================
+      // Step 3 - Consents
+      // ==========================================
       consents: {
+        membership: false,
         medicalEmergency: false,
         photoVideo: false,
         transport: false,
         indemnity: false,
         codeOfConduct: false,
       },
-
-      // File fields — left undefined so `instanceof File` validation fires correctly
-      birthCertificateFile: undefined,
-      idCopyFile: undefined,
-      registrationFormFile: undefined,
-      proofOfPaymentFile: undefined,
     },
   })
 
@@ -93,7 +90,14 @@ export function NewMemberFormProvider({
 
   return (
     <FormProvider {...form}>
-      <StepContext.Provider value={{ step, isLastStep, next, back }}>
+      <StepContext.Provider
+        value={{
+          step,
+          isLastStep,
+          next,
+          back,
+        }}
+      >
         {children}
       </StepContext.Provider>
     </FormProvider>

@@ -89,7 +89,6 @@ function toDefaultValues(member: EditableMember): MemberEditValues {
     emergencyContactPhone: member.emergency_contact_phone ?? "",
     schoolName: member.school_name ?? "",
     schoolGrade: member.school_grade ?? "",
-    idOrBirthCertNumber: member.id_or_birth_cert_number ?? "",
     previousClub: member.previous_club ?? "",
     kitSizeTop: member.kit_size_top ?? "",
     kitSizeBottom: member.kit_size_bottom ?? "",
@@ -250,10 +249,6 @@ export function EditMemberPanel({ member }: { member: EditableMember }) {
 
           <Field label="School grade">
             <Input {...register("schoolGrade")} />
-          </Field>
-
-          <Field label="ID / birth certificate number">
-            <Input disabled {...register("idOrBirthCertNumber")} />
           </Field>
 
           <Field label="Previous team / club">
