@@ -86,7 +86,7 @@ export function MonthGrid({
                   <button
                     key={slot.slotId}
                     onClick={() => onSelectSlot(slot)}
-                    className="truncate rounded bg-muted/40 px-1.5 py-0.5 text-left text-[10px] text-foreground transition-colors hover:bg-muted"
+                    className="truncate rounded bg-teal/60 px-1.5 py-0.5 text-left text-[10px] text-primary-foreground transition-colors hover:bg-muted"
                   >
                     {format(new Date(slot.startsAt), "HH:mm")}
                   </button>

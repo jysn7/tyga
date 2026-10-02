@@ -37,7 +37,7 @@ type ViewMode = "week" | "month"
 
 export function BrowseSlotsTab() {
   const [levelFilter, setLevelFilter] = useState<string>("all")
-  const [view, setView] = useState<ViewMode>("week")
+  const [view, setView] = useState<ViewMode>("month")
   const [anchor, setAnchor] = useState<Date>(new Date())
   const [bookingSlot, setBookingSlot] = useState<OpenSlot | null>(null)
 

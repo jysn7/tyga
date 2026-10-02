@@ -94,18 +94,17 @@ export function MemberTile({
       </div>
 
       {viewerRole === "client" && !isAssessed && (
-        <Button
-          size="sm"
-          variant="secondary"
-          className="w-fit rounded-md text-xs font-medium"
-          onClick={(e) => {
-            e.preventDefault()
-            e.stopPropagation()
-            setAssessmentOpen(true)
-          }}
+        <Link
+          className="w-fit rounded-md bg-foreground px-3 py-2.5 text-xs font-medium text-secondary"
+          href="/my-appointments"
+          // onClick={(e) => {
+          //   e.preventDefault()
+          //   e.stopPropagation()
+          //   setAssessmentOpen(true)
+          // }}
         >
           Book an assessment
-        </Button>
+        </Link>
       )}
     </div>
   )
