@@ -17,6 +17,8 @@ import { ChildCard } from "@/components/portals/client/overview/child-card"
 import { RecentProgressList } from "@/components/portals/client/overview/recent-progress-list"
 import { MiniCalendar } from "@/components/portals/client/overview/mini-calendar"
 import { ProgrammeCarousel } from "@/components/portals/client/overview/programme-carousel"
+import { OnboardingBlock } from "@/components/portals/client/overview/onboarding-block"
+import { OnboardingBlockSidebar } from "@/components/portals/client/overview/onboarding-sidebar"
 import {
   useParentStats,
   useParentChildren,
@@ -67,10 +69,12 @@ export function ParentOverview() {
         }
       />
 
-      {/* Two-column: main content (scrolls) + sidebar (sticky) */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Main column — stats, programmes, members, invoices */}
+        {/* Main column */}
         <div className="flex w-full flex-col gap-6 lg:col-span-2">
+          {/* Onboarding — checklist (mobile) or banner, nothing when complete */}
+          <OnboardingBlock />
+
           {/* Stats */}
           {statsLoading || !stats ? (
             <div className="flex min-h-50 items-center justify-center">
@@ -105,12 +109,10 @@ export function ParentOverview() {
             </div>
           )}
 
-          {/* Outstanding invoice banner */}
           {!invoicesLoading && invoices && (
             <OutstandingInvoiceBanner invoices={invoices} />
           )}
 
-          {/* Programme carousel */}
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold tracking-tight text-foreground">
@@ -133,7 +135,6 @@ export function ParentOverview() {
             )}
           </div>
 
-          {/* Enrolled members */}
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold tracking-tight text-foreground">
@@ -179,9 +180,11 @@ export function ParentOverview() {
           </div>
         </div>
 
-        {/* Sidebar — sticky, full-height content in this column */}
+        {/* Sidebar */}
         <aside className="flex w-full flex-col gap-6 lg:sticky lg:top-6 lg:col-span-1 lg:self-start">
-          {/* Mini calendar */}
+          {/* Onboarding checklist — desktop only, at the top of the sidebar */}
+          <OnboardingBlockSidebar />
+
           {sessionsLoading ? (
             <div className="flex min-h-70 items-center justify-center rounded-xl bg-card shadow">
               <Loader />
@@ -190,7 +193,6 @@ export function ParentOverview() {
             <MiniCalendar sessions={sessions ?? []} />
           )}
 
-          {/* Recent progress */}
           {progressLoading ? (
             <div className="flex h-32 w-full items-center justify-center">
               <Loader />
@@ -199,7 +201,6 @@ export function ParentOverview() {
             <RecentProgressList items={progress ?? []} />
           )}
 
-          {/* Quick links */}
           <div className="flex w-full flex-col gap-2">
             <span className="px-1 text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
               Quick links
