@@ -13,6 +13,16 @@ type UseAuthOptions = {
   requiredRole?: Role
 }
 
+const PORTAL_HOME: Record<Role, string> = {
+  parent: "/dashboard",
+  coach: "/coach/overview",
+  admin: "/admin/overview",
+}
+
+function portalPathFor(role: Role | null | undefined): string {
+  return role ? PORTAL_HOME[role] : "/dashboard"
+}
+
 export function useAuth(options: UseAuthOptions = {}) {
   const {
     redirectTo = "/auth/signin",
@@ -28,65 +38,53 @@ export function useAuth(options: UseAuthOptions = {}) {
 
   useEffect(() => {
     const supabase = createClient()
+    let cancelled = false
 
-    async function check() {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
+    async function fetchRole(): Promise<Role | null> {
+      // Use the security definer RPC — bypasses RLS on accounts
+      const { data, error } = await supabase
+        .rpc("get_my_account")
+        .single<{ role: Role }>()
+
+      if (error) {
+        console.error("[useAuth] get_my_account failed:", error.message)
+        return null
+      }
+      return data?.role ?? null
+    }
+
+    async function handleSession(session: { user: User } | null) {
+      if (cancelled) return
 
       if (!session) {
         setUser(null)
         setRole(null)
         setLoading(false)
         setAuthorized(false)
-        if (!redirectIfAuthenticated) {
-          router.replace(redirectTo)
-        }
+        if (!redirectIfAuthenticated) router.replace(redirectTo)
         return
       }
 
-      // If this is an auth page (signin/signup), redirect to dashboard
+      const userRole = await fetchRole()
+      if (cancelled) return
+
+      // Signed-in user on an auth page → send to their portal
       if (redirectIfAuthenticated) {
         setUser(session.user)
-        setLoading(false)
-        setAuthorized(true)
-        router.replace("/dashboard")
-        return
-      }
-
-      // Get the user's role from accounts table
-      const { data: account, error } = await supabase
-        .from("accounts")
-        .select("role")
-        .eq("id", session.user.id)
-        .single()
-
-      if (error || !account) {
-        // User exists in auth but not in accounts - this shouldn't happen
-        setUser(session.user)
-        setRole(null)
+        setRole(userRole)
         setLoading(false)
         setAuthorized(false)
-        router.replace(redirectTo)
+        router.replace(portalPathFor(userRole))
         return
       }
 
-      const userRole = account.role as Role
-
-      // Check if the user has the required role
+      // Required role mismatch → send to their own portal
       if (requiredRole && userRole !== requiredRole) {
         setUser(session.user)
         setRole(userRole)
         setLoading(false)
         setAuthorized(false)
-        // Redirect to their actual portal
-        const portalPath =
-          userRole === "admin"
-            ? "/admin/overview"
-            : userRole === "coach"
-              ? "/coach/overview"
-              : "/dashboard"
-        router.replace(portalPath)
+        router.replace(portalPathFor(userRole))
         return
       }
 
@@ -96,54 +94,24 @@ export function useAuth(options: UseAuthOptions = {}) {
       setAuthorized(true)
     }
 
+    async function check() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      await handleSession(session)
+    }
+
     check()
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!session) {
-        setUser(null)
-        setRole(null)
-        setLoading(false)
-        setAuthorized(false)
-        if (!redirectIfAuthenticated) {
-          router.replace(redirectTo)
-        }
-        return
-      }
-
-      // Re-check role on auth change
-      const { data: account } = await supabase
-        .from("accounts")
-        .select("role")
-        .eq("id", session.user.id)
-        .single()
-
-      const userRole = account?.role as Role | null
-
-      if (requiredRole && userRole !== requiredRole) {
-        setUser(session.user)
-        setRole(userRole)
-        setLoading(false)
-        setAuthorized(false)
-        const portalPath =
-          userRole === "admin"
-            ? "/admin/overview"
-            : userRole === "coach"
-              ? "/coach"
-              : "/dashboard"
-        router.replace(portalPath)
-        return
-      }
-
-      setUser(session.user)
-      setRole(userRole)
-      setLoading(false)
-      setAuthorized(true)
+      if (event === "INITIAL_SESSION") return
+      await handleSession(session)
     })
 
     return () => {
+      cancelled = true
       subscription.unsubscribe()
     }
   }, [redirectTo, redirectIfAuthenticated, requiredRole, router])

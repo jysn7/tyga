@@ -6,6 +6,7 @@ import type { User as SupabaseUser } from "@supabase/supabase-js"
 
 import { createClient } from "@/utils/supabase/client"
 import { useAppStore } from "@/stores/useAppStore"
+import { useRealtimeNotifications } from "@/hooks/use-notifications"
 
 import { UserDropdown } from "@/components/portals/shared/user-dropdown"
 import { NotificationsDropdown } from "@/components/portals/shared/notifications-dropdown"
@@ -14,40 +15,6 @@ import { GlobalSearch } from "@/components/portals/shared/global-search"
 
 import { ParentOnboardingOverlay } from "./parent-onboarding-overlay"
 import { CoachOnboardingOverlay } from "./coach-onboarding-overlay"
-
-const sampleNotifications = [
-  {
-    id: "1",
-    title: "New Registration",
-    description: "A new golfer completed their enrollment profile.",
-    time: "2m ago",
-    read: false,
-    link: "/golfers/123",
-  },
-  {
-    id: "2",
-    title: "Payment Received",
-    description: "Invoice #1042 has been settled successfully.",
-    time: "1h ago",
-    read: false,
-    link: "/billing",
-  },
-  {
-    id: "3",
-    title: "System Update",
-    description: "Platform maintenance scheduled for Sunday at 02:00 UTC.",
-    time: "3h ago",
-    read: true,
-  },
-  {
-    id: "4",
-    title: "Integration Active",
-    description: "Stripe webhooks are operating smoothly.",
-    time: "1d ago",
-    read: true,
-    link: "/integrations",
-  },
-]
 
 type Account = {
   id: string
@@ -71,9 +38,14 @@ export function LayoutHeader({ user }: { user: SupabaseUser | null }) {
   const [helpOpen, setHelpOpen] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
 
-  const supabase = createClient()
+  // Realtime — opens one channel for this account's notifications.
+  // Passes null until the account is fetched, so it subscribes
+  // as soon as the account id is available.
+  useRealtimeNotifications(account?.id ?? null)
 
   useEffect(() => {
+    const supabase = createClient()
+
     const fetchAccount = async () => {
       try {
         setLoading(true)
@@ -109,13 +81,15 @@ export function LayoutHeader({ user }: { user: SupabaseUser | null }) {
     }
 
     fetchAccount()
-  }, [user, supabase])
+  }, [user])
 
   async function handleOnboardingClose() {
     if (!account) {
       setShowOnboarding(false)
       return
     }
+
+    const supabase = createClient()
 
     const { error } = await supabase
       .from("accounts")
@@ -182,10 +156,7 @@ export function LayoutHeader({ user }: { user: SupabaseUser | null }) {
               <CircleHelp className="h-4 w-4" strokeWidth={1.75} />
             </button>
 
-            <NotificationsDropdown
-              notifications={sampleNotifications}
-              unreadCount={2}
-            />
+            <NotificationsDropdown />
 
             <UserDropdown user={user} account={account} loading={loading} />
           </div>
