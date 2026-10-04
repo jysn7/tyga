@@ -11,54 +11,74 @@ type StatColor =
   | "pink"
   | "gray"
 
-const colorMap: Record<StatColor, { bg: string; chip: string; icon: string }> =
-  {
-    blue: {
-      bg: "bg-blue-light",
-      chip: "bg-blue/50",
-      icon: "text-blue-light",
-    },
-    green: {
-      bg: "bg-primary/70",
-      chip: "bg-primary/50",
-      icon: "text-prmary/80",
-    },
-    yellow: {
-      bg: "bg-yellow-light",
-      chip: "bg-yellow/50",
-      icon: "text-yellow-light",
-    },
-    red: {
-      bg: "bg-red-light",
-      chip: "bg-red/50",
-      icon: "text-red-light",
-    },
-    purple: {
-      bg: "bg-purple-light",
-      chip: "bg-purple/50",
-      icon: "text-purple-light",
-    },
-    teal: {
-      bg: "bg-teal-light",
-      chip: "bg-teal/50",
-      icon: "text-teal-light",
-    },
-    orange: {
-      bg: "bg-orange",
-      chip: "bg-secondary",
-      icon: "text-orange-light",
-    },
-    pink: {
-      bg: "bg-pink-light",
-      chip: "bg-pink/50",
-      icon: "text-pink-light",
-    },
-    gray: {
-      bg: "bg-foreground/80 dark:bg-foreground",
-      chip: "bg-secondary",
-      icon: "text-foreground",
-    },
-  }
+const colorMap: Record<
+  StatColor,
+  { bg: string; chip: string; icon: string; value: string; label: string }
+> = {
+  blue: {
+    bg: "bg-blue-light",
+    chip: "bg-blue/15",
+    icon: "text-blue",
+    value: "text-foreground",
+    label: "text-muted-foreground",
+  },
+  green: {
+    bg: "bg-green-light",
+    chip: "bg-primary/25",
+    icon: "text-primary",
+    value: "text-foreground",
+    label: "text-muted-foreground",
+  },
+  yellow: {
+    bg: "bg-yellow-light",
+    chip: "bg-yellow/20",
+    icon: "text-yellow",
+    value: "text-foreground",
+    label: "text-muted-foreground",
+  },
+  red: {
+    bg: "bg-red-light",
+    chip: "bg-red/15",
+    icon: "text-red",
+    value: "text-foreground",
+    label: "text-muted-foreground",
+  },
+  purple: {
+    bg: "bg-purple-light",
+    chip: "bg-purple/15",
+    icon: "text-purple",
+    value: "text-foreground",
+    label: "text-muted-foreground",
+  },
+  teal: {
+    bg: "bg-teal/80",
+    chip: "bg-card/25",
+    icon: "text-secondary",
+    value: "text-foreground",
+    label: "text-secondary",
+  },
+  orange: {
+    bg: "bg-orange-light",
+    chip: "bg-orange/15",
+    icon: "text-orange",
+    value: "text-foreground",
+    label: "text-muted-foreground",
+  },
+  pink: {
+    bg: "bg-pink-light",
+    chip: "bg-pink/15",
+    icon: "text-pink",
+    value: "text-foreground",
+    label: "text-muted-foreground",
+  },
+  gray: {
+    bg: "bg-foreground/80 dark:bg-foreground",
+    chip: "bg-background/15",
+    icon: "text-background",
+    value: "text-background",
+    label: "text-background/70",
+  },
+}
 
 export function StatTile({
   label,
@@ -78,17 +98,19 @@ export function StatTile({
   return (
     <div
       className={`flex h-full flex-col justify-between rounded-xl shadow ${c.bg} ${
-        compact ? "gap-2 p-3 sm:gap-3 sm:p-4" : "gap-3 p-4"
+        compact
+          ? "flex-row items-center justify-start gap-2 p-2.5 sm:gap-3 sm:p-4"
+          : "gap-3 p-4"
       }`}
     >
       <div
         className={`flex items-center justify-center rounded-lg ${c.chip} ${
-          compact ? "h-7 w-7 sm:h-9 sm:w-9" : "h-9 w-9"
+          compact ? "h-10 w-10 sm:h-12 sm:w-12" : "h-8 w-8"
         }`}
       >
         <Icon
           className={`${c.icon} ${
-            compact ? "h-3.5 w-3.5 sm:h-4 sm:w-4" : "h-4 w-4"
+            compact ? "h-3 w-3 sm:h-4 sm:w-4" : "h-4 w-4"
           }`}
           strokeWidth={1.75}
         />
@@ -96,15 +118,13 @@ export function StatTile({
       <div className="flex flex-col gap-0.5">
         <span
           className={`font-semibold tracking-tight ${
-            compact ? "text-lg sm:text-2xl" : "text-2xl"
-          } ${color === "gray" ? "text-secondary" : "text-foreground"}`}
+            compact ? "text-base sm:text-2xl" : "text-2xl"
+          } ${c.value}`}
         >
           {value}
         </span>
         <span
-          className={`${compact ? "text-[11px] sm:text-xs" : "text-xs"} ${
-            color === "gray" ? "text-secondary/70" : "text-foreground"
-          }`}
+          className={`leading-tight ${compact ? "text-[10px] sm:text-xs" : "text-xs"} ${c.label}`}
         >
           {label}
         </span>

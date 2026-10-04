@@ -54,44 +54,25 @@ export function ParentOverview() {
     .slice(0, 2)
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-2">
       <PageHeader
         title="Welcome back"
         description="Here's what's happening with your family"
-        action={
-          <Link
-            href="/schedule"
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-input px-3.5 text-xs font-medium text-foreground transition-colors hover:bg-accent"
-          >
-            <Calendar className="h-3.5 w-3.5" strokeWidth={1.75} />
-            Full schedule
-          </Link>
-        }
       />
-
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Main column */}
         <div className="flex w-full flex-col gap-6 lg:col-span-2">
           {/* Onboarding — checklist (mobile) or banner, nothing when complete */}
           <OnboardingBlock />
 
-          {/* Stats */}
+          {/* Stats — on mobile: active members + badges side by side,
+              outstanding balance full width below. Desktop: same layout. */}
           {statsLoading || !stats ? (
             <div className="flex min-h-50 items-center justify-center">
               <Loader />
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
-              <div className="sm:col-span-2">
-                <StatTile
-                  color="orange"
-                  label="Outstanding balance"
-                  value={`R${stats.outstandingBalance.toLocaleString()}`}
-                  icon={CreditCard}
-                  compact
-                />
-              </div>
-
+            <div className="grid grid-cols-2 gap-1">
               <StatTile
                 color="gray"
                 label="Active members"
@@ -106,6 +87,15 @@ export function ParentOverview() {
                 icon={Trophy}
                 compact
               />
+              <div className="col-span-2">
+                <StatTile
+                  color="teal"
+                  label="Outstanding balance"
+                  value={`R${stats.outstandingBalance.toLocaleString()}`}
+                  icon={CreditCard}
+                  compact
+                />
+              </div>
             </div>
           )}
 

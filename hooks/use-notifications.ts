@@ -40,18 +40,38 @@ function toNotification(row: NotificationRow): Notification {
   }
 }
 
+export type NotificationFilters = {
+  status?: "all" | "unread" | "read"
+  typeGroup?: string | null
+  search?: string | null
+}
+
 // ---------------------------------------------------------------------------
 // Queries
 // ---------------------------------------------------------------------------
 
-export function useNotifications(limit = 20, offset = 0) {
+export function useNotifications(
+  limit = 20,
+  offset = 0,
+  filters: NotificationFilters = {}
+) {
   const supabase = createClient()
+
+  const status = filters.status ?? "all"
+  const typeGroup = filters.typeGroup ?? null
+  const search = filters.search?.trim() || null
+
+  const isRead = status === "unread" ? false : status === "read" ? true : null
+
   return useQuery({
-    queryKey: ["notifications", limit, offset],
+    queryKey: ["notifications", limit, offset, status, typeGroup, search],
     queryFn: async (): Promise<Notification[]> => {
       const { data, error } = await supabase.rpc("get_my_notifications", {
         p_limit: limit,
         p_offset: offset,
+        p_is_read: isRead,
+        p_type_group: typeGroup,
+        p_search: search,
       })
       if (error) throw error
       return ((data ?? []) as NotificationRow[]).map(toNotification)

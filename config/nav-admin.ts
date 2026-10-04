@@ -1,17 +1,19 @@
 import {
-  LayoutDashboard,
+  House,
   Users,
-  UserCog,
-  BookOpen,
-  Calendar,
-  Building2,
-  CalendarCheck,
-  Bell,
-  ScrollText,
-  Award,
+  KeyRound,
+  UserCheck,
   GraduationCap,
-  FileText,
-  CreditCard,
+  Layers,
+  MapPin,
+  TrendingUp,
+  BookOpen,
+  ClipboardList,
+  CalendarClock,
+  Wallet,
+  SlidersHorizontal,
+  Bell,
+  History,
   Settings,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
@@ -44,7 +46,7 @@ export const adminNav: NavEntry[] = [
     type: "link",
     label: "Overview",
     href: "/admin/overview",
-    icon: LayoutDashboard,
+    icon: House,
   },
 
   // People — who is in the system
@@ -54,8 +56,8 @@ export const adminNav: NavEntry[] = [
     icon: Users,
     items: [
       { label: "Members", href: "/admin/members", icon: Users },
-      { label: "Accounts", href: "/admin/accounts", icon: UserCog },
-      { label: "Coaches", href: "/admin/coaches", icon: Award },
+      { label: "Accounts", href: "/admin/accounts", icon: KeyRound },
+      { label: "Coaches", href: "/admin/coaches", icon: UserCheck },
     ],
   },
 
@@ -65,10 +67,10 @@ export const adminNav: NavEntry[] = [
     label: "Academy",
     icon: GraduationCap,
     items: [
-      { label: "Programmes", href: "/admin/programmes", icon: Calendar },
-      { label: "Venues", href: "/admin/venues", icon: Building2 },
-      { label: "Levels", href: "/admin/levels", icon: BookOpen },
-      { label: "Curriculum", href: "/admin/curriculum", icon: FileText },
+      { label: "Programmes", href: "/admin/programmes", icon: Layers },
+      { label: "Venues", href: "/admin/venues", icon: MapPin },
+      { label: "Levels", href: "/admin/levels", icon: TrendingUp },
+      { label: "Curriculum", href: "/admin/curriculum", icon: BookOpen },
     ],
   },
 
@@ -76,14 +78,14 @@ export const adminNav: NavEntry[] = [
   {
     type: "group",
     label: "Operations",
-    icon: CalendarCheck,
+    icon: ClipboardList,
     items: [
       {
         label: "Appointments",
         href: "/admin/appointments",
-        icon: CalendarCheck,
+        icon: CalendarClock,
       },
-      { label: "Finance", href: "/admin/finance", icon: CreditCard },
+      { label: "Finance", href: "/admin/finance", icon: Wallet },
     ],
   },
 
@@ -91,14 +93,14 @@ export const adminNav: NavEntry[] = [
   {
     type: "group",
     label: "System",
-    icon: Settings,
+    icon: SlidersHorizontal,
     items: [
       {
         label: "Notifications",
         href: "/admin/notifications",
         icon: Bell,
       },
-      { label: "Audit Log", href: "/admin/audit", icon: ScrollText },
+      { label: "Audit Log", href: "/admin/audit", icon: History },
       { label: "Settings", href: "/admin/settings", icon: Settings },
     ],
   },

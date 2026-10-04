@@ -1,3 +1,4 @@
+// components/portals/client/notifications/notifications-list.tsx
 "use client"
 
 import Link from "next/link"
@@ -10,28 +11,51 @@ import {
   Megaphone,
   BookOpen,
   GraduationCap,
+  AlertTriangle,
 } from "lucide-react"
 import { EmptyState } from "@/components/portals/shared/empty-state"
 import { useMarkRead, type Notification } from "@/hooks/use-notifications"
 
 const iconMap: Record<string, React.ElementType> = {
+  // Sessions
   session: Calendar,
   session_reminder: Calendar,
+  session_cancelled: Calendar,
+
+  // Payments
   payment: Receipt,
   payment_confirmed: Receipt,
+  payment_due: Receipt,
+
+  // Levels
   level_progression: TrendingUp,
   level_upgrade: TrendingUp,
+
+  // Appointments / assessments
   appointment: Users,
+  appointment_confirmed: Users,
+  appointment_completed: Users,
+  appointment_reminder: Users,
+  appointment_assigned: Users,
   assessment_assigned: Users,
+  appointment_no_show: AlertTriangle,
+
+  // People
   member: Users,
   member_added: Users,
+  new_student: GraduationCap,
   enrollment: BookOpen,
   enrollment_confirmed: BookOpen,
-  new_student: GraduationCap,
+
+  // Attendance
   attendance: Calendar,
   attendance_update: Calendar,
+
+  // Announcements
   announcement: Megaphone,
   welcome: Bell,
+
+  // Fallback
   default: Bell,
 }
 
@@ -56,11 +80,9 @@ function notificationHref(n: Notification): string | undefined {
     case "session":
       return "/schedule"
     case "appointment":
-      return "/appointments"
-    case "gear_rental":
-      return "/dashboard"
+      return "/my-appointments"
     default:
-      return undefined
+      return "/notifications"
   }
 }
 
@@ -86,7 +108,7 @@ export function NotificationList({
   if (notifications.length === 0) {
     return (
       <EmptyState
-        title="No notifications yet"
+        title="No notifications"
         description="Reminders, payment alerts, and updates will show up here."
       />
     )
@@ -108,21 +130,19 @@ export function NotificationList({
 
           const content = (
             <>
-              {/* Icon bubble */}
               <div
                 className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                  isUnread ? "bg-primary/10" : "bg-input"
+                  isUnread ? "border border-border bg-card" : "bg-input"
                 }`}
               >
                 <Icon
                   className={`h-3.5 w-3.5 ${
-                    isUnread ? "text-primary" : "text-muted-foreground"
+                    isUnread ? "text-muted-foreground" : "text-muted-foreground"
                   }`}
                   strokeWidth={1.75}
                 />
               </div>
 
-              {/* Content */}
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span
                   className={`truncate text-sm ${
@@ -138,7 +158,6 @@ export function NotificationList({
                 </span>
               </div>
 
-              {/* Meta */}
               <div className="flex shrink-0 items-center gap-2 pt-0.5">
                 <span className="text-[11px] text-muted-foreground">
                   {formatRelativeDate(n.createdAt)}
@@ -152,8 +171,6 @@ export function NotificationList({
 
           const className = `group flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors hover:bg-accent/40`
 
-          // Notifications with a link become Link wrappers,
-          // others stay as buttons — the click still marks as read either way.
           if (href) {
             return (
               <Link

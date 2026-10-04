@@ -3,7 +3,6 @@
 import { useState } from "react"
 import Link from "next/link"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
 import { ArrowUpRight, AlertCircle } from "lucide-react"
 import { BookAssessmentPanel } from "@/components/portals/client/members/book-assessment-panel"
 

@@ -38,30 +38,32 @@ export function NextStepBanner() {
         <Icon className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
       </div>
 
-      {/* Text */}
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="truncate text-sm font-medium text-foreground">
-          Next: {config.label}
-        </span>
+      <div className="flex flex-col gap-0.5 gap-2 md:flex-row">
+        {/* Text */}
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="truncate text-sm font-medium text-foreground">
+            Next: {config.label}
+          </span>
 
-        <span className="line-clamp-2 text-xs text-muted-foreground sm:truncate">
-          {config.description}
-        </span>
+          <span className="line-clamp-2 text-xs text-muted-foreground sm:truncate">
+            {config.description}
+          </span>
+        </div>
+
+        {/* CTA — full width on mobile, inline on sm+ */}
+        <Link
+          href={config.href(memberId)}
+          className="group inline-flex h-8 w-full shrink-0 items-center justify-center gap-1.5 rounded-md bg-foreground/80 px-4 text-xs font-medium text-secondary shadow transition-opacity hover:opacity-90 sm:h-8 sm:w-auto dark:bg-foreground"
+        >
+          <span className="hidden sm:inline">{config.ctaLabel}</span>
+          <span className="sm:hidden">Continue</span>
+
+          <ArrowRight
+            className="h-3 w-3 transition-transform duration-300 group-hover:translate-x-0.5"
+            strokeWidth={1.75}
+          />
+        </Link>
       </div>
-
-      {/* CTA — full width on mobile, inline on sm+ */}
-      <Link
-        href={config.href(memberId)}
-        className="group inline-flex h-8 w-full shrink-0 items-center justify-center gap-1.5 rounded-md bg-foreground px-4 text-xs font-medium text-background transition-opacity hover:opacity-90 sm:h-8 sm:w-auto"
-      >
-        <span className="hidden sm:inline">{config.ctaLabel}</span>
-        <span className="sm:hidden">Continue</span>
-
-        <ArrowRight
-          className="h-3 w-3 transition-transform duration-300 group-hover:translate-x-0.5"
-          strokeWidth={1.75}
-        />
-      </Link>
     </div>
   )
 }

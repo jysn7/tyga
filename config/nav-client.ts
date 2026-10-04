@@ -1,12 +1,13 @@
 import {
-  Home,
+  House,
   Users,
   Bell,
   Settings,
-  CreditCard,
-  Trophy,
+  Wallet,
+  Layers,
   CalendarDays,
   CalendarClock,
+  Flag,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -34,16 +35,16 @@ export type NavEntry = NavGroup | NavLink
 
 export const clientNav: NavEntry[] = [
   // Standalone
-  { type: "link", label: "Dashboard", href: "/dashboard", icon: Home },
+  { type: "link", label: "Dashboard", href: "/dashboard", icon: House },
   { type: "link", label: "My Members", href: "/members", icon: Users },
 
-  // Golf group — programmes + schedule + appointments
+  // Golf group: programmes + schedule + appointments
   {
     type: "group",
     label: "Golf",
-    icon: Trophy,
+    icon: Flag,
     items: [
-      { label: "Programmes", href: "/programmes", icon: Trophy },
+      { label: "Programmes", href: "/programmes", icon: Layers },
       { label: "My Schedule", href: "/my-schedule", icon: CalendarDays },
       {
         label: "My Appointments",
@@ -53,8 +54,8 @@ export const clientNav: NavEntry[] = [
     ],
   },
 
-  // Billing — one entry, two tabs inside
-  { type: "link", label: "Billing", href: "/billing", icon: CreditCard },
+  // Billing: one entry, two tabs inside
+  { type: "link", label: "Billing", href: "/billing", icon: Wallet },
 
   // Standalone
   { type: "link", label: "Notifications", href: "/notifications", icon: Bell },
