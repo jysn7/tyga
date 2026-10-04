@@ -32,6 +32,7 @@ export async function proxy(request: NextRequest) {
   const isCallback = path === "/auth/callback"
   const isWebhook = path.startsWith("/api/paystack/webhook")
   const isApiRoute = path.startsWith("/api/")
+  const isOfflinePage = path === "/~offline" || path.startsWith("/~offline/")
 
   // PWA assets — must bypass auth or the SW/manifest fetch gets redirected
   const isManifest =
@@ -42,7 +43,14 @@ export async function proxy(request: NextRequest) {
     path.startsWith("/workbox-")
 
   // Allow these to pass through without session check
-  if (isCallback || isWebhook || isApiRoute || isManifest || isServiceWorker) {
+  if (
+    isOfflinePage ||
+    isCallback ||
+    isWebhook ||
+    isApiRoute ||
+    isManifest ||
+    isServiceWorker
+  ) {
     return response
   }
 

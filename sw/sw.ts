@@ -1,4 +1,3 @@
-// app/sw.ts
 import { defaultCache } from "@serwist/turbopack/worker"
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist"
 import { Serwist } from "serwist"

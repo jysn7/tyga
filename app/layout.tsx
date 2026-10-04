@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
 import { Toaster } from "@/components/ui/toast"
 import { Providers } from "@/components/provider"
+import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register"
 
 export const metadata: Metadata = {
   title: "TYGA Junior Golf",
@@ -39,6 +40,7 @@ export default function RootLayout({
     >
       <body>
         <Toaster />
+        <ServiceWorkerRegister />
         <Providers>
           <ThemeProvider>{children}</ThemeProvider>
         </Providers>
