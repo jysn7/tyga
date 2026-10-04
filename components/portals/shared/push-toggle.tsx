@@ -16,19 +16,28 @@ export function PushToggle() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let cancelled = false
+
     async function check() {
-      const ok = pushSupported()
-      setSupported(ok)
-      if (ok) {
-        try {
-          setEnabled(await isSubscribed())
-        } catch (err) {
-          console.error("[PushToggle] isSubscribed failed:", err)
+      try {
+        const ok = pushSupported()
+        if (cancelled) return
+        setSupported(ok)
+        if (ok) {
+          const subscribed = await isSubscribed()
+          if (!cancelled) setEnabled(subscribed)
         }
+      } catch (err) {
+        console.error("[PushToggle] check failed:", err)
+      } finally {
+        if (!cancelled) setLoading(false)
       }
-      setLoading(false)
     }
+
     check()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   if (!supported) {
@@ -46,34 +55,37 @@ export function PushToggle() {
 
   async function handleToggle(next: boolean) {
     setLoading(true)
-    if (next) {
-      const result = await subscribeToPush()
-      if (result.ok) {
-        setEnabled(true)
+    try {
+      if (next) {
+        const result = await subscribeToPush()
+        if (result.ok) {
+          setEnabled(true)
+          toast.add({
+            title: "Push notifications enabled",
+            description: "You'll get updates on this device.",
+            type: "success",
+            timeout: 4000,
+          })
+        } else {
+          toast.add({
+            title: "Couldn't enable notifications",
+            description: result.reason,
+            type: "error",
+            timeout: 5000,
+          })
+        }
+      } else {
+        await unsubscribeFromPush()
+        setEnabled(false)
         toast.add({
-          title: "Push notifications enabled",
-          description: "You'll get updates on this device.",
+          title: "Push notifications disabled",
           type: "success",
           timeout: 4000,
         })
-      } else {
-        toast.add({
-          title: "Couldn't enable notifications",
-          description: result.reason,
-          type: "error",
-          timeout: 5000,
-        })
       }
-    } else {
-      await unsubscribeFromPush()
-      setEnabled(false)
-      toast.add({
-        title: "Push notifications disabled",
-        type: "success",
-        timeout: 4000,
-      })
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (

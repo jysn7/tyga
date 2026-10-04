@@ -9,7 +9,7 @@ export function ServiceWorkerRegister() {
     }
 
     navigator.serviceWorker
-      .register("/serwist/sw.js")
+      .register("/serwist/sw.js", { scope: "/" })
       .then((reg) => console.log("[SW] registered, scope:", reg.scope))
       .catch((err) => console.error("[SW] registration failed:", err))
   }, [])
