@@ -27,50 +27,6 @@ as $$
   select id from coaches where account_id = auth.uid();
 $$;
 
--- ---------- Auto-sync session_coaches from programme_coaches ----------
--- every new session automatically inherits its programme's coach assignments.
-
-create or replace function sync_session_coaches()
-returns trigger
-language plpgsql
-security definer
-as $$
-begin
-  insert into session_coaches (session_id, coach_id, role_in_session)
-  select new.id, pc.coach_id, pc.role_in_programme
-  from programme_coaches pc
-  where pc.programme_id = new.programme_id
-  on conflict (session_id, coach_id) do nothing;
-  return new;
-end;
-$$;
-
-create trigger trg_sync_session_coaches
-after insert on programme_sessions
-for each row execute function sync_session_coaches();
-
--- ---------- Sensitive data access logging (server-side only) ----------
--- No direct INSERT policy exists on sensitive_data_access_log (see below).
--- The application calls this function whenever it reads medical_notes,
--- dob, or emergency_contact — it runs as security definer so it can write
--- to the log regardless of the caller's own RLS permissions, but it
--- always logs the caller's own auth.uid(), so it can't be spoofed.
-
-create or replace function log_sensitive_data_access(
-  p_member_id int,
-  p_field text,
-  p_reason text default null
-)
-returns void
-language plpgsql
-security definer
-as $$
-begin
-  insert into sensitive_data_access_log (user_id, member_id, field_accessed, reason)
-  values (auth.uid(), p_member_id, p_field, p_reason);
-end;
-$$;
-
 -- ---------- Enable RLS on All Tables ----------
 
 alter table accounts enable row level security;

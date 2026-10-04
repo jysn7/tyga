@@ -3,7 +3,7 @@ import { NotificationList } from "@/components/portals/client/notifications/noti
 import { sampleNotifications } from "@/components/portals/client/notifications/notifications-sample-data"
 
 export default function NotificationsPage() {
-  const unreadCount = sampleNotifications.filter((n) => !n.readAt).length
+  const unreadCount = sampleNotifications.filter((n) => !n.isRead).length
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">

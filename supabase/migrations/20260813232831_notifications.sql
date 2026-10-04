@@ -1,14 +1,18 @@
 -- ============================================================
--- TYGA Platform — Notification System (corrected)
+-- TYGA Platform — Notification System (functions only)
 -- Assumes admin-shared-functions.sql has already been run
 -- (requires: assert_is_admin()).
+--
+-- Note: automatic triggers (welcome, member added, enrollment
+-- confirmed, attendance, payment, level upgrade) are intentionally
+-- omitted for now. Add them in a follow-up once the push layer is
+-- in place.
 -- ============================================================
 
 -- ---------- Migration: notification_type column ----------
--- Required by every function below — the original schema had no
--- column to distinguish notification types.
 
-alter table notifications add column notification_type text;
+alter table notifications
+  add column if not exists notification_type text;
 
 
 -- ---------- CORE FUNCTIONS (service_role only — see Grants) ----------
@@ -36,7 +40,8 @@ begin
   from notification_preferences
   where account_id = p_account_id
     and notification_type = p_type
-    and channel = p_channel;
+    and channel = p_channel
+  limit 1;
 
   if v_enabled is null then
     v_enabled := true;
@@ -102,12 +107,12 @@ as $$
 declare
   v_account_ids uuid[];
 begin
-  select array_agg(id) into v_account_ids
+  select coalesce(array_agg(id), '{}') into v_account_ids
   from accounts
   where active = true
     and (p_role is null or role = p_role);
 
-  if array_length(v_account_ids, 1) > 0 then
+  if cardinality(v_account_ids) > 0 then
     perform create_bulk_notifications(
       v_account_ids,
       p_type,
@@ -124,8 +129,6 @@ $$;
 
 -- ---------- ADMIN-FACING WRAPPER ----------
 
--- The only way to trigger a manual announcement from the app —
--- properly gated, unlike the raw core functions above.
 create or replace function admin_send_announcement(
   p_title text,
   p_body text,
@@ -144,7 +147,6 @@ $$;
 
 -- ---------- USER FUNCTIONS ----------
 
--- Get my notifications
 create or replace function get_my_notifications(
   p_limit int default 50,
   p_offset int default 0
@@ -179,7 +181,6 @@ as $$
   offset p_offset;
 $$;
 
--- Get unread count
 create or replace function get_unread_count()
 returns int
 language sql
@@ -192,8 +193,6 @@ as $$
     and read_at is null;
 $$;
 
--- Mark as read — keeps status in sync with read_at so there's a
--- single source of truth, not two independent "is this read" signals.
 create or replace function mark_read(p_id int)
 returns void
 language plpgsql
@@ -201,7 +200,7 @@ security definer set search_path = public
 as $$
 begin
   update notifications
-  set read_at = now(), status = 'read'
+  set read_at = now()
   where id = p_id and account_id = auth.uid();
 end;
 $$;
@@ -213,12 +212,11 @@ security definer set search_path = public
 as $$
 begin
   update notifications
-  set read_at = now(), status = 'read'
+  set read_at = now()
   where account_id = auth.uid() and read_at is null;
 end;
 $$;
 
--- Delete notification
 create or replace function delete_notification(p_id int)
 returns void
 language plpgsql
@@ -231,204 +229,8 @@ end;
 $$;
 
 
--- ---------- AUTOMATIC TRIGGERS ----------
-
--- 1. Welcome notification on signup
-create or replace function notify_welcome()
-returns trigger
-language plpgsql
-security definer set search_path = public
-as $$
-begin
-  perform create_notification(
-    new.id,
-    'welcome',
-    'Welcome to TYGA! 🎉',
-    'Thank you for joining! Complete your profile to get started.'
-  );
-  return new;
-end;
-$$;
-
-create trigger on_account_created
-  after insert on accounts
-  for each row
-  execute function notify_welcome();
-
--- 2. New member added to account
-create or replace function notify_member_added()
-returns trigger
-language plpgsql
-security definer set search_path = public
-as $$
-begin
-  perform create_notification(
-    new.account_id,
-    'member_added',
-    'New Member Added',
-    format('%s has been added to your account', new.full_name),
-    'member',
-    new.id
-  );
-  return new;
-end;
-$$;
-
-create trigger on_member_created
-  after insert on members
-  for each row
-  execute function notify_member_added();
-
--- 3. Enrollment confirmed
-create or replace function notify_enrollment_confirmed()
-returns trigger
-language plpgsql
-security definer set search_path = public
-as $$
-declare
-  v_account_id uuid;
-  v_programme_name text;
-begin
-  if new.status = 'active' then
-    select account_id, name
-    into v_account_id, v_programme_name
-    from members m
-    join programmes p on p.id = new.programme_id
-    where m.id = new.member_id;
-
-    perform create_notification(
-      v_account_id,
-      'enrollment_confirmed',
-      'Enrollment Confirmed ✅',
-      format('Enrolled in %s successfully', v_programme_name),
-      'enrollment',
-      new.id
-    );
-  end if;
-  return new;
-end;
-$$;
-
-create trigger on_enrollment_active
-  after update of status on enrollments
-  for each row
-  when (new.status = 'active')
-  execute function notify_enrollment_confirmed();
-
--- 4. Attendance marked (present/late/excused only — absences are
--- deliberately not notified to avoid pinging families on every miss)
-create or replace function notify_attendance()
-returns trigger
-language plpgsql
-security definer set search_path = public
-as $$
-declare
-  v_account_id uuid;
-  v_status_text text;
-begin
-  if new.status = 'present' then
-    v_status_text := '✅ Present';
-  elsif new.status = 'late' then
-    v_status_text := '⏰ Late';
-  elsif new.status = 'excused' then
-    v_status_text := '📝 Excused';
-  else
-    return new;
-  end if;
-
-  select account_id into v_account_id
-  from members where id = new.member_id;
-
-  perform create_notification(
-    v_account_id,
-    'attendance_update',
-    'Attendance Updated',
-    format('Attendance marked as %s', v_status_text),
-    'attendance',
-    new.id
-  );
-  return new;
-end;
-$$;
-
-create trigger on_attendance_marked
-  after insert or update of status on attendance
-  for each row
-  when (new.status in ('present', 'late', 'excused'))
-  execute function notify_attendance();
-
--- 5. Payment confirmed
-create or replace function notify_payment()
-returns trigger
-language plpgsql
-security definer set search_path = public
-as $$
-declare
-  v_account_id uuid;
-begin
-  if new.status = 'paid' then
-    select account_id into v_account_id
-    from invoices where id = new.invoice_id;
-
-    perform create_notification(
-      v_account_id,
-      'payment_confirmed',
-      'Payment Confirmed 💰',
-      format('Payment of R%s has been confirmed', new.amount),
-      'payment',
-      new.id
-    );
-  end if;
-  return new;
-end;
-$$;
-
-create trigger on_payment_success
-  after update of status on payments
-  for each row
-  when (new.status = 'paid')
-  execute function notify_payment();
-
--- 6. Level upgrade — only fires when badge completion is actually
--- confirmed, so families are never notified of an unconfirmed promotion.
-create or replace function notify_level_upgrade()
-returns trigger
-language plpgsql
-security definer set search_path = public
-as $$
-declare
-  v_account_id uuid;
-  v_from_level text;
-  v_to_level text;
-begin
-  select account_id,
-         (select name from levels where id = new.from_level_id),
-         (select name from levels where id = new.to_level_id)
-  into v_account_id, v_from_level, v_to_level
-  from members where id = new.member_id;
-
-  perform create_notification(
-    v_account_id,
-    'level_upgrade',
-    'Level Up! ⭐',
-    format('Promoted from %s to %s', v_from_level, v_to_level),
-    'level_progression',
-    new.id
-  );
-  return new;
-end;
-$$;
-
-create trigger on_level_upgrade
-  after insert on level_progressions
-  for each row
-  when (new.badge_complete = true)
-  execute function notify_level_upgrade();
-
-
 -- ---------- CRON JOBS (Optional — requires pg_cron) ----------
 
--- Send session reminders (run daily)
 create or replace function send_session_reminders()
 returns void
 language plpgsql
@@ -459,7 +261,6 @@ begin
 end;
 $$;
 
--- Check overdue gear (run daily)
 create or replace function notify_gear_due()
 returns void
 language plpgsql
@@ -487,7 +288,6 @@ begin
 end;
 $$;
 
--- Clean up old notifications (run weekly)
 create or replace function delete_old_notifications()
 returns void
 language plpgsql
@@ -502,25 +302,18 @@ $$;
 
 -- ---------- GRANTS ----------
 
--- Core send functions: service_role ONLY. These are called by triggers,
--- webhook handlers, and admin_send_announcement — never directly by a
--- client. Granting `authenticated` here would let any logged-in user
--- spam-notify the entire organization.
 grant execute on function create_notification(uuid, text, text, text, text, int, text) to service_role;
 grant execute on function create_bulk_notifications(uuid[], text, text, text, text, int, text) to service_role;
 grant execute on function send_notification_to_role(text, text, text, text, text, int, text) to service_role;
 
--- Admin-facing wrapper — properly gated via assert_is_admin()
 grant execute on function admin_send_announcement(text, text, text) to authenticated;
 
--- User functions — scoped to auth.uid() internally, safe for any authenticated user
 grant execute on function get_my_notifications(int, int) to authenticated;
 grant execute on function get_unread_count() to authenticated;
 grant execute on function mark_read(int) to authenticated;
 grant execute on function mark_all_read() to authenticated;
 grant execute on function delete_notification(int) to authenticated;
 
--- Cron functions — service_role only
 grant execute on function send_session_reminders() to service_role;
 grant execute on function notify_gear_due() to service_role;
 grant execute on function delete_old_notifications() to service_role;

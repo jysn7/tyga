@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { Bell, Check, ChevronRight, Inbox } from "lucide-react"
+import { formatDistanceToNow } from "date-fns"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,29 +11,57 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  useNotifications,
+  useUnreadCount,
+  useMarkRead,
+  useMarkAllRead,
+  type Notification,
+} from "@/hooks/use-notifications"
 
-export interface NotificationItem {
-  id: string
-  title: string
-  description: string
-  time: string
-  read?: boolean
-  link?: string
+function notificationHref(n: Notification): string | undefined {
+  switch (n.relatedType) {
+    case "member":
+      return n.relatedId ? `/members/${n.relatedId}` : "/members"
+    case "enrollment":
+      return "/programmes"
+    case "payment":
+      return "/invoices"
+    case "attendance":
+      return "/dashboard"
+    case "level_progression":
+      return "/dashboard"
+    case "session":
+      return "/schedule"
+    case "gear_rental":
+      return "/dashboard"
+    default:
+      return undefined
+  }
 }
 
-interface NotificationsDropdownProps {
-  notifications?: NotificationItem[]
-  unreadCount?: number
-  onMarkAllAsRead?: () => void
+function relativeTime(iso: string): string {
+  try {
+    return formatDistanceToNow(new Date(iso), { addSuffix: true })
+  } catch {
+    return ""
+  }
 }
 
-export function NotificationsDropdown({
-  notifications = [],
-  unreadCount = 0,
-  onMarkAllAsRead,
-}: NotificationsDropdownProps) {
+export function NotificationsDropdown() {
+  const { data: notifications = [], isLoading } = useNotifications(10, 0)
+  const { data: unreadCount = 0 } = useUnreadCount()
+  const markRead = useMarkRead()
+  const markAllRead = useMarkAllRead()
+
   const displayNotifications = notifications.slice(0, 4)
   const hasUnread = unreadCount > 0
+
+  function handleItemClick(n: Notification) {
+    if (!n.isRead) {
+      markRead.mutate(n.id)
+    }
+  }
 
   return (
     <DropdownMenu>
@@ -40,7 +69,7 @@ export function NotificationsDropdown({
         title="Notifications"
         className="relative flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
       >
-        <Bell className="h-5 w-5" />
+        <Bell className="h-5 w-5" strokeWidth={1.75} />
         {hasUnread && (
           <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-destructive" />
         )}
@@ -51,49 +80,57 @@ export function NotificationsDropdown({
           <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
             Notifications {unreadCount > 0 && `(${unreadCount})`}
           </span>
-          {hasUnread && onMarkAllAsRead && (
+          {hasUnread && (
             <button
               type="button"
-              onClick={onMarkAllAsRead}
-              className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+              onClick={() => markAllRead.mutate()}
+              disabled={markAllRead.isPending}
+              className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
             >
-              <Check className="h-3 w-3" />
+              <Check className="h-3 w-3" strokeWidth={1.75} />
               Mark all read
             </button>
           )}
         </div>
 
-        {displayNotifications.length > 0 ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted border-t-foreground" />
+          </div>
+        ) : displayNotifications.length > 0 ? (
           <DropdownMenuGroup className="flex flex-col divide-y divide-border/60">
             {displayNotifications.map((item) => {
               const content = (
                 <div className="flex w-full items-center gap-2.5 px-3 py-2.5">
-                  {!item.read && (
+                  {!item.isRead && (
                     <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-destructive" />
                   )}
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-baseline gap-1.5">
+                    <div className="flex flex-col gap-0.5">
                       <span className="truncate text-sm text-foreground">
                         {item.title}
                       </span>
                       <span className="truncate text-xs text-muted-foreground">
-                        — {item.description}
+                        {item.body}
                       </span>
                     </div>
                   </div>
                   <span className="shrink-0 text-[11px] text-muted-foreground">
-                    {item.time}
+                    {relativeTime(item.createdAt)}
                   </span>
                 </div>
               )
+
+              const href = notificationHref(item)
 
               return (
                 <DropdownMenuItem
                   key={item.id}
                   className="cursor-pointer rounded-none p-0"
+                  onSelect={() => handleItemClick(item)}
                 >
-                  {item.link ? (
-                    <Link href={item.link} className="w-full">
+                  {href ? (
+                    <Link href={href} className="w-full">
                       {content}
                     </Link>
                   ) : (
@@ -125,7 +162,7 @@ export function NotificationsDropdown({
             className="flex w-full items-center justify-center gap-1 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
           >
             View all notifications
-            <ChevronRight className="h-3.5 w-3.5" />
+            <ChevronRight className="h-3.5 w-3.5" strokeWidth={1.75} />
           </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>

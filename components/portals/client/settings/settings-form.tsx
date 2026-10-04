@@ -12,6 +12,7 @@ import { toast } from "@/components/ui/toast"
 import { createClient } from "@/utils/supabase/client"
 import { saveAccountSettings } from "@/lib/functions/save-account-settings"
 import { Field, fieldStyles } from "@/components/portals/shared/field"
+import { PushToggle } from "@/components/portals/shared/push-toggle"
 import { Camera, ShieldAlert, Check } from "lucide-react"
 
 const NOTIFICATION_TYPES: { key: string; label: string }[] = [
@@ -373,10 +374,26 @@ export function SettingsForm({ account }: { account: AccountSettings }) {
 
       <TabsContent value="notifications" className="mt-0">
         <div className="flex flex-col gap-6">
+          {/* Device push toggle */}
           <section className="flex flex-col gap-3">
             <div className="flex flex-col gap-0.5">
               <h2 className="text-sm font-semibold tracking-tight text-foreground">
-                Notifications
+                This device
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Get notified on this device when something happens
+              </p>
+            </div>
+            <div className="rounded-xl bg-card p-5 shadow">
+              <PushToggle />
+            </div>
+          </section>
+
+          {/* Per-type preferences */}
+          <section className="flex flex-col gap-3">
+            <div className="flex flex-col gap-0.5">
+              <h2 className="text-sm font-semibold tracking-tight text-foreground">
+                What you&apos;re notified about
               </h2>
               <p className="text-xs text-muted-foreground">
                 Choose which updates you&apos;d like to receive

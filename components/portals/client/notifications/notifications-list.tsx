@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import Link from "next/link"
 import {
   Bell,
   Calendar,
@@ -8,25 +8,60 @@ import {
   TrendingUp,
   Users,
   Megaphone,
+  BookOpen,
+  GraduationCap,
 } from "lucide-react"
 import { EmptyState } from "@/components/portals/shared/empty-state"
+import { useMarkRead, type Notification } from "@/hooks/use-notifications"
 
-export type NotificationItem = {
-  id: string
-  title: string
-  body: string
-  relatedType:
-    "session" | "payment" | "level_progression" | "appointment" | "announcement"
-  createdAt: string
-  readAt: string | null
+const iconMap: Record<string, React.ElementType> = {
+  session: Calendar,
+  session_reminder: Calendar,
+  payment: Receipt,
+  payment_confirmed: Receipt,
+  level_progression: TrendingUp,
+  level_upgrade: TrendingUp,
+  appointment: Users,
+  assessment_assigned: Users,
+  member: Users,
+  member_added: Users,
+  enrollment: BookOpen,
+  enrollment_confirmed: BookOpen,
+  new_student: GraduationCap,
+  attendance: Calendar,
+  attendance_update: Calendar,
+  announcement: Megaphone,
+  welcome: Bell,
+  default: Bell,
 }
 
-const iconMap: Record<NotificationItem["relatedType"], React.ElementType> = {
-  session: Calendar,
-  payment: Receipt,
-  level_progression: TrendingUp,
-  appointment: Users,
-  announcement: Megaphone,
+function iconFor(n: Notification): React.ElementType {
+  if (n.type && iconMap[n.type]) return iconMap[n.type]
+  if (n.relatedType && iconMap[n.relatedType]) return iconMap[n.relatedType]
+  return Bell
+}
+
+function notificationHref(n: Notification): string | undefined {
+  switch (n.relatedType) {
+    case "member":
+      return n.relatedId ? `/members/${n.relatedId}` : "/members"
+    case "enrollment":
+      return "/programmes"
+    case "payment":
+      return "/invoices"
+    case "attendance":
+      return "/dashboard"
+    case "level_progression":
+      return "/dashboard"
+    case "session":
+      return "/schedule"
+    case "appointment":
+      return "/appointments"
+    case "gear_rental":
+      return "/dashboard"
+    default:
+      return undefined
+  }
 }
 
 function formatRelativeDate(iso: string) {
@@ -44,19 +79,11 @@ function formatRelativeDate(iso: string) {
 export function NotificationList({
   notifications,
 }: {
-  notifications: NotificationItem[]
+  notifications: Notification[]
 }) {
-  const [items, setItems] = useState(notifications)
+  const markRead = useMarkRead()
 
-  async function markRead(id: string) {
-    setItems((prev) =>
-      prev.map((n) =>
-        n.id === id ? { ...n, readAt: n.readAt ?? new Date().toISOString() } : n
-      )
-    )
-  }
-
-  if (items.length === 0) {
+  if (notifications.length === 0) {
     return (
       <EmptyState
         title="No notifications yet"
@@ -68,16 +95,19 @@ export function NotificationList({
   return (
     <div className="overflow-hidden rounded-xl bg-card shadow">
       <div className="flex flex-col divide-y divide-border/60">
-        {items.map((n) => {
-          const Icon = iconMap[n.relatedType] ?? Bell
-          const isUnread = !n.readAt
+        {notifications.map((n) => {
+          const Icon = iconFor(n)
+          const isUnread = !n.isRead
+          const href = notificationHref(n)
 
-          return (
-            <button
-              key={n.id}
-              onClick={() => markRead(n.id)}
-              className="group flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors hover:bg-accent/40"
-            >
+          function handleClick() {
+            if (isUnread) {
+              markRead.mutate(n.id)
+            }
+          }
+
+          const content = (
+            <>
               {/* Icon bubble */}
               <div
                 className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
@@ -117,6 +147,34 @@ export function NotificationList({
                   <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
                 )}
               </div>
+            </>
+          )
+
+          const className = `group flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors hover:bg-accent/40`
+
+          // Notifications with a link become Link wrappers,
+          // others stay as buttons — the click still marks as read either way.
+          if (href) {
+            return (
+              <Link
+                key={n.id}
+                href={href}
+                onClick={handleClick}
+                className={className}
+              >
+                {content}
+              </Link>
+            )
+          }
+
+          return (
+            <button
+              key={n.id}
+              type="button"
+              onClick={handleClick}
+              className={className}
+            >
+              {content}
             </button>
           )
         })}
