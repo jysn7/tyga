@@ -158,7 +158,6 @@ export function EditMemberPanel({ member }: { member: EditableMember }) {
     <>
       <Button
         variant="secondary"
-        size="sm"
         className="w-full md:w-fit"
         onClick={() => setOpen(true)}
       >

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Switch } from "@/components/ui/switch"
 import {
   Select,
@@ -123,6 +123,13 @@ export function AccountTableRow({ account }: { account: Account }) {
       <td className="px-4 py-2">
         <div className="flex items-center gap-3">
           <Avatar className="h-8 w-8 shrink-0 rounded-full">
+            {account.avatarUrl ? (
+              <AvatarImage
+                src={account.avatarUrl}
+                alt={account.fullName}
+                className="rounded-full object-cover"
+              />
+            ) : null}
             <AvatarFallback className="rounded-full bg-green/15 text-[11px] font-semibold text-green">
               {getInitials(account.fullName)}
             </AvatarFallback>

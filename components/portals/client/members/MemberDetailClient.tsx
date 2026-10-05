@@ -7,6 +7,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { EditMemberPanel } from "@/components/portals/client/members/edit-member-modal"
 import { MemberDetailTabs } from "@/components/portals/client/members/member-detail-tabs"
 import { useMemberDetail } from "@/hooks/client/members/use-members"
+import { useArchiveMember } from "@/hooks/client/members/use-member-mutations"
+import { ArchiveMemberDialog } from "./archive-member-dialog"
 
 function getAge(dob: string) {
   const diff = Date.now() - new Date(dob).getTime()
@@ -24,6 +26,7 @@ function getInitials(name: string) {
 export function MemberDetailClient({ memberId }: { memberId: string }) {
   const id = Number(memberId)
   const { data, isLoading, error } = useMemberDetail(id)
+  const archiveMember = useArchiveMember(id)
 
   if (isLoading) {
     return (
@@ -83,8 +86,15 @@ export function MemberDetailClient({ memberId }: { memberId: string }) {
           </div>
         </div>
 
-        <div className="sm:ml-auto">
+        <div className="flex flex-col gap-2 sm:ml-auto md:flex-row">
           <EditMemberPanel member={member} />
+          <ArchiveMemberDialog
+            memberName={member.full_name}
+            isPending={archiveMember.isPending}
+            onConfirm={async () => {
+              await archiveMember.mutateAsync()
+            }}
+          />
         </div>
       </div>
 

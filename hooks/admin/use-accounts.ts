@@ -19,8 +19,8 @@ type AccountRow = {
   full_name: string | null
   email: string | null
   phone: string | null
-  avatar_url: string | null
   address: string | null
+  avatar_url: string | null
   active: boolean
   created_at: string
 }
@@ -31,9 +31,9 @@ function toAccount(row: AccountRow): Account {
     role: row.role,
     fullName: row.full_name ?? "Unnamed",
     email: row.email ?? "",
-    avatarUrl: row.avatar_url ?? null,
     phone: row.phone,
     address: row.address,
+    avatarUrl: row.avatar_url ?? null,
     active: row.active,
     createdAt: row.created_at,
   }
@@ -48,7 +48,9 @@ export type UseAccountsFilters = {
 export function useAccounts({ role, active, search }: UseAccountsFilters = {}) {
   const supabase = createClient()
 
-  // Trim + cap length client-side (UX only, not the security boundary — see below).
+  // Trim + cap length client-side (UX only, not the security boundary —
+  // the RPC's `ilike` is parameterized, so the real protection against
+  // injection is the parameter binding, not this trim).
   const normalizedSearch = search?.trim().slice(0, 100) || undefined
 
   return useQuery({

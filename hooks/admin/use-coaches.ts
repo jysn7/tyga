@@ -8,6 +8,7 @@ export type Coach = {
   accountId: string | null
   fullName: string
   email: string
+  avatarUrl: string | null
   active: boolean
   coachType: CoachType | null
   linkedMemberId: number | null
@@ -19,6 +20,7 @@ type CoachRow = {
   account_id: string | null
   full_name: string | null
   email: string | null
+  avatar_url: string | null
   active: boolean | null
   coach_type: CoachType | null
   linked_member_id: number | null
@@ -31,6 +33,7 @@ function toCoach(row: CoachRow): Coach {
     accountId: row.account_id,
     fullName: row.full_name ?? "Unnamed",
     email: row.email ?? "",
+    avatarUrl: row.avatar_url ?? null,
     active: row.active ?? false,
     coachType: row.coach_type,
     linkedMemberId: row.linked_member_id,

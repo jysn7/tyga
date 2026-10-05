@@ -156,9 +156,9 @@ export function MemberDetailTabs({ data }: { data: MemberDetail }) {
   return (
     <Tabs
       defaultValue="overview"
-      className="flex max-w-fit min-w-0 flex-col gap-5"
+      className="flex w-full min-w-0 flex-col gap-5"
     >
-      <TabsList className="no-scrollbar h-auto w-fit justify-start gap-1 overflow-x-auto rounded-lg bg-input p-1">
+      <TabsList className="no-scrollbar h-auto w-full justify-start gap-1 overflow-x-auto rounded-lg bg-input p-1">
         <TabsTrigger value="overview" className={TAB_TRIGGER_CLASS}>
           <User className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
           <span className="inline">Overview</span>

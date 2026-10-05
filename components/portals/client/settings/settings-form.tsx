@@ -11,9 +11,10 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { toast } from "@/components/ui/toast"
 import { createClient } from "@/utils/supabase/client"
 import { saveAccountSettings } from "@/lib/functions/save-account-settings"
+import { changeMyPassword } from "@/lib/functions/change-password"
 import { Field, fieldStyles } from "@/components/portals/shared/field"
 import { PushToggle } from "@/components/portals/shared/push-toggle"
-import { Camera, ShieldAlert, Check } from "lucide-react"
+import { Camera, ShieldAlert, Check, KeyRound, Eye, EyeOff } from "lucide-react"
 
 const NOTIFICATION_TYPES: { key: string; label: string }[] = [
   { key: "session_reminder", label: "Session reminders" },
@@ -87,6 +88,13 @@ export function SettingsForm({ account }: { account: AccountSettings }) {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
   const [savedAt, setSavedAt] = useState<number | null>(null)
 
+  // Password change state
+  const [currentPassword, setCurrentPassword] = useState("")
+  const [newPassword, setNewPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [revealPasswords, setRevealPasswords] = useState(false)
+  const [isChangingPassword, setIsChangingPassword] = useState(false)
+
   const phoneValidation = useMemo(() => validatePhone(phone), [phone])
   const phoneTouched = phone.length > 0
 
@@ -94,6 +102,19 @@ export function SettingsForm({ account }: { account: AccountSettings }) {
 
   const canSave =
     phoneValidation.ok && fullNameValid && !isSaving && !isUploadingAvatar
+
+  // Password validation
+  const newPasswordTooShort = newPassword.length > 0 && newPassword.length < 8
+  const passwordsMismatch =
+    confirmPassword.length > 0 && newPassword !== confirmPassword
+  const sameAsCurrent =
+    newPassword.length > 0 && newPassword === currentPassword
+  const canChangePassword =
+    currentPassword.length > 0 &&
+    newPassword.length >= 8 &&
+    newPassword === confirmPassword &&
+    newPassword !== currentPassword &&
+    !isChangingPassword
 
   function handlePhoneChange(e: React.ChangeEvent<HTMLInputElement>) {
     const raw = e.target.value
@@ -224,6 +245,51 @@ export function SettingsForm({ account }: { account: AccountSettings }) {
       })
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  async function handleChangePassword() {
+    setIsChangingPassword(true)
+    const toastId = "password-change-status"
+
+    toast.add({
+      id: toastId,
+      title: "Updating password...",
+      type: "loading",
+      timeout: 0,
+    })
+
+    try {
+      await changeMyPassword({
+        currentPassword,
+        newPassword,
+      })
+
+      toast.add({
+        id: toastId,
+        title: "Password changed",
+        description: "Use your new password next time you sign in.",
+        type: "success",
+        timeout: 4000,
+      })
+
+      setCurrentPassword("")
+      setNewPassword("")
+      setConfirmPassword("")
+      router.refresh()
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Something went wrong"
+
+      toast.add({
+        id: toastId,
+        title: "Couldn't change password",
+        description: message,
+        type: "error",
+        timeout: 5000,
+      })
+    } finally {
+      setIsChangingPassword(false)
     }
   }
 
@@ -434,43 +500,132 @@ export function SettingsForm({ account }: { account: AccountSettings }) {
       </TabsContent>
 
       <TabsContent value="account" className="mt-0">
-        <section className="flex flex-col gap-3">
-          <div className="flex items-start gap-2">
-            <ShieldAlert
-              className="mt-0.5 h-3.5 w-3.5 shrink-0 text-destructive"
-              strokeWidth={1.75}
-            />
-            <div className="flex flex-col gap-0.5">
-              <h2 className="text-sm font-semibold tracking-tight text-foreground">
-                Deactivate account
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                This will disable your account and sign you out everywhere.
-                Contact TYGA to reactivate.
-              </p>
+        <div className="flex flex-col gap-6">
+          {/* Password */}
+          <section className="flex flex-col gap-3">
+            <div className="flex items-start gap-2">
+              <KeyRound
+                className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                strokeWidth={1.75}
+              />
+              <div className="flex flex-col gap-0.5">
+                <h2 className="text-sm font-semibold tracking-tight text-foreground">
+                  Password
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  Change the password you use to sign in.
+                </p>
+              </div>
             </div>
-          </div>
 
-          <div className="flex flex-col items-start gap-3 rounded-xl bg-card p-5 shadow sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-col gap-0.5">
-              <span className="text-sm font-medium text-foreground">
-                Deactivate my account
-              </span>
-              <span className="text-xs text-muted-foreground">
-                You&apos;ll lose access until TYGA reactivates it.
-              </span>
+            <div className="flex flex-col rounded-xl bg-card p-5 shadow">
+              <Field label="Current password">
+                <Input
+                  className={fieldStyles}
+                  type={revealPasswords ? "text" : "password"}
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  autoComplete="current-password"
+                />
+              </Field>
+
+              <Field
+                label="New password"
+                error={
+                  newPasswordTooShort
+                    ? "Must be at least 8 characters"
+                    : sameAsCurrent
+                      ? "New password must differ from your current one"
+                      : undefined
+                }
+              >
+                <Input
+                  className={fieldStyles}
+                  type={revealPasswords ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  autoComplete="new-password"
+                />
+              </Field>
+
+              <Field
+                label="Confirm new password"
+                error={passwordsMismatch ? "Passwords don't match" : undefined}
+              >
+                <Input
+                  className={fieldStyles}
+                  type={revealPasswords ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  autoComplete="new-password"
+                />
+              </Field>
+
+              <button
+                type="button"
+                onClick={() => setRevealPasswords((v) => !v)}
+                className="mb-2 flex w-fit items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground"
+              >
+                {revealPasswords ? (
+                  <EyeOff className="h-3 w-3" strokeWidth={1.75} />
+                ) : (
+                  <Eye className="h-3 w-3" strokeWidth={1.75} />
+                )}
+                {revealPasswords ? "Hide passwords" : "Show passwords"}
+              </button>
+
+              <div className="flex justify-end">
+                <Button
+                  size="sm"
+                  className="h-9 rounded-md bg-foreground px-5 text-xs font-medium text-background hover:bg-foreground/90"
+                  disabled={!canChangePassword}
+                  onClick={handleChangePassword}
+                >
+                  {isChangingPassword ? "Updating…" : "Change password"}
+                </Button>
+              </div>
             </div>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled
-              className="h-9 shrink-0 rounded-md border-destructive/40 text-xs font-medium text-destructive disabled:opacity-60"
-              title="Contact TYGA to deactivate your account"
-            >
-              Deactivate account
-            </Button>
-          </div>
-        </section>
+          </section>
+
+          {/* Danger zone */}
+          <section className="flex flex-col gap-3">
+            <div className="flex items-start gap-2">
+              <ShieldAlert
+                className="mt-0.5 h-3.5 w-3.5 shrink-0 text-destructive"
+                strokeWidth={1.75}
+              />
+              <div className="flex flex-col gap-0.5">
+                <h2 className="text-sm font-semibold tracking-tight text-foreground">
+                  Deactivate account
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  This will disable your account and sign you out everywhere.
+                  Contact TYGA to reactivate.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-start gap-3 rounded-xl bg-card p-5 shadow sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-sm font-medium text-foreground">
+                  Deactivate my account
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  You&apos;ll lose access until TYGA reactivates it.
+                </span>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled
+                className="h-9 shrink-0 rounded-md border-destructive/40 text-xs font-medium text-destructive disabled:opacity-60"
+                title="Contact TYGA to deactivate your account"
+              >
+                Deactivate account
+              </Button>
+            </div>
+          </section>
+        </div>
       </TabsContent>
     </Tabs>
   )
