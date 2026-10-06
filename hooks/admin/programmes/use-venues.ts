@@ -10,7 +10,17 @@ export function useVenues() {
     queryKey: ["admin-venues"],
     queryFn: async (): Promise<Venue[]> => {
       const { data, error } = await supabase.rpc("admin_get_venues")
-      if (error) throw error
+
+      if (error) {
+        console.error("Error fetching admin venues:", error)
+        throw error
+      }
+
+      if (!data) {
+        console.warn("admin_get_venues RPC returned no data (null/undefined)")
+        return []
+      }
+
       return data as Venue[]
     },
   })

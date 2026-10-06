@@ -20,12 +20,35 @@ import {
 import { Field, triggerStyles } from "./shared"
 import { useMemberForm } from "@/context/new-member-form-context"
 
+const MIN_AGE = 6
+const MAX_AGE = 22
+
+function ageInYears(dob: Date, now: Date = new Date()): number {
+  return (
+    now.getFullYear() -
+    dob.getFullYear() -
+    (now < new Date(now.getFullYear(), dob.getMonth(), dob.getDate()) ? 1 : 0)
+  )
+}
+
 export function StepBasicInfo() {
   const {
     register,
     control,
     formState: { errors },
   } = useMemberForm()
+
+  const today = new Date()
+  const minDob = new Date(
+    today.getFullYear() - MAX_AGE,
+    today.getMonth(),
+    today.getDate()
+  )
+  const maxDob = new Date(
+    today.getFullYear() - MIN_AGE,
+    today.getMonth(),
+    today.getDate()
+  )
 
   return (
     <div className="flex flex-col">
@@ -72,10 +95,13 @@ export function StepBasicInfo() {
                   mode="single"
                   selected={field.value}
                   onSelect={field.onChange}
-                  disabled={(date) => date > new Date()}
+                  disabled={(date) => {
+                    const age = ageInYears(date)
+                    return date > today || age < MIN_AGE || age > MAX_AGE
+                  }}
                   captionLayout="dropdown"
-                  startMonth={new Date(2005, 0, 1)}
-                  endMonth={new Date(new Date().getFullYear(), 11, 31)}
+                  startMonth={minDob}
+                  endMonth={maxDob}
                   autoFocus
                 />
               </PopoverContent>

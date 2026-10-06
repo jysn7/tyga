@@ -17,6 +17,10 @@ import { Input } from "@/components/ui/input"
 import { Loader } from "@/components/portals/shared/loader"
 import { toast } from "@/components/ui/toast"
 import {
+  StatusPill,
+  type StatusVariant,
+} from "@/components/portals/shared/status-pill"
+import {
   useGenerateSessions,
   useUpdateSession,
   useDeleteSession,
@@ -29,6 +33,13 @@ import {
 } from "@/hooks/admin/programmes/use-programmes"
 import type { Session } from "@/hooks/admin/programmes/use-programmes"
 import type { Coach } from "@/hooks/admin/use-coaches"
+import {
+  generateSessionsSchema,
+  editSessionSchema,
+  assignCoachSchema,
+  SESSION_STATUSES,
+  SESSION_ROLES,
+} from "@/lib/validations/sessions"
 
 const DAYS = [
   { label: "Sun", value: 0 },
@@ -40,15 +51,18 @@ const DAYS = [
   { label: "Sat", value: 6 },
 ]
 
-const STATUS_OPTIONS = ["scheduled", "cancelled", "completed"]
-const ROLE_OPTIONS = ["lead", "assistant", "volunteer"]
-
 const TABS = [
   { id: "sessions", label: "Sessions" },
   { id: "generate", label: "Generate" },
 ] as const
 
 type TabId = (typeof TABS)[number]["id"]
+
+const STATUS_MAP: Record<string, { label: string; variant: StatusVariant }> = {
+  scheduled: { label: "Scheduled", variant: "info" },
+  cancelled: { label: "Cancelled", variant: "danger" },
+  completed: { label: "Completed", variant: "success" },
+}
 
 function SessionCoachesPanel({
   sessionId,
@@ -62,17 +76,30 @@ function SessionCoachesPanel({
   const removeCoach = useRemoveCoachFromSession()
   const [selectedCoachId, setSelectedCoachId] = useState("")
   const [selectedRole, setSelectedRole] = useState<string>("assistant")
+  const [addError, setAddError] = useState<string | null>(null)
 
   const assignedIds = new Set((assignedCoaches ?? []).map((c) => c.coachId))
   const availableCoaches = coaches.filter((c) => !assignedIds.has(c.id))
 
   async function handleAdd() {
-    if (!selectedCoachId) return
+    setAddError(null)
+
+    const parsed = assignCoachSchema.safeParse({
+      sessionId,
+      coachId: selectedCoachId ? Number(selectedCoachId) : 0,
+      role: selectedRole,
+    })
+
+    if (!parsed.success) {
+      setAddError(parsed.error.issues[0]?.message ?? "Invalid input")
+      return
+    }
+
     try {
       await addCoach.mutateAsync({
-        sessionId,
-        coachId: Number(selectedCoachId),
-        role: selectedRole,
+        sessionId: parsed.data.sessionId,
+        coachId: parsed.data.coachId,
+        role: parsed.data.role,
       })
       setSelectedCoachId("")
       refetch()
@@ -119,11 +146,15 @@ function SessionCoachesPanel({
           {assignedCoaches.map((c) => (
             <div
               key={c.coachId}
-              className="flex items-center justify-between rounded-md bg-muted/40 px-2.5 py-1.5 text-xs"
+              className="flex items-center justify-between gap-2 rounded-md bg-muted/40 px-2.5 py-1.5 text-xs"
             >
-              <span className="font-medium text-foreground">{c.fullName}</span>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">{c.roleInSession}</span>
+              <span className="truncate font-medium text-foreground">
+                {c.fullName}
+              </span>
+              <div className="flex shrink-0 items-center gap-2">
+                <span className="hidden text-muted-foreground sm:inline">
+                  {c.roleInSession}
+                </span>
                 <button
                   onClick={() => handleRemove(c.coachId)}
                   disabled={removeCoach.isPending}
@@ -138,38 +169,49 @@ function SessionCoachesPanel({
         </div>
       )}
 
-      <div className="flex items-center gap-2 border-t border-border/60 pt-3">
-        <select
-          value={selectedCoachId}
-          onChange={(e) => setSelectedCoachId(e.target.value)}
-          className="h-8 flex-1 rounded-md border border-border bg-input px-2 text-xs"
-        >
-          <option value="">Select a coach…</option>
-          {availableCoaches.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.fullName}
-            </option>
-          ))}
-        </select>
-        <select
-          value={selectedRole}
-          onChange={(e) => setSelectedRole(e.target.value)}
-          className="h-8 rounded-md border border-border bg-input px-2 text-xs"
-        >
-          {ROLE_OPTIONS.map((r) => (
-            <option key={r} value={r}>
-              {r}
-            </option>
-          ))}
-        </select>
-        <button
-          onClick={handleAdd}
-          disabled={!selectedCoachId || addCoach.isPending}
-          className="flex h-8 items-center gap-1 rounded-md bg-primary px-2.5 text-xs font-medium text-primary-foreground disabled:opacity-40"
-        >
-          <UserPlus className="h-3 w-3" />
-          Add
-        </button>
+      <div className="flex flex-col gap-1.5 border-t border-border/60 pt-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <select
+            value={selectedCoachId}
+            onChange={(e) => {
+              setSelectedCoachId(e.target.value)
+              setAddError(null)
+            }}
+            className="h-8 flex-1 rounded-md border border-border bg-input px-2 text-xs"
+          >
+            <option value="">Select a coach…</option>
+            {availableCoaches.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.fullName}
+              </option>
+            ))}
+          </select>
+          <div className="flex items-center gap-2">
+            <select
+              value={selectedRole}
+              onChange={(e) => {
+                setSelectedRole(e.target.value)
+                setAddError(null)
+              }}
+              className="h-8 flex-1 rounded-md border border-border bg-input px-2 text-xs sm:flex-none"
+            >
+              {SESSION_ROLES.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={handleAdd}
+              disabled={!selectedCoachId || addCoach.isPending}
+              className="flex h-8 shrink-0 items-center gap-1 rounded-md bg-primary px-2.5 text-xs font-medium text-primary-foreground disabled:opacity-40"
+            >
+              <UserPlus className="h-3 w-3" />
+              Add
+            </button>
+          </div>
+        </div>
+        {addError && <p className="text-[11px] text-destructive">{addError}</p>}
       </div>
     </div>
   )
@@ -198,11 +240,18 @@ export function SessionsModal({
   const [sessionRangeStart, setSessionRangeStart] = useState("")
   const [sessionRangeEnd, setSessionRangeEnd] = useState("")
 
+  const [generateErrors, setGenerateErrors] = useState<
+    Partial<Record<string, string>>
+  >({})
+
   const [editingSessionId, setEditingSessionId] = useState<number | null>(null)
   const [editDate, setEditDate] = useState("")
   const [editStart, setEditStart] = useState("")
   const [editEnd, setEditEnd] = useState("")
   const [editStatus, setEditStatus] = useState("")
+  const [editErrors, setEditErrors] = useState<Partial<Record<string, string>>>(
+    {}
+  )
 
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
   const [expandedCoachesId, setExpandedCoachesId] = useState<number | null>(
@@ -219,50 +268,47 @@ export function SessionsModal({
     setSessionEndTime("")
     setSessionRangeStart("")
     setSessionRangeEnd("")
+    setGenerateErrors({})
   }
 
   async function handleGenerateSessions() {
     if (!programmeId) return
-    if (selectedDays.length === 0) {
+
+    const parsed = generateSessionsSchema.safeParse({
+      programmeId,
+      daysOfWeek: selectedDays,
+      startTime: sessionStartTime,
+      endTime: sessionEndTime,
+      rangeStart: sessionRangeStart,
+      rangeEnd: sessionRangeEnd,
+    })
+
+    if (!parsed.success) {
+      const flattened: Partial<Record<string, string>> = {}
+      for (const issue of parsed.error.issues) {
+        const key = issue.path[0]?.toString() ?? "_form"
+        if (!flattened[key]) flattened[key] = issue.message
+      }
+      setGenerateErrors(flattened)
       toast.add({
-        title: "Select at least one day",
+        title: "Please fix the errors",
+        description: parsed.error.issues[0]?.message,
         type: "error",
         timeout: 4000,
       })
       return
     }
-    if (
-      sessionStartTime &&
-      sessionEndTime &&
-      sessionEndTime <= sessionStartTime
-    ) {
-      toast.add({
-        title: "End time must be after start time",
-        type: "error",
-        timeout: 4000,
-      })
-      return
-    }
-    if (
-      sessionRangeStart &&
-      sessionRangeEnd &&
-      sessionRangeEnd < sessionRangeStart
-    ) {
-      toast.add({
-        title: "End date must be after start date",
-        type: "error",
-        timeout: 4000,
-      })
-      return
-    }
+
+    setGenerateErrors({})
+
     try {
       const count = await generateSessions.mutateAsync({
-        programmeId,
-        daysOfWeek: selectedDays,
-        startTime: sessionStartTime,
-        endTime: sessionEndTime,
-        rangeStart: sessionRangeStart,
-        rangeEnd: sessionRangeEnd,
+        programmeId: parsed.data.programmeId,
+        daysOfWeek: parsed.data.daysOfWeek,
+        startTime: parsed.data.startTime,
+        endTime: parsed.data.endTime,
+        rangeStart: parsed.data.rangeStart,
+        rangeEnd: parsed.data.rangeEnd,
       })
       toast.add({
         title: `${count} sessions generated`,
@@ -290,28 +336,41 @@ export function SessionsModal({
     setEditStart(s.startTime?.slice(0, 5) ?? "")
     setEditEnd(s.endTime?.slice(0, 5) ?? "")
     setEditStatus(s.status ?? "scheduled")
+    setEditErrors({})
   }
 
   function cancelEdit() {
     setEditingSessionId(null)
+    setEditErrors({})
   }
 
   async function handleSaveEdit(sessionId: number) {
-    if (editStart && editEnd && editEnd <= editStart) {
-      toast.add({
-        title: "End time must be after start time",
-        type: "error",
-        timeout: 4000,
-      })
+    const parsed = editSessionSchema.safeParse({
+      sessionDate: editDate,
+      startTime: editStart,
+      endTime: editEnd,
+      status: editStatus,
+    })
+
+    if (!parsed.success) {
+      const flattened: Partial<Record<string, string>> = {}
+      for (const issue of parsed.error.issues) {
+        const key = issue.path[0]?.toString() ?? "_form"
+        if (!flattened[key]) flattened[key] = issue.message
+      }
+      setEditErrors(flattened)
       return
     }
+
+    setEditErrors({})
+
     try {
       await updateSession.mutateAsync({
         sessionId,
-        sessionDate: editDate || undefined,
-        startTime: editStart || undefined,
-        endTime: editEnd || undefined,
-        status: editStatus || undefined,
+        sessionDate: parsed.data.sessionDate || undefined,
+        startTime: parsed.data.startTime || undefined,
+        endTime: parsed.data.endTime || undefined,
+        status: parsed.data.status || undefined,
       })
       toast.add({ title: "Session updated", type: "success", timeout: 4000 })
       setEditingSessionId(null)
@@ -358,15 +417,15 @@ export function SessionsModal({
           : "Manage programme sessions"
       }
       header={
-        <div className="flex items-center gap-3.5 border-b border-border/60 px-6 py-5">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-input">
+        <div className="flex items-center gap-3 border-b border-border/60 px-4 py-4 sm:gap-3.5 sm:px-6 sm:py-5">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-input sm:h-11 sm:w-11">
             <CalendarDays
-              className="h-4.5 w-4.5 text-foreground"
+              className="h-4 w-4 text-foreground sm:h-4.5 sm:w-4.5"
               strokeWidth={1.75}
             />
           </div>
           <div className="flex min-w-0 flex-col gap-0.5">
-            <h2 className="truncate text-xl font-semibold tracking-tight text-foreground">
+            <h2 className="truncate text-lg font-semibold tracking-tight text-foreground sm:text-xl">
               Sessions
             </h2>
             <p className="truncate text-xs text-muted-foreground">
@@ -379,7 +438,7 @@ export function SessionsModal({
       }
     >
       <div className="flex h-full flex-col">
-        <div className="flex gap-1 border-b border-border/60 px-6">
+        <div className="flex gap-1 border-b border-border/60 px-4 sm:px-6">
           {TABS.map((tab) => (
             <button
               key={tab.id}
@@ -403,7 +462,7 @@ export function SessionsModal({
           ))}
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
           {activeTab === "generate" && (
             <div className="flex flex-col gap-5">
               <div className="flex flex-col gap-2">
@@ -415,13 +474,17 @@ export function SessionsModal({
                     <button
                       key={day.value}
                       type="button"
-                      onClick={() =>
+                      onClick={() => {
                         setSelectedDays((prev) =>
                           prev.includes(day.value)
                             ? prev.filter((d) => d !== day.value)
                             : [...prev, day.value]
                         )
-                      }
+                        setGenerateErrors((prev) => ({
+                          ...prev,
+                          daysOfWeek: undefined,
+                        }))
+                      }}
                       className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
                         selectedDays.includes(day.value)
                           ? "bg-primary text-primary-foreground"
@@ -432,9 +495,14 @@ export function SessionsModal({
                     </button>
                   ))}
                 </div>
+                {generateErrors.daysOfWeek && (
+                  <p className="text-xs text-destructive">
+                    {generateErrors.daysOfWeek}
+                  </p>
+                )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-1.5">
                   <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
                     Start time
@@ -442,9 +510,21 @@ export function SessionsModal({
                   <Input
                     type="time"
                     value={sessionStartTime}
-                    onChange={(e) => setSessionStartTime(e.target.value)}
+                    onChange={(e) => {
+                      setSessionStartTime(e.target.value)
+                      setGenerateErrors((prev) => ({
+                        ...prev,
+                        startTime: undefined,
+                        endTime: undefined,
+                      }))
+                    }}
                     className="h-11 rounded-lg border border-border bg-input px-3.5 text-sm text-foreground shadow-none focus-visible:ring-0"
                   />
+                  {generateErrors.startTime && (
+                    <p className="text-xs text-destructive">
+                      {generateErrors.startTime}
+                    </p>
+                  )}
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
@@ -453,13 +533,25 @@ export function SessionsModal({
                   <Input
                     type="time"
                     value={sessionEndTime}
-                    onChange={(e) => setSessionEndTime(e.target.value)}
+                    onChange={(e) => {
+                      setSessionEndTime(e.target.value)
+                      setGenerateErrors((prev) => ({
+                        ...prev,
+                        startTime: undefined,
+                        endTime: undefined,
+                      }))
+                    }}
                     className="h-11 rounded-lg border border-border bg-input px-3.5 text-sm text-foreground shadow-none focus-visible:ring-0"
                   />
+                  {generateErrors.endTime && (
+                    <p className="text-xs text-destructive">
+                      {generateErrors.endTime}
+                    </p>
+                  )}
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-1.5">
                   <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
                     Range start
@@ -467,9 +559,21 @@ export function SessionsModal({
                   <Input
                     type="date"
                     value={sessionRangeStart}
-                    onChange={(e) => setSessionRangeStart(e.target.value)}
+                    onChange={(e) => {
+                      setSessionRangeStart(e.target.value)
+                      setGenerateErrors((prev) => ({
+                        ...prev,
+                        rangeStart: undefined,
+                        rangeEnd: undefined,
+                      }))
+                    }}
                     className="h-11 rounded-lg border border-border bg-input px-3.5 text-sm text-foreground shadow-none focus-visible:ring-0"
                   />
+                  {generateErrors.rangeStart && (
+                    <p className="text-xs text-destructive">
+                      {generateErrors.rangeStart}
+                    </p>
+                  )}
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
@@ -478,9 +582,21 @@ export function SessionsModal({
                   <Input
                     type="date"
                     value={sessionRangeEnd}
-                    onChange={(e) => setSessionRangeEnd(e.target.value)}
+                    onChange={(e) => {
+                      setSessionRangeEnd(e.target.value)
+                      setGenerateErrors((prev) => ({
+                        ...prev,
+                        rangeStart: undefined,
+                        rangeEnd: undefined,
+                      }))
+                    }}
                     className="h-11 rounded-lg border border-border bg-input px-3.5 text-sm text-foreground shadow-none focus-visible:ring-0"
                   />
+                  {generateErrors.rangeEnd && (
+                    <p className="text-xs text-destructive">
+                      {generateErrors.rangeEnd}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -518,10 +634,15 @@ export function SessionsModal({
                     const isEditing = editingSessionId === s.id
                     const isConfirmingDelete = confirmDeleteId === s.id
                     const isCoachesExpanded = expandedCoachesId === s.id
+                    const status = STATUS_MAP[s.status ?? "scheduled"] ?? {
+                      label: s.status ?? "Unknown",
+                      variant: "neutral" as const,
+                    }
+
                     return (
                       <div
                         key={s.id}
-                        className="flex flex-col gap-3 rounded-xl border border-border/60 bg-muted/20 p-4"
+                        className="flex flex-col gap-3 rounded-xl border border-border/60 bg-muted/20 p-3 sm:p-4"
                       >
                         {isEditing ? (
                           <div className="flex flex-col gap-3">
@@ -533,9 +654,20 @@ export function SessionsModal({
                                 <Input
                                   type="date"
                                   value={editDate}
-                                  onChange={(e) => setEditDate(e.target.value)}
+                                  onChange={(e) => {
+                                    setEditDate(e.target.value)
+                                    setEditErrors((prev) => ({
+                                      ...prev,
+                                      sessionDate: undefined,
+                                    }))
+                                  }}
                                   className="h-9 rounded-md border border-border bg-input px-2.5 text-xs"
                                 />
+                                {editErrors.sessionDate && (
+                                  <p className="text-[11px] text-destructive">
+                                    {editErrors.sessionDate}
+                                  </p>
+                                )}
                               </div>
                               <div className="flex flex-col gap-1">
                                 <span className="text-[11px] text-muted-foreground">
@@ -544,9 +676,21 @@ export function SessionsModal({
                                 <Input
                                   type="time"
                                   value={editStart}
-                                  onChange={(e) => setEditStart(e.target.value)}
+                                  onChange={(e) => {
+                                    setEditStart(e.target.value)
+                                    setEditErrors((prev) => ({
+                                      ...prev,
+                                      startTime: undefined,
+                                      endTime: undefined,
+                                    }))
+                                  }}
                                   className="h-9 rounded-md border border-border bg-input px-2.5 text-xs"
                                 />
+                                {editErrors.startTime && (
+                                  <p className="text-[11px] text-destructive">
+                                    {editErrors.startTime}
+                                  </p>
+                                )}
                               </div>
                               <div className="flex flex-col gap-1">
                                 <span className="text-[11px] text-muted-foreground">
@@ -555,9 +699,21 @@ export function SessionsModal({
                                 <Input
                                   type="time"
                                   value={editEnd}
-                                  onChange={(e) => setEditEnd(e.target.value)}
+                                  onChange={(e) => {
+                                    setEditEnd(e.target.value)
+                                    setEditErrors((prev) => ({
+                                      ...prev,
+                                      startTime: undefined,
+                                      endTime: undefined,
+                                    }))
+                                  }}
                                   className="h-9 rounded-md border border-border bg-input px-2.5 text-xs"
                                 />
+                                {editErrors.endTime && (
+                                  <p className="text-[11px] text-destructive">
+                                    {editErrors.endTime}
+                                  </p>
+                                )}
                               </div>
                               <div className="flex flex-col gap-1">
                                 <span className="text-[11px] text-muted-foreground">
@@ -570,12 +726,17 @@ export function SessionsModal({
                                   }
                                   className="h-9 rounded-md border border-border bg-input px-2 text-xs"
                                 >
-                                  {STATUS_OPTIONS.map((opt) => (
+                                  {SESSION_STATUSES.map((opt) => (
                                     <option key={opt} value={opt}>
                                       {opt}
                                     </option>
                                   ))}
                                 </select>
+                                {editErrors.status && (
+                                  <p className="text-[11px] text-destructive">
+                                    {editErrors.status}
+                                  </p>
+                                )}
                               </div>
                             </div>
                             <div className="flex items-center justify-end gap-2">
@@ -597,11 +758,11 @@ export function SessionsModal({
                             </div>
                           </div>
                         ) : isConfirmingDelete ? (
-                          <div className="flex items-center justify-between">
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <span className="text-xs text-destructive">
                               Delete this session? This can&apos;t be undone.
                             </span>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center justify-end gap-2">
                               <button
                                 onClick={() => handleConfirmDelete(s.id)}
                                 disabled={deleteSession.isPending}
@@ -620,40 +781,40 @@ export function SessionsModal({
                             </div>
                           </div>
                         ) : (
-                          <div className="flex items-center justify-between">
-                            <div className="flex flex-col gap-0.5">
-                              <span className="text-sm font-medium text-foreground">
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex min-w-0 flex-col gap-0.5">
+                              <span className="truncate text-sm font-medium text-foreground">
                                 {s.sessionDate
                                   ? new Date(
                                       `${s.sessionDate}T00:00:00`
                                     ).toLocaleDateString()
                                   : "No date"}
                               </span>
-                              <span className="text-xs text-muted-foreground">
+                              <span className="truncate text-xs text-muted-foreground">
                                 {s.startTime?.slice(0, 5)} -{" "}
                                 {s.endTime?.slice(0, 5)} ·{" "}
                                 {s.venueName ?? "No venue"}
                               </span>
-                            </div>
-                            <div className="flex items-center gap-4">
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-xs text-muted-foreground sm:hidden">
                                 {s.coachCount ?? 0} coaches ·{" "}
                                 {s.enrolledCount ?? 0} enrolled
                                 {s.status === "completed"
                                   ? ` · ${s.attendanceCount ?? 0} attended`
                                   : ""}
                               </span>
-                              <span
-                                className={`rounded px-2 py-1 text-xs font-medium ${
-                                  s.status === "scheduled"
-                                    ? "bg-information text-white"
-                                    : s.status === "cancelled"
-                                      ? "bg-destructive text-white"
-                                      : "bg-green-600 text-white"
-                                }`}
-                              >
-                                {s.status}
+                            </div>
+                            <div className="flex items-center justify-between gap-3 sm:justify-end sm:gap-4">
+                              <span className="hidden text-xs text-muted-foreground sm:inline">
+                                {s.coachCount ?? 0} coaches ·{" "}
+                                {s.enrolledCount ?? 0} enrolled
+                                {s.status === "completed"
+                                  ? ` · ${s.attendanceCount ?? 0} attended`
+                                  : ""}
                               </span>
+                              <StatusPill
+                                label={status.label}
+                                variant={status.variant}
+                              />
                               <div className="flex items-center gap-1">
                                 <button
                                   onClick={() =>

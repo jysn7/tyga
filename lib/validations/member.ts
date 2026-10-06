@@ -1,5 +1,6 @@
 import { z } from "zod"
 import type { Member, MemberQuestionnaire } from "@/lib/types"
+import { ageInYears } from "../functions/age"
 
 const MEMBER_GENDER_OPTIONS = ["male", "female", "any"] as const
 type MemberGender = (typeof MEMBER_GENDER_OPTIONS)[number]
@@ -49,8 +50,11 @@ export const memberFormSchema = z.object({
     .refine((d) => d <= new Date(), {
       message: "Date of birth cannot be in the future",
     })
-    .refine((d) => d >= new Date(1990, 0, 1), {
-      message: "Please check the date of birth",
+    .refine((d) => ageInYears(d) >= 6, {
+      message: "Member must be at least 6 years old",
+    })
+    .refine((d) => ageInYears(d) <= 22, {
+      message: "Member must be 22 or younger",
     }),
 
   gender: z.enum(MEMBER_GENDER_OPTIONS, {
