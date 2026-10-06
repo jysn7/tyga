@@ -24,45 +24,45 @@ const colorMap: Record<
   },
   green: {
     bg: "bg-green-light",
-    chip: "bg-primary/25",
-    icon: "text-primary",
+    chip: "bg-foreground/5 dark:bg-foreground/25",
+    icon: "text-card ",
     value: "text-foreground",
-    label: "text-muted-foreground",
+    label: "text-muted-foreground dark:text-background",
   },
   yellow: {
     bg: "bg-yellow-light",
-    chip: "bg-yellow/20",
+    chip: "bg-card/25 dark:bg-foreground/25",
     icon: "text-yellow",
     value: "text-foreground",
     label: "text-muted-foreground",
   },
   red: {
     bg: "bg-red-light",
-    chip: "bg-red/15",
+    chip: "bg-card/25 dark:bg-foreground/25",
     icon: "text-red",
     value: "text-foreground",
     label: "text-muted-foreground",
   },
   purple: {
     bg: "bg-purple-light",
-    chip: "bg-purple/15",
+    chip: "bg-card/25 dark:bg-foreground/25",
     icon: "text-purple",
     value: "text-foreground",
     label: "text-muted-foreground",
   },
   teal: {
     bg: "bg-teal/80",
-    chip: "bg-card/25",
+    chip: "bg-card/25 dark:bg-foreground/25",
     icon: "text-secondary",
     value: "text-foreground",
     label: "text-secondary",
   },
   orange: {
     bg: "bg-orange-light",
-    chip: "bg-orange/15",
-    icon: "text-orange",
+    chip: "bg-foreground/10 dark:bg-foreground/25",
+    icon: "text-secondary",
     value: "text-foreground",
-    label: "text-muted-foreground",
+    label: "dark:text-secondary text-foreground",
   },
   pink: {
     bg: "bg-pink-light",
@@ -83,12 +83,14 @@ const colorMap: Record<
 export function StatTile({
   label,
   value,
+  hint,
   icon: Icon,
   color = "blue",
   compact = false,
 }: {
   label: string
   value: string
+  hint?: string
   icon: LucideIcon
   color?: StatColor
   compact?: boolean
@@ -115,19 +117,25 @@ export function StatTile({
           strokeWidth={1.75}
         />
       </div>
+
       <div className="flex flex-col gap-0.5">
         <span
-          className={`font-semibold tracking-tight ${
+          className={`font-semibold tracking-tight tabular-nums ${
             compact ? "text-base sm:text-2xl" : "text-2xl"
           } ${c.value}`}
         >
           {value}
         </span>
         <span
-          className={`leading-tight ${compact ? "text-[10px] sm:text-xs" : "text-xs"} ${c.label}`}
+          className={`leading-tight ${
+            compact ? "text-[10px] sm:text-xs" : "text-xs"
+          } ${c.label}`}
         >
           {label}
         </span>
+        {hint && (
+          <span className={`text-[11px] ${c.label} opacity-80`}>{hint}</span>
+        )}
       </div>
     </div>
   )

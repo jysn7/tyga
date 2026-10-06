@@ -20,7 +20,7 @@ export function SearchInput({
   return (
     <div
       className={cn(
-        "relative h-9 rounded-lg border border-border bg-input",
+        "relative h-12 rounded-lg border border-border bg-input md:h-9",
         "transition-colors focus-within:border-primary/60 focus-within:ring-1 focus-within:ring-primary/30",
         className
       )}

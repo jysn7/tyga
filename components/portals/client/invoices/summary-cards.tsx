@@ -1,114 +1,102 @@
+// components/portals/client/billing/summary-cards.tsx
 "use client"
 
 import { format } from "date-fns"
-import { Check, AlertTriangle } from "lucide-react"
-import { Loader } from "@/components/portals/shared/loader"
-import { usePaymentSummary } from "@/hooks/client/use-invoices"
+import { AlertCircle, CalendarClock, CheckCircle2, Wallet } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
+import { StatTile } from "@/components/portals/client/overview/stat-tile"
+import { useBillingSummary } from "@/hooks/client/use-invoices"
 
 function formatRand(amount: number) {
-  return new Intl.NumberFormat("en-ZA", {
-    style: "currency",
-    currency: "ZAR",
-    minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
-    maximumFractionDigits: 2,
-  }).format(amount)
+  return `R${amount.toFixed(2)}`
 }
 
 export function SummaryCards() {
-  const { data, isLoading } = usePaymentSummary()
+  const { data, isLoading, error } = useBillingSummary()
 
-  if (isLoading || !data) {
+  if (isLoading) {
     return (
-      <div className="flex h-24 items-center justify-center rounded-xl bg-card shadow">
-        <Loader />
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {[0, 1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="flex flex-col gap-3 rounded-xl bg-card p-4 shadow-sm ring-1 ring-border/50"
+          >
+            <Skeleton className="h-8 w-8 rounded-lg" />
+            <div className="flex flex-col gap-1.5">
+              <Skeleton className="h-7 w-24" />
+              <Skeleton className="h-3.5 w-20" />
+              <Skeleton className="h-3 w-16" />
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  if (error || !data) {
+    return (
+      <div className="flex items-start gap-2.5 rounded-xl border border-border/60 bg-muted/20 p-3.5">
+        <AlertCircle
+          className="mt-0.5 h-3.5 w-3.5 shrink-0 text-destructive"
+          strokeWidth={1.75}
+        />
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          Failed to load billing summary.
+        </p>
       </div>
     )
   }
 
   const hasOutstanding = data.totalOutstanding > 0
-  const isOverdue = data.nextDueAt
-    ? new Date(data.nextDueAt) < new Date()
-    : false
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {/* Outstanding */}
-        <div className="flex flex-col gap-2 rounded-xl bg-card p-5 shadow">
-          <span className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
-            Outstanding
-          </span>
-          <div className="flex items-center gap-2">
-            {hasOutstanding ? (
-              <span className="text-2xl font-semibold tracking-tight text-foreground">
-                {formatRand(data.totalOutstanding)}
-              </span>
-            ) : (
-              <>
-                <Check className="h-5 w-5 text-green" strokeWidth={2} />
-                <span className="text-lg font-semibold tracking-tight text-foreground">
-                  All settled
-                </span>
-              </>
-            )}
-          </div>
-          {hasOutstanding && data.nextDueAt && (
-            <span
-              className={`text-xs ${
-                isOverdue ? "text-destructive" : "text-muted-foreground"
-              }`}
-            >
-              {isOverdue ? "Overdue" : "Due"}{" "}
-              {format(new Date(data.nextDueAt), "d MMM yyyy")}
-            </span>
-          )}
-        </div>
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <StatTile
+        label="Outstanding"
+        value={formatRand(data.totalOutstanding)}
+        hint={hasOutstanding ? "Across open invoices" : "All settled"}
+        icon={Wallet}
+        color={hasOutstanding ? "orange" : "green"}
+        compact
+      />
 
-        {/* Next due */}
-        <div className="flex flex-col gap-2 rounded-xl bg-card p-5 shadow">
-          <span className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
-            {isOverdue ? "Overdue" : "Next due"}
-          </span>
-          {data.nextDueAt ? (
-            <>
-              <span className="text-2xl font-semibold tracking-tight text-foreground">
-                {formatRand(data.nextDueAmount)}
-              </span>
-              <span
-                className={`flex items-center gap-1 text-xs ${
-                  isOverdue ? "text-destructive" : "text-muted-foreground"
-                }`}
-              >
-                {isOverdue && (
-                  <AlertTriangle className="h-3 w-3" strokeWidth={2} />
-                )}
-                {format(new Date(data.nextDueAt), "d MMM yyyy")}
-              </span>
-            </>
-          ) : (
-            <span className="text-lg font-semibold tracking-tight text-foreground">
-              Nothing due
-            </span>
-          )}
-        </div>
-      </div>
+      <StatTile
+        label="Paid to date"
+        value={formatRand(data.totalPaid)}
+        hint={
+          data.lastPaymentAt
+            ? `Last ${format(new Date(data.lastPaymentAt), "d MMM")}`
+            : "No payments yet"
+        }
+        icon={CheckCircle2}
+        color="green"
+        compact
+      />
 
-      {/* Context line */}
-      {(data.totalPaid > 0 || data.lastPaymentAt) && (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-          {data.totalPaid > 0 && (
-            <span>{formatRand(data.totalPaid)} paid to date</span>
-          )}
-          {data.lastPaymentAt && (
-            <span>
-              Last payment {format(new Date(data.lastPaymentAt), "d MMM yyyy")}
-              {data.lastPaymentAmount > 0
-                ? ` · ${formatRand(data.lastPaymentAmount)}`
-                : ""}
-            </span>
-          )}
-        </div>
-      )}
+      <StatTile
+        label="Next due"
+        value={data.nextDueAt ? format(new Date(data.nextDueAt), "d MMM") : "—"}
+        hint={
+          data.nextDueAt ? formatRand(data.nextDueAmount) : "Nothing scheduled"
+        }
+        icon={CalendarClock}
+        color="blue"
+        compact
+      />
+
+      <StatTile
+        label="Last payment"
+        value={data.lastPaymentAt ? formatRand(data.lastPaymentAmount) : "—"}
+        hint={
+          data.lastPaymentAt
+            ? format(new Date(data.lastPaymentAt), "d MMM yyyy")
+            : "No payments yet"
+        }
+        icon={CheckCircle2}
+        color="teal"
+        compact
+      />
     </div>
   )
 }

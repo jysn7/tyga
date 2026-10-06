@@ -54,7 +54,7 @@ type PaymentListRow = {
   paid_at: string | null
 }
 
-// Payment summary row — matches parent_get_payment_summary return shape
+// Billing summary row — matches get_my_billing_summary return shape
 type PaymentSummaryRow = {
   total_paid: number | string
   total_outstanding: number | string
@@ -161,20 +161,20 @@ function mapPaymentSummary(row: PaymentSummaryRow): PaymentSummary {
 }
 
 // ============================================================
-// Invoice hooks (existing)
+// Invoice hooks
 // ============================================================
 
 export function useInvoices(status?: string) {
   const supabase = createClient()
 
-  return useQuery({
-    queryKey: ["invoices", status],
+  return useQuery<Invoice[]>({
+    queryKey: ["invoices", status ?? "all"],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_my_invoices", {
         p_status: status ?? null,
       })
       if (error) throw error
-      return (data ?? []).map(mapInvoice)
+      return ((data ?? []) as InvoiceRow[]).map(mapInvoice)
     },
   })
 }
@@ -182,27 +182,27 @@ export function useInvoices(status?: string) {
 export function useInvoiceDetail(invoiceId: number) {
   const supabase = createClient()
 
-  return useQuery({
+  return useQuery<InvoiceDetail>({
     queryKey: ["invoices", invoiceId],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_invoice_detail", {
         p_invoice_id: invoiceId,
       })
       if (error) throw error
-      return mapInvoiceDetail(data)
+      return mapInvoiceDetail(data as InvoiceDetailRow)
     },
     enabled: !!invoiceId,
   })
 }
 
 // ============================================================
-// Payment hooks (new)
+// Payment hooks
 // ============================================================
 
 export type PaymentFilters = {
   from?: string
   to?: string
-  status?: "pending" | "successful" | "failed" | "refunded" | null
+  status?: "pending" | "paid" | "failed" | "refunded" | null
   method?: "card" | "eft" | "cash" | "debit_order" | "other" | null
 }
 
@@ -210,7 +210,7 @@ export function usePayments(filters: PaymentFilters = {}) {
   const supabase = createClient()
   const { from, to, status, method } = filters
 
-  return useQuery({
+  return useQuery<Payment[]>({
     queryKey: [
       "payments",
       from ?? "any",
@@ -218,7 +218,7 @@ export function usePayments(filters: PaymentFilters = {}) {
       status ?? "all",
       method ?? "all",
     ],
-    queryFn: async (): Promise<Payment[]> => {
+    queryFn: async () => {
       const { data, error } = await supabase.rpc("parent_get_payments", {
         p_from: from ?? null,
         p_to: to ?? null,
@@ -231,16 +231,15 @@ export function usePayments(filters: PaymentFilters = {}) {
   })
 }
 
-export function usePaymentSummary() {
+export function useBillingSummary() {
   const supabase = createClient()
 
-  return useQuery({
-    queryKey: ["payments", "summary"],
-    queryFn: async (): Promise<PaymentSummary> => {
-      const { data, error } = await supabase.rpc("parent_get_payment_summary")
+  return useQuery<PaymentSummary>({
+    queryKey: ["billing", "summary"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_my_billing_summary")
       if (error) throw error
 
-      // The RPC returns a single-row table
       const row = Array.isArray(data) ? data[0] : data
       if (!row) {
         return {
@@ -252,7 +251,6 @@ export function usePaymentSummary() {
           lastPaymentAmount: 0,
         }
       }
-
       return mapPaymentSummary(row as PaymentSummaryRow)
     },
     staleTime: 60 * 1000,
