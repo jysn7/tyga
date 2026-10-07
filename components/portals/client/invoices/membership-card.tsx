@@ -2,7 +2,7 @@
 "use client"
 
 import { format } from "date-fns"
-import { CreditCard, ShieldCheck, AlertCircle, Loader2 } from "lucide-react"
+import { CreditCard, ShieldCheck, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   StatusPill,

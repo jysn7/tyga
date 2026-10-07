@@ -1,6 +1,7 @@
 "use client"
 
-import { useParams, notFound } from "next/navigation"
+import { useMemo, useState } from "react"
+import { useParams, useSearchParams, notFound } from "next/navigation"
 import Link from "next/link"
 import {
   ChevronLeft,
@@ -14,13 +15,14 @@ import {
   MinusCircle,
   Save,
   Loader2,
+  Check,
+  AlertCircle,
 } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Loader } from "@/components/portals/shared/loader"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/components/ui/toast"
-import { useState } from "react"
 import {
   useCoachSessionDetail,
   useCoachSessionRoster,
@@ -30,6 +32,7 @@ import {
   useMarkAttendance,
   useBulkMarkAttendance,
   useSaveSessionNotes,
+  useTagSessionCurriculum,
 } from "@/hooks/coach/use-coach-mutations"
 
 const STATUS_OPTIONS = [
@@ -68,6 +71,7 @@ const TAB_TRIGGER_CLASS =
 
 export default function CoachSessionDetailPage() {
   const params = useParams<{ id: string }>()
+  const searchParams = useSearchParams()
   const sessionId = Number(params.id)
 
   const {
@@ -84,6 +88,13 @@ export default function CoachSessionDetailPage() {
     )
   }
   if (detailError || !detail) notFound()
+
+  const hasStarted =
+    new Date(`${detail.session_date}T${detail.start_time}`) <= new Date()
+  const isCancelled = detail.status === "cancelled"
+
+  const initialTab =
+    searchParams.get("focus") === "attendance" ? "roster" : "roster"
 
   return (
     <div className="flex flex-col gap-6">
@@ -126,18 +137,43 @@ export default function CoachSessionDetailPage() {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="overview" className="flex flex-col gap-5">
+      <Tabs defaultValue={initialTab} className="flex flex-col gap-5">
         <TabsList className="flex h-auto w-full justify-start gap-1 overflow-x-auto p-1 sm:w-fit">
-          <TabsTrigger value="overview" className={TAB_TRIGGER_CLASS}>
-            Overview
-          </TabsTrigger>
           <TabsTrigger value="roster" className={TAB_TRIGGER_CLASS}>
             Roster & attendance
           </TabsTrigger>
           <TabsTrigger value="curriculum" className={TAB_TRIGGER_CLASS}>
             Notes & curriculum
           </TabsTrigger>
+          <TabsTrigger value="overview" className={TAB_TRIGGER_CLASS}>
+            Overview
+          </TabsTrigger>
         </TabsList>
+
+        {/* ROSTER */}
+        <TabsContent
+          value="roster"
+          className="mt-0 data-[state=inactive]:hidden"
+        >
+          <RosterTab
+            sessionId={sessionId}
+            hasStarted={hasStarted}
+            isCancelled={isCancelled}
+          />
+        </TabsContent>
+
+        {/* CURRICULUM */}
+        <TabsContent
+          value="curriculum"
+          className="mt-0 data-[state=inactive]:hidden"
+        >
+          <CurriculumTab
+            sessionId={sessionId}
+            initialNotes={detail.coach_notes ?? ""}
+            hasStarted={hasStarted}
+            isCancelled={isCancelled}
+          />
+        </TabsContent>
 
         {/* OVERVIEW */}
         <TabsContent value="overview" className="mt-0">
@@ -184,27 +220,54 @@ export default function CoachSessionDetailPage() {
             </div>
           </section>
         </TabsContent>
-
-        {/* ROSTER */}
-        <TabsContent value="roster" className="mt-0">
-          <RosterTab sessionId={sessionId} />
-        </TabsContent>
-
-        {/* CURRICULUM */}
-        <TabsContent value="curriculum" className="mt-0">
-          <CurriculumTab sessionId={sessionId} />
-        </TabsContent>
       </Tabs>
+    </div>
+  )
+}
+
+// ---------- Lock banner ----------
+
+function LockBanner({
+  hasStarted,
+  isCancelled,
+}: {
+  hasStarted: boolean
+  isCancelled: boolean
+}) {
+  if (hasStarted && !isCancelled) return null
+
+  return (
+    <div className="flex items-start gap-2.5 rounded-xl border border-border/60 bg-muted/20 p-3.5">
+      <AlertCircle
+        className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground"
+        strokeWidth={1.75}
+      />
+      <p className="text-xs text-muted-foreground">
+        {isCancelled
+          ? "This session was cancelled. Nothing to record."
+          : "This session hasn't started yet. Attendance, curriculum, and notes unlock when it begins."}
+      </p>
     </div>
   )
 }
 
 // ---------- Roster ----------
 
-function RosterTab({ sessionId }: { sessionId: number }) {
+function RosterTab({
+  sessionId,
+  hasStarted,
+  isCancelled,
+}: {
+  sessionId: number
+  hasStarted: boolean
+  isCancelled: boolean
+}) {
   const { data: roster, isLoading } = useCoachSessionRoster(sessionId)
   const mark = useMarkAttendance()
   const bulk = useBulkMarkAttendance()
+  const [confirmBulk, setConfirmBulk] = useState(false)
+
+  const readOnly = !hasStarted || isCancelled
 
   if (isLoading) {
     return (
@@ -230,22 +293,13 @@ function RosterTab({ sessionId }: { sessionId: number }) {
     )
   }
 
-  // FIX: single-member mark now toasts on success and error.
   function handleMark(
     memberId: number,
-    memberName: string,
     status: (typeof STATUS_OPTIONS)[number]["value"]
   ) {
     mark.mutate(
       { sessionId, memberId, status },
       {
-        onSuccess: () =>
-          toast.add({
-            title: "Attendance marked",
-            description: `${memberName} — ${status}`,
-            type: "success",
-            timeout: 3000,
-          }),
         onError: (err) =>
           toast.add({
             title: "Failed to mark attendance",
@@ -258,44 +312,74 @@ function RosterTab({ sessionId }: { sessionId: number }) {
     )
   }
 
-  // FIX: bulk mark now toasts on success and error.
   function handleBulkMark() {
     bulk.mutate(
       { sessionId, status: "present" },
       {
-        onSuccess: () =>
+        onSuccess: () => {
           toast.add({
             title: "All members marked present",
             type: "success",
             timeout: 3000,
-          }),
-        onError: (err) =>
+          })
+          setConfirmBulk(false)
+        },
+        onError: (err) => {
           toast.add({
             title: "Failed to mark attendance",
             description:
               err instanceof Error ? err.message : "Something went wrong",
             type: "error",
             timeout: 5000,
-          }),
+          })
+          setConfirmBulk(false)
+        },
       }
     )
   }
 
   return (
     <section className="flex flex-col gap-3">
+      <LockBanner hasStarted={hasStarted} isCancelled={isCancelled} />
+
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold tracking-tight text-foreground">
           Roster ({roster.length})
         </h2>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={bulk.isPending}
-          onClick={handleBulkMark}
-          className="h-8 text-xs"
-        >
-          {bulk.isPending ? "Marking…" : "Mark all present"}
-        </Button>
+
+        {!readOnly &&
+          (confirmBulk ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">
+                Overwrite all with present?
+              </span>
+              <Button
+                size="sm"
+                disabled={bulk.isPending}
+                onClick={handleBulkMark}
+                className="h-8 text-xs"
+              >
+                {bulk.isPending ? "Marking…" : "Yes"}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setConfirmBulk(false)}
+                className="h-8 text-xs"
+              >
+                No
+              </Button>
+            </div>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setConfirmBulk(true)}
+              className="h-8 text-xs"
+            >
+              Mark all present
+            </Button>
+          ))}
       </div>
 
       <div className="overflow-hidden rounded-xl bg-card shadow">
@@ -316,16 +400,14 @@ function RosterTab({ sessionId }: { sessionId: number }) {
                     <button
                       key={opt.value}
                       type="button"
-                      disabled={mark.isPending}
-                      onClick={() =>
-                        handleMark(m.member_id, m.full_name, opt.value)
-                      }
+                      disabled={readOnly || mark.isPending}
+                      onClick={() => handleMark(m.member_id, opt.value)}
                       title={opt.label}
                       className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors ${
                         isActive
                           ? `${opt.bg} ${opt.color}`
                           : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                      }`}
+                      } disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent`}
                     >
                       <Icon className="h-3.5 w-3.5" strokeWidth={1.75} />
                     </button>
@@ -342,12 +424,89 @@ function RosterTab({ sessionId }: { sessionId: number }) {
 
 // ---------- Curriculum ----------
 
-function CurriculumTab({ sessionId }: { sessionId: number }) {
+function CurriculumTab({
+  sessionId,
+  initialNotes,
+  hasStarted,
+  isCancelled,
+}: {
+  sessionId: number
+  initialNotes: string
+  hasStarted: boolean
+  isCancelled: boolean
+}) {
   const { data: modules, isLoading } = useCoachSessionCurriculum(sessionId)
+  const tagCurriculum = useTagSessionCurriculum()
   const saveNotes = useSaveSessionNotes()
-  const [notes, setNotes] = useState("")
 
-  function handleSave() {
+  const [notes, setNotes] = useState(initialNotes)
+  const [selectionOverrides, setSelectionOverrides] = useState<
+    Record<number, boolean>
+  >({})
+
+  const readOnly = !hasStarted || isCancelled
+  const taggedModuleIds = useMemo(
+    () =>
+      new Set(
+        modules?.filter((m) => m.is_tagged).map((m) => m.module_id) ?? []
+      ),
+    [modules]
+  )
+
+  const selected = useMemo(() => {
+    const next = new Set(taggedModuleIds)
+
+    Object.entries(selectionOverrides).forEach(([moduleId, value]) => {
+      const id = Number(moduleId)
+      if (value) next.add(id)
+      else next.delete(id)
+    })
+
+    return next
+  }, [selectionOverrides, taggedModuleIds])
+
+  function toggle(moduleId: number) {
+    const baseValue = taggedModuleIds.has(moduleId)
+    const currentOverride = selectionOverrides[moduleId]
+    const nextValue = currentOverride ?? baseValue
+    const desiredValue = !nextValue
+
+    setSelectionOverrides((prev) => {
+      const next = { ...prev }
+
+      if (desiredValue === baseValue) {
+        delete next[moduleId]
+        return next
+      }
+
+      next[moduleId] = desiredValue
+      return next
+    })
+  }
+
+  function handleSaveCurriculum() {
+    tagCurriculum.mutate(
+      { sessionId, moduleIds: Array.from(selected) },
+      {
+        onSuccess: () =>
+          toast.add({
+            title: "Curriculum saved",
+            type: "success",
+            timeout: 3000,
+          }),
+        onError: (err) =>
+          toast.add({
+            title: "Failed to save curriculum",
+            description:
+              err instanceof Error ? err.message : "Something went wrong",
+            type: "error",
+            timeout: 5000,
+          }),
+      }
+    )
+  }
+
+  function handleSaveNotes() {
     saveNotes.mutate(
       { sessionId, notes },
       {
@@ -371,15 +530,18 @@ function CurriculumTab({ sessionId }: { sessionId: number }) {
 
   return (
     <div className="flex flex-col gap-6">
+      <LockBanner hasStarted={hasStarted} isCancelled={isCancelled} />
+
+      {/* Curriculum */}
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold tracking-tight text-foreground">
-            Curriculum
+            Curriculum covered
           </h2>
           <span className="text-xs text-muted-foreground">
             {isLoading
               ? ""
-              : `${modules?.filter((m) => m.is_tagged).length ?? 0} tagged`}
+              : `${selected.size} of ${modules?.length ?? 0} tagged`}
           </span>
         </div>
 
@@ -394,37 +556,70 @@ function CurriculumTab({ sessionId }: { sessionId: number }) {
             </p>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-xl bg-card shadow">
-            <div className="flex flex-col divide-y divide-border/60">
-              {modules.map((mod) => (
-                <div
-                  key={mod.module_id}
-                  className="flex items-center justify-between gap-3 px-5 py-3"
-                >
-                  <div className="flex min-w-0 flex-col gap-0.5">
-                    <span className="truncate text-sm text-foreground">
-                      {mod.module_name}
-                    </span>
-                    {mod.category && (
-                      <span className="text-xs text-muted-foreground capitalize">
-                        {mod.category}
-                      </span>
-                    )}
-                  </div>
-                  <span
-                    className={`shrink-0 rounded-md px-2 py-0.5 text-[11px] font-medium text-primary-foreground dark:text-secondary ${
-                      mod.is_tagged ? "bg-green-light" : "bg-orange-light"
-                    }`}
-                  >
-                    {mod.is_tagged ? "Tagged" : "Not tagged"}
-                  </span>
-                </div>
-              ))}
+          <>
+            <div className="overflow-hidden rounded-xl bg-card shadow">
+              <div className="flex flex-col divide-y divide-border/60">
+                {modules.map((mod) => {
+                  const isSelected = selected.has(mod.module_id)
+                  return (
+                    <button
+                      key={mod.module_id}
+                      type="button"
+                      disabled={readOnly}
+                      onClick={() => toggle(mod.module_id)}
+                      className="flex items-center justify-between gap-3 px-5 py-3 text-left transition-colors hover:bg-accent/40 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
+                    >
+                      <div className="flex min-w-0 flex-1 items-center gap-3">
+                        <span
+                          className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors ${
+                            isSelected
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-border"
+                          }`}
+                        >
+                          {isSelected && (
+                            <Check className="h-3 w-3" strokeWidth={2.5} />
+                          )}
+                        </span>
+                        <div className="flex min-w-0 flex-col gap-0.5">
+                          <span className="truncate text-sm text-foreground">
+                            {mod.module_name}
+                          </span>
+                          {mod.category && (
+                            <span className="text-xs text-muted-foreground capitalize">
+                              {mod.category}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
             </div>
-          </div>
+
+            {!readOnly && (
+              <Button
+                onClick={handleSaveCurriculum}
+                disabled={tagCurriculum.isPending}
+                className="h-11 w-fit gap-2 px-5 text-sm"
+              >
+                {tagCurriculum.isPending ? (
+                  <Loader2
+                    className="h-3.5 w-3.5 animate-spin"
+                    strokeWidth={1.75}
+                  />
+                ) : (
+                  <Save className="h-3.5 w-3.5" strokeWidth={1.75} />
+                )}
+                Save curriculum
+              </Button>
+            )}
+          </>
         )}
       </section>
 
+      {/* Notes */}
       <section className="flex flex-col gap-3">
         <h2 className="text-sm font-semibold tracking-tight text-foreground">
           Session notes
@@ -432,21 +627,27 @@ function CurriculumTab({ sessionId }: { sessionId: number }) {
         <Textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
+          disabled={readOnly}
           placeholder="What happened in this session?"
-          className="min-h-32 resize-none rounded-lg border border-border bg-input p-3 text-sm text-foreground shadow-none focus-visible:ring-0"
+          className="min-h-32 resize-none rounded-lg border border-border bg-input p-3 text-sm text-foreground shadow-none focus-visible:ring-0 disabled:opacity-50"
         />
-        <Button
-          onClick={handleSave}
-          disabled={saveNotes.isPending}
-          className="h-11 w-fit gap-2 px-5 text-sm"
-        >
-          {saveNotes.isPending ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={1.75} />
-          ) : (
-            <Save className="h-3.5 w-3.5" strokeWidth={1.75} />
-          )}
-          Save notes
-        </Button>
+        {!readOnly && (
+          <Button
+            onClick={handleSaveNotes}
+            disabled={saveNotes.isPending}
+            className="h-11 w-fit gap-2 px-5 text-sm"
+          >
+            {saveNotes.isPending ? (
+              <Loader2
+                className="h-3.5 w-3.5 animate-spin"
+                strokeWidth={1.75}
+              />
+            ) : (
+              <Save className="h-3.5 w-3.5" strokeWidth={1.75} />
+            )}
+            Save notes
+          </Button>
+        )}
       </section>
     </div>
   )

@@ -1,12 +1,17 @@
 import { useQuery } from "@tanstack/react-query"
 import { createClient } from "@/utils/supabase/client"
 
+export type CoachSessionStatus = "scheduled" | "cancelled" | "completed"
+
 export type CoachSessionDetail = {
   session_id: number
   programme_name: string
   venue_name: string
+  session_date: string
   start_time: string
   end_time: string
+  status: CoachSessionStatus
+  coach_notes: string | null
   max_ratio: number | null
   enrolled_count: number
 }

@@ -43,15 +43,19 @@ export function useBulkMarkAttendance() {
       sessionId: number
       status: "present" | "absent" | "late" | "excused"
     }) => {
-      const { error } = await supabase.rpc("coach_bulk_mark_attendance", {
+      const { data, error } = await supabase.rpc("coach_bulk_mark_attendance", {
         p_session_id: sessionId,
         p_status: status,
       })
       if (error) throw new Error(error.message)
+      return data as number
     },
     onSuccess: (_, { sessionId }) => {
       queryClient.invalidateQueries({
         queryKey: ["coach-session-roster", sessionId],
+      })
+      queryClient.invalidateQueries({
+        queryKey: ["coach-session-detail", sessionId],
       })
     },
   })
@@ -75,6 +79,38 @@ export function useSaveSessionNotes() {
       if (error) throw new Error(error.message)
     },
     onSuccess: (_, { sessionId }) => {
+      queryClient.invalidateQueries({
+        queryKey: ["coach-session-detail", sessionId],
+      })
+    },
+  })
+}
+
+export function useTagSessionCurriculum() {
+  const supabase = createClient()
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      sessionId,
+      moduleIds,
+    }: {
+      sessionId: number
+      moduleIds: number[]
+    }) => {
+      const { data, error } = await supabase.rpc(
+        "coach_tag_session_curriculum",
+        {
+          p_session_id: sessionId,
+          p_module_ids: moduleIds,
+        }
+      )
+      if (error) throw new Error(error.message)
+      return data as number
+    },
+    onSuccess: (_, { sessionId }) => {
+      queryClient.invalidateQueries({
+        queryKey: ["coach-session-curriculum", sessionId],
+      })
       queryClient.invalidateQueries({
         queryKey: ["coach-session-detail", sessionId],
       })
