@@ -38,7 +38,7 @@ A booking and assessment system for parents, coaches, and head coaches.
 | `appointments` | Bookings against slots |
 | `coach_availability_rules` | Recurring weekly patterns |
 | `coach_blocks` | Time off |
-| `academy_settings` | Booking window and cancellation policy |
+| `app_settings` | Booking window and cancellation policy (among other platform settings) |
 
 **Status lifecycle:** `requested` → `scheduled` → `completed` (or `cancelled` / `no_show`).
 
@@ -106,12 +106,14 @@ A booking and assessment system for parents, coaches, and head coaches.
 | File | Exports |
 |---|---|
 | `hooks/lookups/use-lookups.ts` | `useVenues`, `useLevels` |
-| `hooks/lookups/use-academy-settings.ts` | `useAcademySettings`, `useUpdateAcademySettings` |
+| `hooks/lookups/use-academy-settings.ts` | `useAppSettings`, `useUpdateAppSettings`, booking behavior defaults |
 | `hooks/client/use-parent-appointments.ts` | `useOpenSlots`, `useParentAppointments`, `useBookSlot`, `useCancelAppointment` |
-| `hooks/coach/use-coach-appointments.ts` | `useCoachSlots`, `useCoachBookedAppointments`, `useOpenAppointmentSlot`, `useArchiveAppointmentSlot`, `useIsHeadCoach` |
-| `hooks/coach/use-coach-availability.ts` | `useCoachRules`, `useCreateAvailabilityRule`, `useArchiveAvailabilityRule`, `useApplyAvailabilityRule`, `useCoachBlocks`, `useAddBlock`, `useRemoveBlock` |
-| `hooks/admin/use-admin-overrides.ts` | `useAdminCreateSlotForCoach`, `useAdminBookSlotForMember`, `useAdminConfirmAppointment` |
+| `hooks/coach/use-coach-appointments.ts` | Coach slot list, booked appointments, one-off slot create/archive and head-coach check |
+| `hooks/coach/use-coach-availability.ts` | Recurring availability rules and blocked-time list/create/apply/archive operations |
+| `hooks/coach/use-head-coach-appointments.ts` | Assessment queue, confirm, complete and no-show actions |
+| `hooks/admin/appointments/use-admin-overrides.ts` | `useAdminCreateSlotForCoach`, `useAdminBookSlotForMember`, `useAdminConfirmAppointment` |
 | `hooks/shared/use-schedule.ts` | `useCoachSchedule`, `useParentSchedule`, `useAdminSchedule` |
+| `hooks/coach/use-appointment-slots.ts` and `hooks/use-appointment-slots.ts` | Shared appointment slot types, query-key helpers and client utilities |
 
 ---
 
@@ -123,8 +125,9 @@ A booking and assessment system for parents, coaches, and head coaches.
 | `/my-schedule` | Parent | Combined calendar |
 | `/coach/appointments` | Coach | Recurring, one-off slots, booked, queue |
 | `/coach/my-schedule` | Coach | Combined calendar |
-| `/admin/schedule` | Admin | Academy-wide calendar |
-| `/admin/settings` | Admin | Booking settings |
+| `/admin/appointments` | Admin | Appointment and schedule administration |
+| `/admin/settings` | Admin | Academy/application settings, including booking behavior |
+| `/coach/appointments/queue` | Head coach | Assessment request queue |
 
 ---
 
@@ -132,6 +135,7 @@ A booking and assessment system for parents, coaches, and head coaches.
 
 | Rule | Where enforced |
 |---|---|
+| Booking windows and cancellation policy are read through the shared app-settings hook; defaults are 24 hours lead time, 56 days lookahead, 24 hours cancellation cutoff and 60 minute slots when settings are unavailable | `useBehaviourSettings` |
 | Parents can only book slots at least `booking_lead_hours` ahead, up to `booking_lookahead_days` | `parent_get_open_slots`, `parent_book_slot` |
 | Parents can't cancel inside `cancellation_cutoff_hours` | `parent_cancel_appointment` + UI |
 | Two parents can't book the last seat simultaneously | `parent_book_slot` uses `SELECT ... FOR UPDATE` |
@@ -144,14 +148,7 @@ A booking and assessment system for parents, coaches, and head coaches.
 
 ## Setup order
 
-1. `01-lookups.sql` — venues, levels
-2. `02-settings.sql` — `academy_settings`
-3. `03-availability.sql` — rules and blocks
-4. `04-admin-overrides.sql`
-5. `05-parent-slots-lead-time.sql`
-6. `06-parent-appointments.sql`
-7. `schedule.sql` — unified calendars
-8. `notify pgrst, 'reload schema';`
+Apply the current migrations for lookups, `app_settings`, coach availability, appointment slots/bookings, role-specific RPCs and combined schedule functions; reload PostgREST after changing RPC definitions. The migration history is authoritative for ordering and the active settings table name.
 
 ---
 

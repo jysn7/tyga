@@ -40,8 +40,9 @@ Venue management with map-based address entry.
 | File | Exports |
 |---|---|
 | `hooks/admin/venues/use-venues.ts` | `useVenues` (admin list, with counts) |
-| `hooks/admin/venues/use-venue-mutations.ts` | `useCreateVenue`, `useUpdateVenue`, `useDeleteVenue` |
-| `hooks/lookups/use-lookups.ts` | `useVenues` (plain dropdown list) |
+| `hooks/admin/venues/use-venue-mutations.ts` | Create, update and delete mutations |
+| `hooks/admin/programmes/use-venues.ts` | Admin venue lookups used by programme forms |
+| `hooks/lookups/use-lookups.ts` | Authenticated plain venue and level lookups for shared forms |
 
 ---
 
@@ -65,13 +66,9 @@ Venue management with map-based address entry.
 
 ---
 
-## Setup order
+## Setup
 
-1. `01-venues-schema.sql` — table + lat/lng columns
-2. `02-venue-storage-bucket.sql` — if venue images are ever added (not currently implemented)
-3. `03-admin-venue-rpcs.sql`
-4. Enable Maps JavaScript API + Places API in Google Cloud, add `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`
-5. `notify pgrst, 'reload schema';`
+Use the Supabase migration history for the current venue schema and admin RPC order, then reload PostgREST after function changes. The map picker requires Google Maps JavaScript API and Places API access and `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`.
 
 ---
 
