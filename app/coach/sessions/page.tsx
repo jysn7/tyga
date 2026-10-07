@@ -33,10 +33,7 @@ import {
   StatusPill,
   type StatusVariant,
 } from "@/components/portals/shared/status-pill"
-import {
-  useCoachSessions,
-  type CoachSession,
-} from "@/hooks/coach/use-coach-sessions"
+import { useCoachSessions, type CoachSession } from "@/hooks/coach/use-sessions"
 
 // ---------------------------------------------------------------------------
 // Status logic

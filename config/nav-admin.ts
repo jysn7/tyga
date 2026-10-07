@@ -15,6 +15,7 @@ import {
   Bell,
   History,
   Settings,
+  Images,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -100,6 +101,7 @@ export const adminNav: NavEntry[] = [
         href: "/admin/notifications",
         icon: Bell,
       },
+      { label: "Gallery", href: "/admin/gallery", icon: Images },
       { label: "Audit Log", href: "/admin/audit", icon: History },
       { label: "Settings", href: "/admin/settings", icon: Settings },
     ],

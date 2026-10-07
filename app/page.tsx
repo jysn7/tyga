@@ -109,6 +109,12 @@ export default function PortalLandingPage() {
             >
               Pricing
             </Link>
+            <Link
+              href="/gallery"
+              className="rounded-full px-3 py-1.5 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+            >
+              Gallery
+            </Link>
           </nav>
 
           <Link href="/auth/signin" className={navBtn}>
