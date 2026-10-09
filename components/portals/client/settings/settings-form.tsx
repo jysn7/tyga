@@ -14,7 +14,17 @@ import { saveAccountSettings } from "@/lib/functions/save-account-settings"
 import { changeMyPassword } from "@/lib/functions/change-password"
 import { Field, fieldStyles } from "@/components/portals/shared/field"
 import { PushToggle } from "@/components/portals/shared/push-toggle"
-import { Camera, ShieldAlert, Check, KeyRound, Eye, EyeOff } from "lucide-react"
+import {
+  Camera,
+  ShieldAlert,
+  Check,
+  KeyRound,
+  Eye,
+  EyeOff,
+  ShieldCheck,
+  ArrowRight,
+} from "lucide-react"
+import Link from "next/link"
 
 const NOTIFICATION_TYPES: { key: string; label: string }[] = [
   { key: "session_reminder", label: "Session reminders" },
@@ -584,6 +594,42 @@ export function SettingsForm({ account }: { account: AccountSettings }) {
                   {isChangingPassword ? "Updating…" : "Change password"}
                 </Button>
               </div>
+            </div>
+          </section>
+
+          {/* Two-factor authentication */}
+          <section className="flex flex-col gap-3">
+            <div className="flex items-start gap-2">
+              <ShieldCheck
+                className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                strokeWidth={1.75}
+              />
+              <div className="flex flex-col gap-0.5">
+                <h2 className="text-sm font-semibold tracking-tight text-foreground">
+                  Two-factor authentication
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  Add an extra layer of security to your account.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-start gap-3 rounded-xl bg-card p-5 shadow sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-sm font-medium text-foreground">
+                  Authenticator app
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  Require a 6-digit code from your authenticator app at sign-in.
+                </span>
+              </div>
+              <Link
+                className="flex items-center justify-center rounded-md bg-foreground px-4 py-2 text-xs font-medium text-background"
+                href="/settings/security"
+              >
+                Manage
+                <ArrowRight className="ml-1 h-3 w-3" strokeWidth={1.75} />
+              </Link>
             </div>
           </section>
 

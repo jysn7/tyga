@@ -10,11 +10,23 @@ const PORTAL_HOME: Record<Portal, string> = {
   admin: "/admin/overview",
 }
 
+// Paths a logged-in but not-yet-AAL2 user must be able to reach
+const MFA_EXEMPT_PATHS = [
+  "/auth/mfa/enroll",
+  "/auth/mfa/challenge",
+  "/auth/signin",
+  "/auth/signout",
+]
+
 function isPortalPathAllowed(path: string, role: Portal): boolean {
   if (role === "admin") return true // admins can access anything
   if (role === "coach") return !path.startsWith("/admin")
   // role === "client"
   return !path.startsWith("/admin") && !path.startsWith("/coach")
+}
+
+function isMfaExempt(path: string) {
+  return MFA_EXEMPT_PATHS.some((p) => path === p || path.startsWith(p + "/"))
 }
 
 export async function proxy(request: NextRequest) {
@@ -27,7 +39,6 @@ export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname
 
   // Public routes that don't need session checks
-  const isAuthPage = path.startsWith("/auth/")
   const isHelpPage = path === "/help" || path.startsWith("/help/")
   const isCallback = path === "/auth/callback"
   const isWebhook = path.startsWith("/api/paystack/webhook")
@@ -54,6 +65,14 @@ export async function proxy(request: NextRequest) {
     return response
   }
 
+  // MFA-exempt pages: always let through. They handle their own auth state.
+  // Without this, the isAuthPage redirect below would loop on the
+  // challenge and enroll pages.
+  if (isMfaExempt(path)) {
+    return response
+  }
+
+  const isAuthPage = path.startsWith("/auth/")
   const isProtectedPage = !isAuthPage && !isHelpPage
 
   // Not signed in → kick to signin
@@ -76,6 +95,28 @@ export async function proxy(request: NextRequest) {
     }
 
     const home = PORTAL_HOME[account.role] ?? "/dashboard"
+
+    // --- MFA enforcement (before the auth-page and portal redirects) ---
+    const { data: aal } =
+      await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+
+    const mustVerify = aal?.currentLevel === "aal1" && aal?.nextLevel === "aal2"
+    const isPrivileged = account.role === "coach" || account.role === "admin"
+
+    // Has a factor enrolled but hasn't verified → challenge
+    if (mustVerify) {
+      const challengeUrl = new URL("/auth/mfa/challenge", request.url)
+      challengeUrl.searchParams.set("next", path)
+      return NextResponse.redirect(challengeUrl)
+    }
+
+    // Privileged user with no factor enrolled → force enrollment.
+    // Parents are skipped — MFA is optional for them.
+    const hasNoFactor =
+      aal?.currentLevel === "aal1" && aal?.nextLevel === "aal1"
+    if (isPrivileged && hasNoFactor && !isAuthPage) {
+      return NextResponse.redirect(new URL("/auth/mfa/enroll", request.url))
+    }
 
     // Redirect signed-in users away from auth pages to their portal home
     if (isAuthPage) {
