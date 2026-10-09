@@ -13,6 +13,7 @@ This directory is the feature-level guide to TYGA. The documents describe the us
 | [Billing & payments](./billing-and-payments.md) | Membership subscriptions, invoices, payments, checkout and reconciliation |
 | [Appointments](./appointments.md) | Coach availability, parent bookings, assessment queue and unified schedules |
 | [Events](./events.md) | Admin-managed events, registration visibility and event image storage |
+| [Admin marketing site](./admin-marketing-site.md) | Admin-managed public-site events, programme cards, team profiles, gallery and site copy |
 | [Venues](./venues.md) | Venue records, address capture, map selection and lookups |
 | [Notifications, search & PWA](./notifications-and-search.md) | Notification inbox, preferences and delivery, role-scoped search and installability |
 | [Administration & reporting](./administration-and-reporting.md) | Admin dashboard, accounts, coaches, invitations, settings and audit/reporting hooks |
