@@ -1,7 +1,7 @@
 // app/auth/mfa/challenge/page.tsx
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { Suspense, useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useTheme } from "next-themes"
@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 
 const supabase = createClient()
 
-export default function MFAChallengePage() {
+function MFAChallengeContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const nextPath = searchParams.get("next") ?? "/"
@@ -237,5 +237,19 @@ export default function MFAChallengePage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function MFAChallengePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-svh items-center justify-center bg-secondary">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-foreground border-t-transparent" />
+        </div>
+      }
+    >
+      <MFAChallengeContent />
+    </Suspense>
   )
 }
