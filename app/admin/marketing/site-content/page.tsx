@@ -11,9 +11,10 @@ import { fieldStyles, Field } from "@/components/portals/shared/field"
 import {
   useSiteContent,
   useUpdateSiteContent,
+  type SiteContent,
 } from "@/hooks/admin/marketing/use-site-content"
 
-function createSiteContentState(data?: SiteContentData) {
+function createSiteContentState(data?: SiteContent | null) {
   return {
     heroEyebrow: data?.hero_eyebrow ?? "",
     heroHeading: data?.hero_heading ?? "",
@@ -28,21 +29,6 @@ function createSiteContentState(data?: SiteContentData) {
     seoTitle: data?.seo_title ?? "",
     seoDescription: data?.seo_description ?? "",
   }
-}
-
-type SiteContentData = {
-  hero_eyebrow?: string
-  hero_heading?: string
-  hero_summary?: string
-  hero_cta_label?: string
-  hero_cta_url?: string
-  homepage_intro?: string
-  marketing_statements?: string[]
-  location?: string
-  parent_portal_url?: string
-  social_links?: Record<string, string>
-  seo_title?: string
-  seo_description?: string
 }
 
 function SiteContentSkeleton() {
@@ -66,7 +52,7 @@ function SiteContentSkeleton() {
   )
 }
 
-function SiteContentEditor({ data }: { data?: SiteContentData }) {
+function SiteContentEditor({ data }: { data?: SiteContent | null }) {
   const update = useUpdateSiteContent()
 
   const [heroEyebrow, setHeroEyebrow] = useState(
