@@ -1,10 +1,8 @@
 import {
   Home,
   Users,
-  Calendar,
   Bell,
   Settings,
-  GraduationCap,
   CalendarDays,
   CalendarClock,
   TrendingUp,
@@ -12,25 +10,37 @@ import {
 import type { LucideIcon } from "lucide-react"
 
 export type NavItem = {
+  type: "link"
   label: string
   href: string
   icon: LucideIcon
 }
 
 export const coachNav: NavItem[] = [
-  { label: "Dashboard", href: "/coach/dashboard", icon: Home },
-  { label: "My Schedule", href: "/coach/my-schedule", icon: CalendarDays },
   {
+    type: "link",
+    label: "Dashboard",
+    href: "/coach/dashboard",
+    icon: Home,
+  },
+  {
+    type: "link",
     label: "My Appointments",
     href: "/coach/appointments",
     icon: CalendarClock,
   },
-  { label: "My Roster", href: "/coach/roster", icon: Users },
+  { type: "link", label: "My Roster", href: "/coach/roster", icon: Users },
   {
+    type: "link",
     label: "Progressions",
     href: "/coach/progressions",
     icon: TrendingUp,
   },
-  { label: "Notifications", href: "/coach/notifications", icon: Bell },
-  { label: "Settings", href: "/coach/settings", icon: Settings },
+  {
+    type: "link",
+    label: "Notifications",
+    href: "/coach/notifications",
+    icon: Bell,
+  },
+  { type: "link", label: "Settings", href: "/coach/settings", icon: Settings },
 ]
