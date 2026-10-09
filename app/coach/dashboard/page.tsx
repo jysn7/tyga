@@ -213,7 +213,7 @@ function SessionCard({
 
   return (
     <Link
-      href={`/coach/sessions/${session.session_id}`}
+      href={`/coach/dashboard/${session.session_id}`}
       className={`group flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4 shadow-sm transition-all hover:border-border hover:shadow ${
         hero ? "ring-1 ring-primary/30" : ""
       }`}
@@ -406,7 +406,7 @@ export default function CoachSessionsPage() {
                 {needsAttention.slice(0, 5).map((s) => (
                   <Link
                     key={s.session_id}
-                    href={`/coach/sessions/${s.session_id}?focus=attendance`}
+                    href={`/coach/dashboard/${s.session_id}?focus=attendance`}
                     className="group flex items-center justify-between gap-2 py-2.5 first:pt-0 last:pb-0"
                   >
                     <div className="flex min-w-0 flex-col gap-0.5">
