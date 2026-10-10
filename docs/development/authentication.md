@@ -35,6 +35,28 @@ Role destinations are `/dashboard` for parents, `/coach/overview` for coaches an
 
 The hook and portal layouts provide client-side navigation and UX. They are not a substitute for authorization: database access must remain protected by RLS and privileged server operations must validate the caller before using the service-role client.
 
+## Multi-factor authentication (MFA)
+
+TYGA uses Supabase Auth's TOTP MFA flow so privileged users must complete step-up verification before accessing protected admin and coach areas. The app resolves the policy through `hooks/shared/use-mfa-policy.ts`, which calls `supabase.auth.mfa.getAuthenticatorAssuranceLevel()` and classifies the session as `verified`, `needs-challenge`, or `needs-enrollment`.
+
+### Route behavior
+
+- `proxy.ts` runs before page rendering and redirects users with `aal1` + `nextLevel === "aal2"` to `/auth/mfa/challenge`.
+- `admin` and `coach` accounts without an enrolled factor are redirected to `/auth/mfa/enroll` before they can open the portal.
+- Parent accounts skip forced enrollment, but if they already enrolled and have not yet completed the challenge, they still receive the challenge redirect.
+- Auth pages are explicitly exempted from the enforcement guard so the MFA pages can manage their own session state without redirect loops.
+
+### Enrollment and verification flow
+
+- `components/portals/shared/enroll-mfa.tsx` starts TOTP enrollment with `supabase.auth.mfa.enroll({ factorType: "totp" })`, renders the QR code and manual secret, and verifies the 6-digit code using `challenge()` + `verify()`.
+- `app/auth/mfa/enroll/page.tsx` gates the route by role and redirects users who already have a verified factor.
+- `app/auth/mfa/challenge/page.tsx` looks up the verified factor, asks the user for a 6-digit code, and then redirects back to the originally requested route after `verify()` succeeds.
+- `components/portals/shared/auth/disable-mfa.tsx` allows a user to unenroll a TOTP factor after confirmation.
+
+### Current implementation boundary
+
+The MFA flow is shipped for TOTP-based authenticator apps and is enforced for account roles with elevated access. It does not yet include a recovery-code workflow, backup-device management, or a full admin UI for MFA policy review and enforcement history; those remain out of scope for the current app surfaces.
+
 ## Environment variables
 
 Create `.env.local` in the repository root. Do not commit it or place private keys in `NEXT_PUBLIC_` variables.
