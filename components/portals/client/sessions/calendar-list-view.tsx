@@ -1,16 +1,11 @@
 "use client"
 
-import { format } from "date-fns"
-import { dotColor, groupSessionsByDate } from "@/lib/schedule"
+import { format, parseISO } from "date-fns"
+import { KIND_STYLES, eventHref, groupSessionsByDate } from "@/lib/schedule"
+import { EventLink } from "@/components/portals/client/sessions/event-link"
 import type { SessionEvent } from "@/components/portals/client/sessions/schedule-calendar"
 
-export function CalendarListView({
-  sessions,
-  onSelectSession,
-}: {
-  sessions: SessionEvent[]
-  onSelectSession: (session: SessionEvent) => void
-}) {
+export function CalendarListView({ sessions }: { sessions: SessionEvent[] }) {
   const grouped = groupSessionsByDate(sessions)
 
   return (
@@ -21,33 +16,50 @@ export function CalendarListView({
           className="border-b border-border/60 py-3 last:border-b-0"
         >
           <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            {format(new Date(date), "EEEE, MMMM d")}
+            {format(parseISO(date), "EEEE, MMMM d")}
           </span>
           <div className="mt-2 flex flex-col gap-1">
-            {daySessions.map((s) => (
-              <button
-                key={s.id}
-                onClick={() => onSelectSession(s)}
-                className="flex items-center justify-between rounded-md px-1.5 py-2 text-left transition-colors hover:bg-accent/40"
-              >
-                <div className="flex items-center gap-2.5">
-                  <span
-                    className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotColor(s.status)}`}
-                  />
-                  <div>
-                    <p className="text-[15px] text-foreground">
-                      {s.programmeName}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {s.memberName} · {s.venueName}
-                    </p>
+            {daySessions.map((s) => {
+              const cancelled = s.status === "cancelled"
+              const sub = [s.memberName, s.venueName]
+                .filter(Boolean)
+                .join(" · ")
+
+              return (
+                <EventLink
+                  key={`${s.kind}-${s.id}`}
+                  href={eventHref(s)}
+                  className={`flex items-center justify-between rounded-md px-1.5 py-2 text-left transition-colors hover:bg-accent/40 ${
+                    cancelled ? "opacity-60" : ""
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      className={`h-1.5 w-1.5 shrink-0 rounded-full ${KIND_STYLES[s.kind].dot}`}
+                    />
+                    <div>
+                      <p
+                        className={`text-[15px] text-foreground ${
+                          cancelled ? "line-through" : ""
+                        }`}
+                      >
+                        {s.programmeName}
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          {KIND_STYLES[s.kind].label}
+                          {cancelled ? " (cancelled)" : ""}
+                        </span>
+                      </p>
+                      {sub && (
+                        <p className="text-xs text-muted-foreground">{sub}</p>
+                      )}
+                    </div>
                   </div>
-                </div>
-                <span className="text-xs text-muted-foreground">
-                  {s.startTime}
-                </span>
-              </button>
-            ))}
+                  <span className="text-xs text-muted-foreground">
+                    {s.startTime}
+                  </span>
+                </EventLink>
+              )
+            })}
           </div>
         </div>
       ))}

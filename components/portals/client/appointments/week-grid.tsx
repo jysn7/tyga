@@ -2,6 +2,7 @@
 
 import { addDays, format, isSameDay, startOfWeek } from "date-fns"
 import type { OpenSlot } from "@/hooks/client/use-parent-appointments"
+import Link from "next/link"
 
 export function WeekGrid({
   anchor,
@@ -54,8 +55,9 @@ export function WeekGrid({
             ) : (
               <div className="flex flex-col gap-1">
                 {daySlots.slice(0, 4).map((slot) => (
-                  <button
+                  <Link
                     key={slot.slotId}
+                    href={`/my-schedule/${slot.slotId}`}
                     onClick={() => onSelectSlot(slot)}
                     className="flex flex-col gap-0.5 rounded-md border border-border bg-blue-light px-2 py-1.5 text-left transition-colors hover:bg-muted"
                   >
@@ -65,7 +67,7 @@ export function WeekGrid({
                     <span className="truncate text-[10px] text-muted-foreground">
                       {slot.venueName}
                     </span>
-                  </button>
+                  </Link>
                 ))}
                 {daySlots.length > 4 && (
                   <button
