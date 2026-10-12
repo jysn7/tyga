@@ -97,3 +97,91 @@ export function useTagSessionCurriculum() {
     },
   })
 }
+
+export function useClaimAssessment() {
+  const supabase = createClient()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (appointmentId: number) => {
+      const { error } = await supabase.rpc("coach_claim_assessment", {
+        p_appointment_id: appointmentId,
+      })
+      if (error) throw new Error(error.message)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["coach-appointments"] })
+    },
+  })
+}
+
+export function useRecordAssessment() {
+  const supabase = createClient()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (args: {
+      appointmentId: number
+      assessedLevelId: number
+      notes?: string | null
+    }) => {
+      const { error } = await supabase.rpc("coach_record_assessment", {
+        p_appointment_id: args.appointmentId,
+        p_assessed_level_id: args.assessedLevelId,
+        p_notes: args.notes ?? null,
+      })
+      if (error) throw new Error(error.message)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["coach-appointments"] })
+      queryClient.invalidateQueries({ queryKey: ["coach-session-detail"] })
+    },
+  })
+}
+
+export function useRecordParentConsultation() {
+  const supabase = createClient()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (args: {
+      appointmentId: number
+      notes?: string | null
+    }) => {
+      const { error } = await supabase.rpc("coach_record_parent_consultation", {
+        p_appointment_id: args.appointmentId,
+        p_notes: args.notes ?? null,
+      })
+      if (error) throw new Error(error.message)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["coach-appointments"] })
+    },
+  })
+}
+
+export function useSubmitProgression() {
+  const supabase = createClient()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (args: {
+      memberId: number
+      toLevelId: number
+      badgeComplete?: boolean
+      notes?: string | null
+    }) => {
+      const { error } = await supabase.rpc("coach_submit_progression", {
+        p_member_id: args.memberId,
+        p_to_level_id: args.toLevelId,
+        p_badge_complete: args.badgeComplete ?? false,
+        p_notes: args.notes ?? null,
+      })
+      if (error) throw new Error(error.message)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["coach-roster"] })
+      queryClient.invalidateQueries({ queryKey: ["coach-appointments"] })
+    },
+  })
+}

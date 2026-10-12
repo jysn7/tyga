@@ -70,6 +70,40 @@ export type CoachCurriculumModuleOption = {
   is_milestone: boolean
 }
 
+export type CoachAppointment = {
+  id: number
+  member_id: number
+  member_name: string
+  coach_id: number | null
+  coach_name: string | null
+  venue_id: number | null
+  venue_name: string | null
+  type: "assessment" | "parent_consultation"
+  status: string
+  requested_at: string
+  scheduled_at: string | null
+  assessed_level_id: number | null
+  assessed_level_name: string | null
+  notes: string | null
+}
+
+export function useCoachAppointments(
+  type?: "assessment" | "parent_consultation" | null
+) {
+  const supabase = createClient()
+
+  return useQuery({
+    queryKey: ["coach-appointments", type ?? "all"],
+    queryFn: async (): Promise<CoachAppointment[]> => {
+      const { data, error } = await supabase.rpc("coach_get_appointments", {
+        p_type: type ?? null,
+      })
+      if (error) throw new Error(error.message)
+      return (data ?? []) as CoachAppointment[]
+    },
+  })
+}
+
 export function useCoachSessions(startDate: string, endDate: string) {
   const supabase = createClient()
 

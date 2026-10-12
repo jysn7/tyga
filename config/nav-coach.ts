@@ -62,6 +62,7 @@ export const coachNav: NavEntry[] = [
     icon: Users,
     items: [
       { label: "My Roster", href: "/coach/roster", icon: Users },
+      { label: "Progression", href: "/coach/progression", icon: Trophy },
       { label: "Members", href: "/coach/members", icon: Users },
       { label: "Achievements", href: "/coach/achievements", icon: Trophy },
     ],
