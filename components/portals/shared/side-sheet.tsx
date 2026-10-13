@@ -53,7 +53,9 @@ export function SidePanel({
             </SheetHeader>
           )}
 
-          <div className="flex-1 overflow-y-auto px-8 py-6">{children}</div>
+          <div className="flex-1 overflow-y-auto px-2 py-6 md:px-8">
+            {children}
+          </div>
 
           {footer && <div className="px-8 pt-2 pb-8">{footer}</div>}
         </div>

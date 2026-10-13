@@ -1,17 +1,16 @@
 "use client"
 
 import { format, isToday } from "date-fns"
-import { dotColor, getSessionsForDay } from "@/lib/schedule"
+import { KIND_STYLES, eventHref, getSessionsForDay } from "@/lib/schedule"
+import { EventLink } from "@/components/portals/client/sessions/event-link"
 import type { SessionEvent } from "@/components/portals/client/sessions/schedule-calendar"
 
 export function CalendarWeekView({
   days,
   sessions,
-  onSelectSession,
 }: {
   days: Date[]
   sessions: SessionEvent[]
-  onSelectSession: (session: SessionEvent) => void
 }) {
   return (
     <div className="grid grid-cols-7 gap-3">
@@ -34,25 +33,39 @@ export function CalendarWeekView({
               {daySessions.length === 0 ? (
                 <span className="text-xs text-muted-foreground/50">—</span>
               ) : (
-                daySessions.map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => onSelectSession(s)}
-                    className="flex flex-col gap-0.5 rounded-md bg-blue p-2 text-left transition-colors hover:bg-accent/60"
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotColor(s.status)}`}
-                      />
-                      <span className="text-xs font-medium text-primary-foreground">
-                        {s.startTime}
+                daySessions.map((s) => {
+                  const cancelled = s.status === "cancelled"
+                  const detail = [s.programmeName, s.memberName]
+                    .filter(Boolean)
+                    .join(" · ")
+
+                  return (
+                    <EventLink
+                      key={`${s.kind}-${s.id}`}
+                      href={eventHref(s)}
+                      ariaLabel={`${KIND_STYLES[s.kind].label} at ${s.startTime}: ${detail}`}
+                      className={`flex flex-col gap-0.5 rounded-md bg-blue p-2 text-left transition-colors hover:bg-accent/60 ${
+                        cancelled ? "opacity-60" : ""
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className={`h-1.5 w-1.5 shrink-0 rounded-full ${KIND_STYLES[s.kind].dot}`}
+                        />
+                        <span
+                          className={`text-xs font-medium text-primary-foreground ${
+                            cancelled ? "line-through" : ""
+                          }`}
+                        >
+                          {s.startTime}
+                        </span>
+                      </div>
+                      <span className="truncate text-xs text-muted-foreground">
+                        {detail}
                       </span>
-                    </div>
-                    <span className="truncate text-xs text-muted-foreground">
-                      {s.memberName}
-                    </span>
-                  </button>
-                ))
+                    </EventLink>
+                  )
+                })
               )}
             </div>
           </div>

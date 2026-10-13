@@ -1,7 +1,7 @@
 "use client"
 
 import { format, isSameMonth, isToday } from "date-fns"
-import { getSessionsForDay } from "@/lib/schedule"
+import { eventHref, getSessionsForDay } from "@/lib/schedule"
 import { SessionPill } from "@/components/portals/client/sessions/session-pill"
 import type { SessionEvent } from "@/components/portals/client/sessions/schedule-calendar"
 
@@ -11,12 +11,10 @@ export function CalendarMonthView({
   days,
   cursorDate,
   sessions,
-  onSelectSession,
 }: {
   days: Date[]
   cursorDate: Date
   sessions: SessionEvent[]
-  onSelectSession: (session: SessionEvent) => void
 }) {
   return (
     <div className="overflow-hidden rounded-lg bg-secondary shadow">
@@ -54,9 +52,9 @@ export function CalendarMonthView({
               <div className="flex flex-col gap-0.5">
                 {daySessions.slice(0, 3).map((s) => (
                   <SessionPill
-                    key={s.id}
+                    key={`${s.kind}-${s.id}`}
                     session={s}
-                    onClick={() => onSelectSession(s)}
+                    href={eventHref(s)}
                   />
                 ))}
                 {daySessions.length > 3 && (

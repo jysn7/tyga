@@ -86,3 +86,28 @@ export function getHeaderLabel(view: ViewMode, cursorDate: Date) {
   }
   return "All upcoming sessions"
 }
+
+// ---------- Event kinds (sessions vs appointments) ----------
+
+export type EventKind = "session" | "appointment"
+
+export const KIND_STYLES: Record<
+  EventKind,
+  { label: string; dot: string; card: string }
+> = {
+  session: {
+    label: "Session",
+    dot: "bg-blue",
+    card: "bg-blue-light",
+  },
+  appointment: {
+    label: "Appointment",
+    dot: "bg-orange",
+    card: "bg-orange-light",
+  },
+}
+
+// Sessions open their detail page. Appointments have no page yet.
+export function eventHref(e: { id: string; kind: EventKind }): string | null {
+  return e.kind === "session" ? `/my-schedule/${e.id}` : null
+}

@@ -79,6 +79,30 @@ No login-tracking API routes or lockout-management pages were found in the curre
 - `admin_get_login_events` and `admin_get_lockouts` assert admin access and provide read-only history.
 - No current app path records sign-in/logout events, applies the returned lock signal, creates/lifts lockout rows, logs out an active locked session, or schedules login-event retention cleanup. Treat those as integration work, not shipped end-to-end behavior.
 
+## Two-factor authentication (implemented)
+
+TYGA enforces TOTP-based MFA for privileged roles and allows parent users to opt in from the security settings page. The MFA status is resolved with `hooks/shared/use-mfa-policy.ts`, which calls `supabase.auth.mfa.getAuthenticatorAssuranceLevel()` and reports one of `verified`, `needs-challenge` or `needs-enrollment`.
+
+### Enforcement and routing
+
+- `proxy.ts` blocks access to protected routes until the user has either satisfied AAL2 or completed the required enrollment/challenge flow.
+- `app/admin/layout.tsx`, `app/coach/layout.tsx` and `app/(client)/layout.tsx` use the MFA policy to redirect to `/auth/mfa/enroll` or `/auth/mfa/challenge` while the policy remains unresolved.
+- The middleware intentionally skips parents for enrollment enforcement (`MFA is optional for parents`), but still challenges them if they have already enrolled and have not yet verified a fresh code.
+- Privileged users who have no factor enrolled are redirected to `/auth/mfa/enroll` before they can continue to the portal.
+
+### User flows
+
+- `/auth/mfa/enroll` is the required enrollment page for `admin` and `coach` roles. It checks the current user, resolves the account role via `get_my_account`, and redirects users who already have a verified TOTP factor away from the page.
+- `/auth/mfa/challenge` requires a valid 6-digit TOTP code before returning the user to the intended destination.
+- `/settings/security` exposes the management surface for parent accounts. It lists enrolled factors and renders the disable flow via `components/portals/shared/auth/disable-mfa.tsx`.
+
+### Implementation notes
+
+- Enrollment is implemented in `components/portals/shared/enroll-mfa.tsx` and uses Supabase TOTP enrollment (`supabase.auth.mfa.enroll` with `factorType: "totp"`).
+- The flow renders the QR code plus a manual secret key, verifies the code with `supabase.auth.mfa.challenge()` and `supabase.auth.mfa.verify()`, then refreshes the session before redirecting.
+- `DisableMFA` calls `supabase.auth.mfa.unenroll({ factorId })` and refreshes the page after confirmation.
+- The app currently supports TOTP via authenticator apps such as Google Authenticator, Authy, 1Password and other standards-compliant apps. No backup codes or recovery flow are documented in the current UI.
+
 ## Setup order
 
 The migration history is authoritative for the current database primitives. To deliver end-to-end login security, server-side sign-in integration, lockout creation/lifting, UI/read surfaces and a retention job still need to be implemented and verified. Keep service-role access server-side.
@@ -92,5 +116,4 @@ The migration history is authoritative for the current database primitives. To d
 - CAPTCHA on repeated failed attempts
 - Location lookup for sign-in IPs
 - Self-service recent sign-in view for end users
-- Two-factor authentication
 - Session management for active devices

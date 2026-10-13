@@ -15,6 +15,7 @@ import {
   Bell,
   History,
   Settings,
+  Megaphone,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -87,6 +88,15 @@ export const adminNav: NavEntry[] = [
       },
       { label: "Finance", href: "/admin/finance", icon: Wallet },
     ],
+  },
+
+  // Marketing — public-facing content
+
+  {
+    type: "link",
+    label: "Marketing Site",
+    href: "/admin/markteting",
+    icon: Megaphone,
   },
 
   // System — academy-wide config and records
