@@ -2,6 +2,7 @@ import type { SessionEvent } from "@/components/portals/client/sessions/schedule
 
 export const sampleSessions: SessionEvent[] = [
   {
+    kind: "session",
     id: "1",
     programmeName: "Skill Building — Weekday Squad",
     memberName: "Jayden",
@@ -15,6 +16,7 @@ export const sampleSessions: SessionEvent[] = [
     attendanceStatus: null,
   },
   {
+    kind: "session",
     id: "2",
     programmeName: "Skill Building — Weekday Squad",
     memberName: "Jayden",
@@ -29,6 +31,7 @@ export const sampleSessions: SessionEvent[] = [
     attendanceStatus: "present",
   },
   {
+    kind: "session",
     id: "3",
     programmeName: "Foundation — Tuesday & Thursday",
     memberName: "Lerato",
@@ -42,6 +45,7 @@ export const sampleSessions: SessionEvent[] = [
     attendanceStatus: null,
   },
   {
+    kind: "session",
     id: "4",
     programmeName: "Foundation — Tuesday & Thursday",
     memberName: "Lerato",
@@ -56,6 +60,7 @@ export const sampleSessions: SessionEvent[] = [
     attendanceStatus: "present",
   },
   {
+    kind: "session",
     id: "5",
     programmeName: "Skill Building — Weekday Squad",
     memberName: "Jayden",
@@ -69,6 +74,7 @@ export const sampleSessions: SessionEvent[] = [
     attendanceStatus: "absent",
   },
   {
+    kind: "session",
     id: "6",
     programmeName: "Foundation — Tuesday & Thursday",
     memberName: "Lerato",

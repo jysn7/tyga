@@ -9,9 +9,7 @@ export default async function SecuritySettings() {
   const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  await supabase.auth.getUser()
 
   const { data: factors } = await supabase.auth.mfa.listFactors()
   const verifiedFactor = factors?.totp?.find((f) => f.status === "verified")

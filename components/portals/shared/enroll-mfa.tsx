@@ -2,6 +2,7 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/utils/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -193,11 +194,12 @@ export function EnrollMFA({ nextPath, onEnrolled }: Props) {
       {qr && (
         <div className="flex flex-col items-center gap-3">
           <div className="flex items-center justify-center rounded-lg bg-white p-3">
-            <img
+            <Image
               src={qrSrc(qr)}
               alt="Authenticator QR code"
               width={176}
               height={176}
+              unoptimized
             />
           </div>
           <p className="max-w-xs text-center text-xs leading-relaxed text-muted-foreground">
