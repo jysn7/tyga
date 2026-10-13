@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "@/components/ui/toast"
@@ -24,6 +24,11 @@ import { Field } from "@/components/portals/shared/field"
 import { useOpenAppointmentSlot } from "@/hooks/coach/use-coach-appointments"
 import { useVenues, useLevels } from "@/hooks/lookups/use-lookups"
 import type { AppointmentType } from "@/hooks/use-appointment-slots"
+import {
+  openSlotSchema,
+  todayIso,
+  nowHm,
+} from "@/lib/validations/appointment-slots"
 
 export function OpenSlotDialog({
   open,
@@ -45,6 +50,29 @@ export function OpenSlotDialog({
   const [capacity, setCapacity] = useState("1")
   const [notes, setNotes] = useState("")
 
+  const today = todayIso()
+  const now = nowHm()
+  const isToday = date === today
+
+  // ---- Live validation ----
+  const live = useMemo(() => {
+    const result = openSlotSchema.safeParse({
+      date,
+      startTime,
+      endTime,
+      venueId,
+      capacity,
+    })
+    const errors: Partial<Record<string, string>> = {}
+    if (!result.success) {
+      for (const issue of result.error.issues) {
+        const key = issue.path[0]?.toString() ?? "_form"
+        if (!errors[key]) errors[key] = issue.message
+      }
+    }
+    return { errors, isValid: result.success }
+  }, [date, startTime, endTime, venueId, capacity])
+
   function reset() {
     setDate("")
     setStartTime("")
@@ -57,7 +85,16 @@ export function OpenSlotDialog({
   }
 
   function handleSubmit() {
-    if (!date || !startTime || !endTime || !venueId) return
+    if (!live.isValid) return
+
+    const parsed = openSlotSchema.safeParse({
+      date,
+      startTime,
+      endTime,
+      venueId,
+      capacity,
+    })
+    if (!parsed.success) return
 
     const startsAt = new Date(`${date}T${startTime}`).toISOString()
     const endsAt = new Date(`${date}T${endTime}`).toISOString()
@@ -69,7 +106,7 @@ export function OpenSlotDialog({
         endsAt,
         levelId: levelId && levelId !== "none" ? Number(levelId) : null,
         type,
-        capacity: Number(capacity) || 1,
+        capacity: parsed.data.capacity,
         notes: notes || null,
       },
       {
@@ -95,14 +132,6 @@ export function OpenSlotDialog({
     )
   }
 
-  const canSubmit =
-    !!date &&
-    !!startTime &&
-    !!endTime &&
-    !!venueId &&
-    startTime < endTime &&
-    Number(capacity) >= 1
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
@@ -119,26 +148,55 @@ export function OpenSlotDialog({
               <Input
                 type="date"
                 value={date}
-                onChange={(e) => setDate(e.target.value)}
-                min={new Date().toISOString().slice(0, 10)}
+                min={today}
+                onChange={(e) => {
+                  const v = e.target.value
+                  if (v && v < today) return
+                  setDate(v)
+                }}
                 className="h-11"
               />
+              {live.errors.date && (
+                <p className="mt-1 text-[11px] text-destructive">
+                  {live.errors.date}
+                </p>
+              )}
             </Field>
             <Field label="Start">
               <Input
                 type="time"
                 value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
+                min={isToday ? now : undefined}
+                onChange={(e) => {
+                  const v = e.target.value
+                  if (isToday && v && v < now) return
+                  setStartTime(v)
+                }}
                 className="h-11"
               />
+              {live.errors.startTime && (
+                <p className="mt-1 text-[11px] text-destructive">
+                  {live.errors.startTime}
+                </p>
+              )}
             </Field>
             <Field label="End">
               <Input
                 type="time"
                 value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
+                min={startTime || undefined}
+                onChange={(e) => {
+                  const v = e.target.value
+                  if (v && startTime && v <= startTime) return
+                  setEndTime(v)
+                }}
                 className="h-11"
               />
+              {live.errors.endTime && (
+                <p className="mt-1 text-[11px] text-destructive">
+                  {live.errors.endTime}
+                </p>
+              )}
             </Field>
           </div>
 
@@ -161,6 +219,11 @@ export function OpenSlotDialog({
                   ))}
                 </SelectContent>
               </Select>
+              {live.errors.venueId && (
+                <p className="mt-1 text-[11px] text-destructive">
+                  {live.errors.venueId}
+                </p>
+              )}
             </Field>
 
             <Field label="Level (optional)">
@@ -215,6 +278,11 @@ export function OpenSlotDialog({
                 onChange={(e) => setCapacity(e.target.value)}
                 className="h-11"
               />
+              {live.errors.capacity && (
+                <p className="mt-1 text-[11px] text-destructive">
+                  {live.errors.capacity}
+                </p>
+              )}
             </Field>
           </div>
 
@@ -227,10 +295,10 @@ export function OpenSlotDialog({
             />
           </Field>
 
-          {startTime && endTime && startTime >= endTime && (
+          {live.errors.endTime && startTime && endTime && (
             <div className="flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
               <AlertCircle className="h-3.5 w-3.5" strokeWidth={1.75} />
-              End time must be after start time.
+              {live.errors.endTime}
             </div>
           )}
         </div>
@@ -245,7 +313,7 @@ export function OpenSlotDialog({
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={!canSubmit || openSlot.isPending}
+            disabled={!live.isValid || openSlot.isPending}
           >
             {openSlot.isPending ? "Opening…" : "Open slot"}
           </Button>

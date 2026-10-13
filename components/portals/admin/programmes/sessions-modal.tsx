@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import {
   Trash2,
   Pencil,
@@ -39,6 +39,9 @@ import {
   assignCoachSchema,
   SESSION_STATUSES,
   SESSION_ROLES,
+  SESSION_GRACE_MINUTES,
+  todayIso,
+  nowHm,
 } from "@/lib/validations/sessions"
 
 const DAYS = [
@@ -62,6 +65,17 @@ const STATUS_MAP: Record<string, { label: string; variant: StatusVariant }> = {
   scheduled: { label: "Scheduled", variant: "info" },
   cancelled: { label: "Cancelled", variant: "danger" },
   completed: { label: "Completed", variant: "success" },
+}
+
+function flattenIssues(
+  issues: { path: (string | number)[]; message: string }[]
+): Partial<Record<string, string>> {
+  const out: Partial<Record<string, string>> = {}
+  for (const issue of issues) {
+    const key = issue.path[0]?.toString() ?? "_form"
+    if (!out[key]) out[key] = issue.message
+  }
+  return out
 }
 
 function SessionCoachesPanel({
@@ -240,18 +254,11 @@ export function SessionsModal({
   const [sessionRangeStart, setSessionRangeStart] = useState("")
   const [sessionRangeEnd, setSessionRangeEnd] = useState("")
 
-  const [generateErrors, setGenerateErrors] = useState<
-    Partial<Record<string, string>>
-  >({})
-
   const [editingSessionId, setEditingSessionId] = useState<number | null>(null)
   const [editDate, setEditDate] = useState("")
   const [editStart, setEditStart] = useState("")
   const [editEnd, setEditEnd] = useState("")
   const [editStatus, setEditStatus] = useState("")
-  const [editErrors, setEditErrors] = useState<Partial<Record<string, string>>>(
-    {}
-  )
 
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
   const [expandedCoachesId, setExpandedCoachesId] = useState<number | null>(
@@ -262,17 +269,59 @@ export function SessionsModal({
   const updateSession = useUpdateSession()
   const deleteSession = useDeleteSession()
 
+  // ---- Live validation: Generate tab ----
+  const generateLive = useMemo(() => {
+    const result = generateSessionsSchema.safeParse({
+      programmeId: programmeId ?? undefined,
+      daysOfWeek: selectedDays,
+      startTime: sessionStartTime,
+      endTime: sessionEndTime,
+      rangeStart: sessionRangeStart,
+      rangeEnd: sessionRangeEnd,
+    })
+    return {
+      errors: result.success ? {} : flattenIssues(result.error.issues),
+      isValid: result.success,
+    }
+  }, [
+    programmeId,
+    selectedDays,
+    sessionStartTime,
+    sessionEndTime,
+    sessionRangeStart,
+    sessionRangeEnd,
+  ])
+
+  // ---- Live validation: Edit card ----
+  const editLive = useMemo(() => {
+    const result = editSessionSchema.safeParse({
+      sessionDate: editDate,
+      startTime: editStart,
+      endTime: editEnd,
+      status: editStatus,
+    })
+    return {
+      errors: result.success ? {} : flattenIssues(result.error.issues),
+      isValid: result.success,
+    }
+  }, [editDate, editStart, editEnd, editStatus])
+
+  // ---- Picker bounds ----
+  const today = todayIso()
+  const now = nowHm()
+  const rangeStartIsToday = sessionRangeStart === today
+  const editDateIsToday = editDate === today
+
   function resetGenerateForm() {
     setSelectedDays([])
     setSessionStartTime("")
     setSessionEndTime("")
     setSessionRangeStart("")
     setSessionRangeEnd("")
-    setGenerateErrors({})
   }
 
   async function handleGenerateSessions() {
-    if (!programmeId) return
+    if (!programmeId || !generateLive.isValid) return
 
     const parsed = generateSessionsSchema.safeParse({
       programmeId,
@@ -282,24 +331,7 @@ export function SessionsModal({
       rangeStart: sessionRangeStart,
       rangeEnd: sessionRangeEnd,
     })
-
-    if (!parsed.success) {
-      const flattened: Partial<Record<string, string>> = {}
-      for (const issue of parsed.error.issues) {
-        const key = issue.path[0]?.toString() ?? "_form"
-        if (!flattened[key]) flattened[key] = issue.message
-      }
-      setGenerateErrors(flattened)
-      toast.add({
-        title: "Please fix the errors",
-        description: parsed.error.issues[0]?.message,
-        type: "error",
-        timeout: 4000,
-      })
-      return
-    }
-
-    setGenerateErrors({})
+    if (!parsed.success) return
 
     try {
       const count = await generateSessions.mutateAsync({
@@ -336,33 +368,22 @@ export function SessionsModal({
     setEditStart(s.startTime?.slice(0, 5) ?? "")
     setEditEnd(s.endTime?.slice(0, 5) ?? "")
     setEditStatus(s.status ?? "scheduled")
-    setEditErrors({})
   }
 
   function cancelEdit() {
     setEditingSessionId(null)
-    setEditErrors({})
   }
 
   async function handleSaveEdit(sessionId: number) {
+    if (!editLive.isValid) return
+
     const parsed = editSessionSchema.safeParse({
       sessionDate: editDate,
       startTime: editStart,
       endTime: editEnd,
       status: editStatus,
     })
-
-    if (!parsed.success) {
-      const flattened: Partial<Record<string, string>> = {}
-      for (const issue of parsed.error.issues) {
-        const key = issue.path[0]?.toString() ?? "_form"
-        if (!flattened[key]) flattened[key] = issue.message
-      }
-      setEditErrors(flattened)
-      return
-    }
-
-    setEditErrors({})
+    if (!parsed.success) return
 
     try {
       await updateSession.mutateAsync({
@@ -474,30 +495,26 @@ export function SessionsModal({
                     <button
                       key={day.value}
                       type="button"
-                      onClick={() => {
+                      onClick={() =>
                         setSelectedDays((prev) =>
                           prev.includes(day.value)
                             ? prev.filter((d) => d !== day.value)
                             : [...prev, day.value]
                         )
-                        setGenerateErrors((prev) => ({
-                          ...prev,
-                          daysOfWeek: undefined,
-                        }))
-                      }}
+                      }
                       className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
                         selectedDays.includes(day.value)
                           ? "bg-primary text-primary-foreground"
-                          : "/40 bg-accent text-muted-foreground hover:bg-muted/60"
+                          : "bg-accent/40 text-muted-foreground hover:bg-muted/60"
                       }`}
                     >
                       {day.label}
                     </button>
                   ))}
                 </div>
-                {generateErrors.daysOfWeek && (
+                {generateLive.errors.daysOfWeek && (
                   <p className="text-xs text-destructive">
-                    {generateErrors.daysOfWeek}
+                    {generateLive.errors.daysOfWeek}
                   </p>
                 )}
               </div>
@@ -510,19 +527,13 @@ export function SessionsModal({
                   <Input
                     type="time"
                     value={sessionStartTime}
-                    onChange={(e) => {
-                      setSessionStartTime(e.target.value)
-                      setGenerateErrors((prev) => ({
-                        ...prev,
-                        startTime: undefined,
-                        endTime: undefined,
-                      }))
-                    }}
+                    min={rangeStartIsToday ? now : undefined}
+                    onChange={(e) => setSessionStartTime(e.target.value)}
                     className="h-11 rounded-lg border border-border bg-input px-3.5 text-sm text-foreground shadow-none focus-visible:ring-0"
                   />
-                  {generateErrors.startTime && (
+                  {generateLive.errors.startTime && (
                     <p className="text-xs text-destructive">
-                      {generateErrors.startTime}
+                      {generateLive.errors.startTime}
                     </p>
                   )}
                 </div>
@@ -533,19 +544,13 @@ export function SessionsModal({
                   <Input
                     type="time"
                     value={sessionEndTime}
-                    onChange={(e) => {
-                      setSessionEndTime(e.target.value)
-                      setGenerateErrors((prev) => ({
-                        ...prev,
-                        startTime: undefined,
-                        endTime: undefined,
-                      }))
-                    }}
+                    min={sessionStartTime || undefined}
+                    onChange={(e) => setSessionEndTime(e.target.value)}
                     className="h-11 rounded-lg border border-border bg-input px-3.5 text-sm text-foreground shadow-none focus-visible:ring-0"
                   />
-                  {generateErrors.endTime && (
+                  {generateLive.errors.endTime && (
                     <p className="text-xs text-destructive">
-                      {generateErrors.endTime}
+                      {generateLive.errors.endTime}
                     </p>
                   )}
                 </div>
@@ -559,19 +564,13 @@ export function SessionsModal({
                   <Input
                     type="date"
                     value={sessionRangeStart}
-                    onChange={(e) => {
-                      setSessionRangeStart(e.target.value)
-                      setGenerateErrors((prev) => ({
-                        ...prev,
-                        rangeStart: undefined,
-                        rangeEnd: undefined,
-                      }))
-                    }}
+                    min={today}
+                    onChange={(e) => setSessionRangeStart(e.target.value)}
                     className="h-11 rounded-lg border border-border bg-input px-3.5 text-sm text-foreground shadow-none focus-visible:ring-0"
                   />
-                  {generateErrors.rangeStart && (
+                  {generateLive.errors.rangeStart && (
                     <p className="text-xs text-destructive">
-                      {generateErrors.rangeStart}
+                      {generateLive.errors.rangeStart}
                     </p>
                   )}
                 </div>
@@ -582,19 +581,13 @@ export function SessionsModal({
                   <Input
                     type="date"
                     value={sessionRangeEnd}
-                    onChange={(e) => {
-                      setSessionRangeEnd(e.target.value)
-                      setGenerateErrors((prev) => ({
-                        ...prev,
-                        rangeStart: undefined,
-                        rangeEnd: undefined,
-                      }))
-                    }}
+                    min={sessionRangeStart || today}
+                    onChange={(e) => setSessionRangeEnd(e.target.value)}
                     className="h-11 rounded-lg border border-border bg-input px-3.5 text-sm text-foreground shadow-none focus-visible:ring-0"
                   />
-                  {generateErrors.rangeEnd && (
+                  {generateLive.errors.rangeEnd && (
                     <p className="text-xs text-destructive">
-                      {generateErrors.rangeEnd}
+                      {generateLive.errors.rangeEnd}
                     </p>
                   )}
                 </div>
@@ -602,14 +595,7 @@ export function SessionsModal({
 
               <Button
                 onClick={handleGenerateSessions}
-                disabled={
-                  selectedDays.length === 0 ||
-                  !sessionStartTime ||
-                  !sessionEndTime ||
-                  !sessionRangeStart ||
-                  !sessionRangeEnd ||
-                  generateSessions.isPending
-                }
+                disabled={!generateLive.isValid || generateSessions.isPending}
                 variant="secondary"
                 size="lg"
               >
@@ -654,18 +640,13 @@ export function SessionsModal({
                                 <Input
                                   type="date"
                                   value={editDate}
-                                  onChange={(e) => {
-                                    setEditDate(e.target.value)
-                                    setEditErrors((prev) => ({
-                                      ...prev,
-                                      sessionDate: undefined,
-                                    }))
-                                  }}
+                                  min={today}
+                                  onChange={(e) => setEditDate(e.target.value)}
                                   className="h-9 rounded-md border border-border bg-input px-2.5 text-xs"
                                 />
-                                {editErrors.sessionDate && (
+                                {editLive.errors.sessionDate && (
                                   <p className="text-[11px] text-destructive">
-                                    {editErrors.sessionDate}
+                                    {editLive.errors.sessionDate}
                                   </p>
                                 )}
                               </div>
@@ -676,19 +657,13 @@ export function SessionsModal({
                                 <Input
                                   type="time"
                                   value={editStart}
-                                  onChange={(e) => {
-                                    setEditStart(e.target.value)
-                                    setEditErrors((prev) => ({
-                                      ...prev,
-                                      startTime: undefined,
-                                      endTime: undefined,
-                                    }))
-                                  }}
+                                  min={editDateIsToday ? now : undefined}
+                                  onChange={(e) => setEditStart(e.target.value)}
                                   className="h-9 rounded-md border border-border bg-input px-2.5 text-xs"
                                 />
-                                {editErrors.startTime && (
+                                {editLive.errors.startTime && (
                                   <p className="text-[11px] text-destructive">
-                                    {editErrors.startTime}
+                                    {editLive.errors.startTime}
                                   </p>
                                 )}
                               </div>
@@ -699,19 +674,13 @@ export function SessionsModal({
                                 <Input
                                   type="time"
                                   value={editEnd}
-                                  onChange={(e) => {
-                                    setEditEnd(e.target.value)
-                                    setEditErrors((prev) => ({
-                                      ...prev,
-                                      startTime: undefined,
-                                      endTime: undefined,
-                                    }))
-                                  }}
+                                  min={editStart || undefined}
+                                  onChange={(e) => setEditEnd(e.target.value)}
                                   className="h-9 rounded-md border border-border bg-input px-2.5 text-xs"
                                 />
-                                {editErrors.endTime && (
+                                {editLive.errors.endTime && (
                                   <p className="text-[11px] text-destructive">
-                                    {editErrors.endTime}
+                                    {editLive.errors.endTime}
                                   </p>
                                 )}
                               </div>
@@ -732,9 +701,9 @@ export function SessionsModal({
                                     </option>
                                   ))}
                                 </select>
-                                {editErrors.status && (
+                                {editLive.errors.status && (
                                   <p className="text-[11px] text-destructive">
-                                    {editErrors.status}
+                                    {editLive.errors.status}
                                   </p>
                                 )}
                               </div>
@@ -749,7 +718,9 @@ export function SessionsModal({
                               </button>
                               <button
                                 onClick={() => handleSaveEdit(s.id)}
-                                disabled={updateSession.isPending}
+                                disabled={
+                                  !editLive.isValid || updateSession.isPending
+                                }
                                 className="flex h-8 items-center gap-1 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground disabled:opacity-40"
                               >
                                 <Check className="h-3.5 w-3.5" />

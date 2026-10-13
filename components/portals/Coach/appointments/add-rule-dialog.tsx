@@ -1,7 +1,7 @@
 "use client"
 
+import { useMemo, useState } from "react"
 import { AlertCircle } from "lucide-react"
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { toast } from "@/components/ui/toast"
 import { Input } from "@/components/ui/input"
@@ -21,9 +21,9 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useCreateAvailabilityRule } from "@/hooks/coach/use-coach-availability"
-import { useVenues } from "@/hooks/lookups/use-lookups"
-import { useLevels } from "@/hooks/lookups/use-lookups"
+import { useVenues, useLevels } from "@/hooks/lookups/use-lookups"
 import type { AppointmentType } from "@/hooks/use-appointment-slots"
+import { addRuleSchema, todayIso } from "@/lib/validations/appointment-slots"
 
 const DAY_OPTIONS = [
   { value: "0", label: "Sunday" },
@@ -61,10 +61,41 @@ export function AddRuleDialog({
   const [levelId, setLevelId] = useState("")
   const [type, setType] = useState<AppointmentType>("assessment")
   const [capacity, setCapacity] = useState("1")
-  const [validFrom, setValidFrom] = useState(
-    new Date().toISOString().slice(0, 10)
-  )
+  const [validFrom, setValidFrom] = useState(todayIso())
   const [validUntil, setValidUntil] = useState("")
+
+  const today = todayIso()
+
+  // ---- Live validation ----
+  const live = useMemo(() => {
+    const result = addRuleSchema.safeParse({
+      dayOfWeek,
+      startTime,
+      endTime,
+      slotMinutes,
+      venueId,
+      capacity,
+      validFrom,
+      validUntil,
+    })
+    const errors: Partial<Record<string, string>> = {}
+    if (!result.success) {
+      for (const issue of result.error.issues) {
+        const key = issue.path[0]?.toString() ?? "_form"
+        if (!errors[key]) errors[key] = issue.message
+      }
+    }
+    return { errors, isValid: result.success }
+  }, [
+    dayOfWeek,
+    startTime,
+    endTime,
+    slotMinutes,
+    venueId,
+    capacity,
+    validFrom,
+    validUntil,
+  ])
 
   function reset() {
     setDayOfWeek("1")
@@ -75,25 +106,37 @@ export function AddRuleDialog({
     setLevelId("")
     setType("assessment")
     setCapacity("1")
-    setValidFrom(new Date().toISOString().slice(0, 10))
+    setValidFrom(todayIso())
     setValidUntil("")
   }
 
   function handleSubmit() {
-    if (!venueId) return
+    if (!live.isValid) return
+
+    const parsed = addRuleSchema.safeParse({
+      dayOfWeek,
+      startTime,
+      endTime,
+      slotMinutes,
+      venueId,
+      capacity,
+      validFrom,
+      validUntil,
+    })
+    if (!parsed.success) return
 
     createRule.mutate(
       {
-        venueId: Number(venueId),
-        dayOfWeek: Number(dayOfWeek),
-        startTime,
-        endTime,
-        slotMinutes: Number(slotMinutes),
+        venueId: Number(parsed.data.venueId),
+        dayOfWeek: parsed.data.dayOfWeek,
+        startTime: parsed.data.startTime,
+        endTime: parsed.data.endTime,
+        slotMinutes: parsed.data.slotMinutes,
         levelId: levelId && levelId !== "none" ? Number(levelId) : null,
         type,
-        capacity: Number(capacity) || 1,
-        validFrom,
-        validUntil: validUntil || null,
+        capacity: parsed.data.capacity,
+        validFrom: parsed.data.validFrom,
+        validUntil: parsed.data.validUntil || null,
       },
       {
         onSuccess: () => {
@@ -118,8 +161,6 @@ export function AddRuleDialog({
       }
     )
   }
-
-  const canSubmit = !!venueId && startTime < endTime && Number(capacity) >= 1
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -169,6 +210,11 @@ export function AddRuleDialog({
                   ))}
                 </SelectContent>
               </Select>
+              {live.errors.venueId && (
+                <p className="text-[11px] text-destructive">
+                  {live.errors.venueId}
+                </p>
+              )}
             </Field>
           </div>
 
@@ -178,17 +224,36 @@ export function AddRuleDialog({
               <Input
                 type="time"
                 value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
+                onChange={(e) => {
+                  const v = e.target.value
+                  if (v && endTime && v >= endTime) return
+                  setStartTime(v)
+                }}
                 className="h-11"
               />
+              {live.errors.startTime && (
+                <p className="text-[11px] text-destructive">
+                  {live.errors.startTime}
+                </p>
+              )}
             </Field>
             <Field label="End">
               <Input
                 type="time"
                 value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
+                min={startTime || undefined}
+                onChange={(e) => {
+                  const v = e.target.value
+                  if (v && startTime && v <= startTime) return
+                  setEndTime(v)
+                }}
                 className="h-11"
               />
+              {live.errors.endTime && (
+                <p className="text-[11px] text-destructive">
+                  {live.errors.endTime}
+                </p>
+              )}
             </Field>
             <Field label="Slot length">
               <Select
@@ -206,6 +271,11 @@ export function AddRuleDialog({
                   ))}
                 </SelectContent>
               </Select>
+              {live.errors.slotMinutes && (
+                <p className="text-[11px] text-destructive">
+                  {live.errors.slotMinutes}
+                </p>
+              )}
             </Field>
           </div>
 
@@ -260,31 +330,56 @@ export function AddRuleDialog({
                 onChange={(e) => setCapacity(e.target.value)}
                 className="h-11"
               />
+              {live.errors.capacity && (
+                <p className="text-[11px] text-destructive">
+                  {live.errors.capacity}
+                </p>
+              )}
             </Field>
             <Field label="Valid from">
               <Input
                 type="date"
                 value={validFrom}
-                onChange={(e) => setValidFrom(e.target.value)}
+                min={today}
+                onChange={(e) => {
+                  const v = e.target.value
+                  if (v && v < today) return
+                  setValidFrom(v)
+                }}
                 className="h-11"
               />
+              {live.errors.validFrom && (
+                <p className="text-[11px] text-destructive">
+                  {live.errors.validFrom}
+                </p>
+              )}
             </Field>
             <Field label="Valid until">
               <Input
                 type="date"
                 value={validUntil}
-                onChange={(e) => setValidUntil(e.target.value)}
-                min={validFrom}
+                min={validFrom || today}
+                onChange={(e) => {
+                  const v = e.target.value
+                  const floor = validFrom || today
+                  if (v && v < floor) return
+                  setValidUntil(v)
+                }}
                 placeholder="No end date"
                 className="h-11"
               />
+              {live.errors.validUntil && (
+                <p className="text-[11px] text-destructive">
+                  {live.errors.validUntil}
+                </p>
+              )}
             </Field>
           </div>
 
-          {startTime >= endTime && (
+          {live.errors.endTime && startTime && endTime && (
             <div className="flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
               <AlertCircle className="h-3.5 w-3.5" strokeWidth={1.75} />
-              End time must be after start time.
+              {live.errors.endTime}
             </div>
           )}
         </div>
@@ -297,7 +392,10 @@ export function AddRuleDialog({
           >
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={!canSubmit}>
+          <Button
+            onClick={handleSubmit}
+            disabled={!live.isValid || createRule.isPending}
+          >
             {createRule.isPending ? "Adding…" : "Add rule"}
           </Button>
         </DialogFooter>

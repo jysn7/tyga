@@ -10,7 +10,9 @@ import {
   BookOpen,
   ClipboardList,
   CalendarClock,
+  CalendarDays,
   Wallet,
+  ClipboardCheck,
   SlidersHorizontal,
   Bell,
   History,
@@ -69,6 +71,7 @@ export const adminNav: NavEntry[] = [
     icon: GraduationCap,
     items: [
       { label: "Programmes", href: "/admin/programmes", icon: Layers },
+      { label: "Events", href: "/admin/events", icon: CalendarDays },
       { label: "Venues", href: "/admin/venues", icon: MapPin },
       { label: "Levels", href: "/admin/levels", icon: TrendingUp },
       { label: "Curriculum", href: "/admin/curriculum", icon: BookOpen },
@@ -82,6 +85,11 @@ export const adminNav: NavEntry[] = [
     icon: ClipboardList,
     items: [
       {
+        label: "Enrollments",
+        href: "/admin/enrollments",
+        icon: ClipboardCheck,
+      },
+      {
         label: "Appointments",
         href: "/admin/appointments",
         icon: CalendarClock,
@@ -90,26 +98,21 @@ export const adminNav: NavEntry[] = [
     ],
   },
 
-  // Marketing — public-facing content
-
+  // Marketing — standalone, its own public-facing surface
   {
     type: "link",
     label: "Marketing Site",
-    href: "/admin/markteting",
+    href: "/admin/marketing", // fixed typo: markteting → marketing
     icon: Megaphone,
   },
 
-  // System — academy-wide config and records
+  // System — admin-only config and records
   {
     type: "group",
     label: "System",
     icon: SlidersHorizontal,
     items: [
-      {
-        label: "Notifications",
-        href: "/admin/notifications",
-        icon: Bell,
-      },
+      { label: "Notifications", href: "/admin/notifications", icon: Bell },
       { label: "Audit Log", href: "/admin/audit", icon: History },
       { label: "Settings", href: "/admin/settings", icon: Settings },
     ],
