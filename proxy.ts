@@ -18,6 +18,10 @@ const MFA_EXEMPT_PATHS = [
   "/auth/signout",
 ]
 
+// Skip MFA enforcement entirely outside production.
+// This prevents local dev from being forced into enrollment/challenge.
+const MFA_ENFORCED = process.env.NODE_ENV === "production"
+
 function isPortalPathAllowed(path: string, role: Portal): boolean {
   if (role === "admin") return true // admins can access anything
   if (role === "coach") return !path.startsWith("/admin")
@@ -97,25 +101,28 @@ export async function proxy(request: NextRequest) {
     const home = PORTAL_HOME[account.role] ?? "/dashboard"
 
     // --- MFA enforcement (before the auth-page and portal redirects) ---
-    const { data: aal } =
-      await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+    if (MFA_ENFORCED) {
+      const { data: aal } =
+        await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
 
-    const mustVerify = aal?.currentLevel === "aal1" && aal?.nextLevel === "aal2"
-    const isPrivileged = account.role === "coach" || account.role === "admin"
+      const mustVerify =
+        aal?.currentLevel === "aal1" && aal?.nextLevel === "aal2"
+      const isPrivileged = account.role === "coach" || account.role === "admin"
 
-    // Has a factor enrolled but hasn't verified → challenge
-    if (mustVerify) {
-      const challengeUrl = new URL("/auth/mfa/challenge", request.url)
-      challengeUrl.searchParams.set("next", path)
-      return NextResponse.redirect(challengeUrl)
-    }
+      // Has a factor enrolled but hasn't verified → challenge
+      if (mustVerify) {
+        const challengeUrl = new URL("/auth/mfa/challenge", request.url)
+        challengeUrl.searchParams.set("next", path)
+        return NextResponse.redirect(challengeUrl)
+      }
 
-    // Privileged user with no factor enrolled → force enrollment.
-    // Parents are skipped — MFA is optional for them.
-    const hasNoFactor =
-      aal?.currentLevel === "aal1" && aal?.nextLevel === "aal1"
-    if (isPrivileged && hasNoFactor && !isAuthPage) {
-      return NextResponse.redirect(new URL("/auth/mfa/enroll", request.url))
+      // Privileged user with no factor enrolled → force enrollment.
+      // Parents are skipped — MFA is optional for them.
+      const hasNoFactor =
+        aal?.currentLevel === "aal1" && aal?.nextLevel === "aal1"
+      if (isPrivileged && hasNoFactor && !isAuthPage) {
+        return NextResponse.redirect(new URL("/auth/mfa/enroll", request.url))
+      }
     }
 
     // Redirect signed-in users away from auth pages to their portal home
