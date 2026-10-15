@@ -149,7 +149,8 @@ export function RecurringTab() {
           </div>
           <Button
             onClick={() => setAddRuleOpen(true)}
-            className="h-9 shrink-0 text-xs"
+            variant="secondary"
+            size="lg"
           >
             <Plus className="h-3.5 w-3.5" strokeWidth={1.75} />
             Add rule
@@ -214,11 +215,7 @@ export function RecurringTab() {
               unbooked slots in the window.
             </p>
           </div>
-          <Button
-            onClick={() => setAddBlockOpen(true)}
-            variant="outline"
-            className="h-9 shrink-0 text-xs"
-          >
+          <Button onClick={() => setAddBlockOpen(true)} variant="secondary">
             <Ban className="h-3.5 w-3.5" strokeWidth={1.75} />
             Block time
           </Button>

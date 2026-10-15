@@ -602,7 +602,8 @@ function CurriculumTab({
               <Button
                 onClick={handleSaveCurriculum}
                 disabled={tagCurriculum.isPending}
-                className="h-11 w-fit gap-2 px-5 text-sm"
+                variant="secondary"
+                className="w-fit"
               >
                 {tagCurriculum.isPending ? (
                   <Loader2
@@ -635,7 +636,8 @@ function CurriculumTab({
           <Button
             onClick={handleSaveNotes}
             disabled={saveNotes.isPending}
-            className="h-11 w-fit gap-2 px-5 text-sm"
+            variant="secondary"
+            className="w-fit"
           >
             {saveNotes.isPending ? (
               <Loader2
