@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils"
 
 export const fieldStyles = cn(
-  "h-10 w-full rounded-lg border border-border bg-input px-3",
+  "h-12 w-full rounded-lg border border-border bg-input px-3 md:h-9",
   "text-[15px] text-foreground",
   "placeholder:text-muted-foreground",
   "focus-visible:ring-1 focus-visible:ring-primary focus-visible:outline-none",

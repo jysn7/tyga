@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronLeft } from "lucide-react"
+import { Check, ChevronLeft, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { toast } from "@/components/ui/toast"
@@ -26,8 +26,8 @@ function NewMemberFormContent() {
 
     toast.add({
       id: toastId,
-      title: "Creating member...",
-      description: "Saving member information and consent...",
+      title: "Creating member…",
+      description: "Saving member information and consent.",
       type: "loading",
       timeout: 0,
     })
@@ -37,20 +37,20 @@ function NewMemberFormContent() {
 
       toast.add({
         id: toastId,
-        title: "Member added! 🎉",
+        title: "Member added",
         description: `${values.fullName} has been added successfully.`,
         type: "success",
         timeout: 5000,
       })
 
-      setTimeout(() => router.push("/members"), 1500)
+      router.push("/members")
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to create member"
 
       toast.add({
         id: toastId,
-        title: "Error",
+        title: "Couldn't add member",
         description: message,
         type: "error",
         timeout: 5000,
@@ -63,7 +63,6 @@ function NewMemberFormContent() {
       await handleSubmit(onSubmit)()
       return
     }
-
     await next()
   }
 
@@ -72,45 +71,76 @@ function NewMemberFormContent() {
       router.push("/members")
       return
     }
-
     back()
   }
 
   return (
-    <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-4xl flex-col px-6 py-10">
-      <div className="mb-8 flex items-center gap-2">
-        {STEPS.map((label, i) => (
-          <div key={label} className="flex flex-1 flex-col gap-2">
+    <div className="max-w-8xl mx-auto flex flex-col gap-8 rounded-lg bg-card px-4 py-8 shadow sm:px-6 sm:py-12">
+      {/* Stepper */}
+      <div className="flex items-center">
+        {STEPS.map((label, i) => {
+          const isComplete = i < step
+          const isCurrent = i === step
+          return (
             <div
-              className={`h-1 rounded-full transition-colors ${
-                i <= step ? "bg-primary" : "bg-muted"
-              }`}
-            />
-            <span
-              className={`text-xs transition-colors ${
-                i === step ? "text-foreground" : "text-muted-foreground/60"
-              }`}
+              key={label}
+              className="flex flex-1 items-center last:flex-none"
             >
-              {label}
-            </span>
-          </div>
-        ))}
+              <div className="flex items-center gap-3">
+                <div
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-medium transition-colors ${
+                    isComplete || isCurrent
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {isComplete ? (
+                    <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
+                  ) : (
+                    i + 1
+                  )}
+                </div>
+                <span
+                  className={`hidden text-xs font-medium transition-colors sm:inline ${
+                    isCurrent || isComplete
+                      ? "text-foreground"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  {label}
+                </span>
+              </div>
+              {i < STEPS.length - 1 && (
+                <div
+                  className={`mx-3 h-px flex-1 transition-colors ${
+                    isComplete ? "bg-primary" : "bg-border"
+                  }`}
+                />
+              )}
+            </div>
+          )
+        })}
       </div>
 
-      <div className="flex-1">
+      {/* Step content */}
+      <div>
         {step === 0 && <StepBasicInfo />}
         {step === 1 && <StepHealthSafety />}
         {step === 2 && <StepConsent />}
       </div>
 
-      <div className="mt-8 flex items-center justify-between border-t border-border/60 pt-5">
-        <button
+      {/* Footer */}
+      <div className="flex items-center justify-between border-t border-border/60 pt-5">
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={handleBack}
-          className="flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          disabled={isPending}
+          className="gap-1 text-muted-foreground hover:text-foreground"
         >
           <ChevronLeft className="h-4 w-4" />
-          Back
-        </button>
+          {step === 0 ? "Cancel" : "Back"}
+        </Button>
 
         <Button
           size="sm"
@@ -118,7 +148,16 @@ function NewMemberFormContent() {
           disabled={isPending}
           onClick={handleNext}
         >
-          {isPending ? "Saving…" : isLastStep ? "Add member" : "Next"}
+          {isPending ? (
+            <>
+              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+              {isLastStep ? "Adding…" : "Saving…"}
+            </>
+          ) : isLastStep ? (
+            "Add member"
+          ) : (
+            "Next"
+          )}
         </Button>
       </div>
     </div>

@@ -19,9 +19,9 @@ export type ViewMode = "month" | "week" | "list"
 // ---------- Status → visual mapping ----------
 
 export function dotColor(status: SessionEvent["status"]) {
-  if (status === "completed") return "bg-primary"
-  if (status === "cancelled") return "bg-destructive"
-  return "bg-muted-foreground"
+  if (status === "completed") return "bg-green"
+  if (status === "cancelled") return "bg-rose"
+  return "bg-secondary"
 }
 
 // ---------- Session lookups ----------

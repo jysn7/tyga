@@ -22,14 +22,32 @@ type ArchiveMemberDialogProps = {
   memberName: string
   isPending?: boolean
   onConfirm: () => Promise<void>
+  /** Optional controlled open state. When omitted, the dialog manages its own. */
+  open?: boolean
+  /** Optional controlled open setter. Pair with `open`. */
+  onOpenChange?: (open: boolean) => void
+  /**
+   * When true, the built-in trigger button is not rendered.
+   * Use this when an external control (e.g. a dropdown menu) opens the dialog.
+   */
+  hideTrigger?: boolean
 }
 
 export function ArchiveMemberDialog({
   memberName,
   isPending = false,
   onConfirm,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+  hideTrigger = false,
 }: ArchiveMemberDialogProps) {
-  const [open, setOpen] = useState(false)
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
+
+  const isControlled = controlledOpen !== undefined
+  const open = isControlled ? controlledOpen : uncontrolledOpen
+  const setOpen = isControlled
+    ? (controlledOnOpenChange ?? (() => {}))
+    : setUncontrolledOpen
 
   const handleConfirm = async () => {
     const toastId = "archive-member-status"
@@ -70,26 +88,28 @@ export function ArchiveMemberDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger>
-        <Button variant="destructive" className="w-full sm:w-auto">
-          <Archive className="mr-2 h-4 w-4" />
-          Archive
-        </Button>
-      </AlertDialogTrigger>
+      {!hideTrigger && (
+        <AlertDialogTrigger>
+          <Button variant="destructive" className="w-full sm:w-auto">
+            <Archive className="mr-2 h-4 w-4" />
+            Archive
+          </Button>
+        </AlertDialogTrigger>
+      )}
 
       <AlertDialogContent className="max-w-[95vw] sm:max-w-lg">
         <AlertDialogHeader>
           <AlertDialogTitle>Archive {memberName}?</AlertDialogTitle>
 
-          <AlertDialogDescription className="space-y-3 text-left">
-            <p>
-              This member will be removed from active lists and future
+          <AlertDialogDescription className="flex flex-col gap-3 text-left">
+            <span>
+              The member will be removed from active lists and future
               appointments.
-            </p>
+            </span>
 
-            <p>Historical records will be preserved, including:</p>
+            <span>Historical records are kept, including:</span>
 
-            <ul className="ml-4 list-disc space-y-1">
+            <ul className="ml-4 flex list-disc flex-col gap-1">
               <li>Attendance history</li>
               <li>Assessment results</li>
               <li>Progression records</li>
@@ -98,9 +118,9 @@ export function ArchiveMemberDialog({
               <li>Consent records</li>
             </ul>
 
-            <p className="font-medium text-foreground">
-              This action can be reversed later by restoring the member.
-            </p>
+            <span className="font-medium text-foreground">
+              You can restore the member later if needed.
+            </span>
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -110,11 +130,14 @@ export function ArchiveMemberDialog({
           </AlertDialogCancel>
 
           <AlertDialogAction
-            onClick={handleConfirm}
+            onClick={(e) => {
+              e.preventDefault()
+              handleConfirm()
+            }}
             disabled={isPending}
             className="text-destructive-foreground w-full bg-destructive hover:bg-destructive/90 sm:w-auto"
           >
-            {isPending ? "Archiving..." : "Archive Member"}
+            {isPending ? "Archiving…" : "Archive member"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

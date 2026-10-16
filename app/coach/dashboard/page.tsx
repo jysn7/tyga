@@ -215,7 +215,7 @@ function SessionCard({
     <Link
       href={`/coach/dashboard/${session.session_id}`}
       className={`group flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4 shadow-sm transition-all hover:border-border hover:shadow ${
-        hero ? "ring-1 ring-primary/30" : ""
+        hero ? "ring-1 ring-rose/60" : ""
       }`}
     >
       {hero && (

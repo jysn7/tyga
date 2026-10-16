@@ -13,48 +13,59 @@ export function CalendarListView({ sessions }: { sessions: SessionEvent[] }) {
       {grouped.map(([date, daySessions]) => (
         <div
           key={date}
-          className="border-b border-border/60 py-3 last:border-b-0"
+          className="flex flex-col gap-2 border-b border-border/60 py-4 first:pt-0 last:border-b-0 last:pb-0"
         >
-          <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            {format(parseISO(date), "EEEE, MMMM d")}
+          {/* Date header */}
+          <span className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
+            {format(parseISO(date), "EEEE, d MMMM")}
           </span>
-          <div className="mt-2 flex flex-col gap-1">
+
+          {/* Sessions */}
+          <div className="flex flex-col gap-1">
             {daySessions.map((s) => {
               const cancelled = s.status === "cancelled"
               const sub = [s.memberName, s.venueName]
                 .filter(Boolean)
                 .join(" · ")
+              const kindStyle = KIND_STYLES[s.kind]
 
               return (
                 <EventLink
                   key={`${s.kind}-${s.id}`}
                   href={eventHref(s)}
-                  className={`flex items-center justify-between rounded-md px-1.5 py-2 text-left transition-colors hover:bg-accent/40 ${
+                  className={`flex items-center justify-between gap-3 rounded-lg px-2.5 py-2.5 text-left transition-colors hover:bg-accent/40 ${
                     cancelled ? "opacity-60" : ""
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex min-w-0 items-center gap-3">
                     <span
-                      className={`h-1.5 w-1.5 shrink-0 rounded-full ${KIND_STYLES[s.kind].dot}`}
+                      className={`h-1.5 w-1.5 shrink-0 rounded-full ${kindStyle.dot}`}
                     />
-                    <div>
-                      <p
-                        className={`text-[15px] text-foreground ${
-                          cancelled ? "line-through" : ""
-                        }`}
-                      >
-                        {s.programmeName}
-                        <span className="ml-2 text-xs text-muted-foreground">
-                          {KIND_STYLES[s.kind].label}
-                          {cancelled ? " (cancelled)" : ""}
+
+                    <div className="flex min-w-0 flex-col gap-0.5">
+                      <div className="flex items-baseline gap-2">
+                        <span
+                          className={`truncate text-sm text-foreground ${
+                            cancelled ? "line-through" : ""
+                          }`}
+                        >
+                          {s.programmeName}
                         </span>
-                      </p>
+                        <span className="shrink-0 text-xs text-muted-foreground">
+                          {kindStyle.label}
+                          {cancelled ? " · cancelled" : ""}
+                        </span>
+                      </div>
+
                       {sub && (
-                        <p className="text-xs text-muted-foreground">{sub}</p>
+                        <span className="truncate text-xs text-muted-foreground">
+                          {sub}
+                        </span>
                       )}
                     </div>
                   </div>
-                  <span className="text-xs text-muted-foreground">
+
+                  <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
                     {s.startTime}
                   </span>
                 </EventLink>

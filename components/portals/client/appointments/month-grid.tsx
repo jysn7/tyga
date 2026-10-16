@@ -75,7 +75,7 @@ export function MonthGrid({
                   {format(day, "d")}
                 </span>
                 {daySlots.length > 0 && (
-                  <span className="rounded-sm bg-green-light px-1.5 py-0.5 text-[9px] font-medium text-secondary">
+                  <span className="rounded-sm bg-rose px-1.5 py-0.5 text-[9px] font-medium text-secondary">
                     {daySlots.length}
                   </span>
                 )}
@@ -86,7 +86,7 @@ export function MonthGrid({
                   <button
                     key={slot.slotId}
                     onClick={() => onSelectSlot(slot)}
-                    className="truncate rounded bg-teal/60 px-1.5 py-0.5 text-left text-[10px] text-primary-foreground transition-colors hover:bg-muted"
+                    className="truncate rounded border border-teal/60 bg-teal/60 px-1.5 py-0.5 text-left text-[10px] text-primary-foreground transition-colors hover:bg-card hover:text-teal"
                   >
                     {format(new Date(slot.startsAt), "HH:mm")}
                   </button>

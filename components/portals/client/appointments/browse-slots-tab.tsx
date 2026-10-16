@@ -14,6 +14,7 @@ import {
 } from "date-fns"
 import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Loader } from "@/components/portals/shared/loader"
 import { EmptyState } from "@/components/portals/shared/empty-state"
 import {
@@ -34,6 +35,9 @@ import { MonthGrid } from "@/components/portals/client/appointments/month-grid"
 import { BookSlotDialog } from "@/components/portals/client/appointments/book-slot-dialog"
 
 type ViewMode = "week" | "month"
+
+const TAB_TRIGGER_CLASS =
+  "flex-1 gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium w-fit text-muted-foreground transition-colors hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm sm:flex-initial"
 
 export function BrowseSlotsTab() {
   const [levelFilter, setLevelFilter] = useState<string>("all")
@@ -87,9 +91,10 @@ export function BrowseSlotsTab() {
       : levels?.find((l) => l.id.toString() === levelFilter)?.name
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       {/* Filter + view toggle + navigation */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        {/* Level filter */}
         <Select
           value={levelFilter}
           onValueChange={(v) => setLevelFilter(v ?? "all")}
@@ -110,51 +115,35 @@ export function BrowseSlotsTab() {
         </Select>
 
         <div className="flex items-center gap-2">
-          <div className="flex rounded-md border border-border p-0.5">
-            <button
-              onClick={() => setView("week")}
-              className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
-                view === "week"
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Week
-            </button>
-            <button
-              onClick={() => setView("month")}
-              className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
-                view === "month"
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Month
-            </button>
-          </div>
+          {/* View tabs */}
+          <Tabs value={view} onValueChange={(v) => setView(v as ViewMode)}>
+            <TabsList className="h-auto gap-1 rounded-lg bg-input p-1">
+              <TabsTrigger value="week" className={TAB_TRIGGER_CLASS}>
+                Week
+              </TabsTrigger>
+              <TabsTrigger value="month" className={TAB_TRIGGER_CLASS}>
+                Month
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
 
+          {/* Navigation */}
           <div className="flex items-center gap-1">
             <Button
               variant="outline"
               size="sm"
               onClick={goPrev}
               className="h-8 w-8 p-0"
+              aria-label="Previous"
             >
               <ChevronLeft className="h-3.5 w-3.5" strokeWidth={1.75} />
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={goToday}
-              className="h-8 px-2.5 text-xs"
-            >
-              Today
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
               onClick={goNext}
               className="h-8 w-8 p-0"
+              aria-label="Next"
             >
               <ChevronRight className="h-3.5 w-3.5" strokeWidth={1.75} />
             </Button>

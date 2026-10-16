@@ -4,22 +4,19 @@ import Link from "next/link"
 import { format } from "date-fns"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
-  ShieldAlert,
   User,
   CalendarDays,
   GraduationCap,
   Settings2,
-  ClipboardList,
-  FileText,
   ShieldCheck,
   Activity,
-  ExternalLink,
   CheckCircle2,
   XCircle,
-  Loader2,
+  ShieldAlert,
+  LogOut,
 } from "lucide-react"
 import type { MemberDetail } from "@/hooks/client/members/use-members"
-import { useSignedDocumentUrl } from "@/hooks/admin/use-document-url"
+import { WithdrawEnrollmentDialog } from "@/components/portals/client/programmes/withdraw-enrollment-dialog"
 
 function Detail({
   label,
@@ -88,63 +85,14 @@ function EmptyCard({
   )
 }
 
-function DocumentRow({
-  doc,
-}: {
-  doc: { id: number; doc_type: string; file_url: string; uploaded_at: string }
-}) {
-  const signUrl = useSignedDocumentUrl()
-
-  async function handleOpen() {
-    if (doc.file_url.startsWith("http")) {
-      window.open(doc.file_url, "_blank", "noopener,noreferrer")
-      return
-    }
-    try {
-      const url = await signUrl.mutateAsync(doc.file_url)
-      window.open(url, "_blank", "noopener,noreferrer")
-    } catch {
-      // silent
-    }
-  }
-
-  return (
-    <div className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
-      <div className="flex min-w-0 flex-col gap-0.5">
-        <span className="truncate text-sm font-medium text-foreground capitalize">
-          {doc.doc_type.replace(/_/g, " ")}
-        </span>
-        <span className="text-xs text-muted-foreground">
-          Uploaded {format(new Date(doc.uploaded_at), "d MMM yyyy, HH:mm")}
-        </span>
-      </div>
-      <button
-        type="button"
-        onClick={handleOpen}
-        disabled={signUrl.isPending}
-        className="flex h-8 shrink-0 items-center gap-1.5 rounded-md bg-input px-2.5 text-xs font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-40"
-      >
-        {signUrl.isPending ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={1.75} />
-        ) : (
-          <ExternalLink className="h-3.5 w-3.5" strokeWidth={1.75} />
-        )}
-        Open
-      </button>
-    </div>
-  )
-}
-
 const TAB_TRIGGER_CLASS =
-  "flex-1 gap-1.5 rounded-md px-2.5 py-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm sm:flex-initial sm:gap-2 sm:px-3"
+  "flex-1 gap-1.5 rounded-md px-2.5 py-2 text-xs font-medium w-fit text-muted-foreground transition-colors hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm sm:flex-initial sm:gap-2 sm:px-3"
 
 export function MemberDetailTabs({ data }: { data: MemberDetail }) {
   const {
     member,
     level,
-    questionnaire,
     consents,
-    documents,
     enrollments,
     progressions,
     attendance_summary,
@@ -153,12 +101,15 @@ export function MemberDetailTabs({ data }: { data: MemberDetail }) {
 
   const isAssessed = member.current_level_id !== null
 
+  const signedCount = consents.filter((c) => c.signed).length
+  const totalCount = consents.length
+
   return (
     <Tabs
       defaultValue="overview"
       className="flex w-full min-w-0 flex-col gap-5"
     >
-      <TabsList className="no-scrollbar h-auto w-full justify-start gap-1 overflow-x-auto rounded-lg bg-input p-1">
+      <TabsList className="no-scrollbar h-auto w-fit justify-start gap-1 overflow-x-auto rounded-lg bg-input p-1">
         <TabsTrigger value="overview" className={TAB_TRIGGER_CLASS}>
           <User className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
           <span className="inline">Overview</span>
@@ -178,14 +129,6 @@ export function MemberDetailTabs({ data }: { data: MemberDetail }) {
         <TabsTrigger value="consents" className={TAB_TRIGGER_CLASS}>
           <ShieldCheck className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
           <span className="inline">Consents</span>
-        </TabsTrigger>
-        <TabsTrigger value="documents" className={TAB_TRIGGER_CLASS}>
-          <FileText className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
-          <span className="inline">Documents</span>
-        </TabsTrigger>
-        <TabsTrigger value="questionnaire" className={TAB_TRIGGER_CLASS}>
-          <ClipboardList className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
-          <span className="inline">Questionnaire</span>
         </TabsTrigger>
         <TabsTrigger value="settings" className={TAB_TRIGGER_CLASS}>
           <Settings2 className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
@@ -329,38 +272,67 @@ export function MemberDetailTabs({ data }: { data: MemberDetail }) {
         ) : (
           <Section title="Enrolled programmes">
             <div className="flex flex-col">
-              {enrollments.map((e) => (
-                <div
-                  key={e.id}
-                  className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
-                >
-                  <div className="flex min-w-0 flex-col gap-0.5">
-                    <Link
-                      href={`/programmes/${e.programme_id}`}
-                      className="truncate text-sm font-medium text-foreground transition-colors hover:text-primary hover:underline"
-                    >
-                      {e.programme_name}
-                    </Link>
-                    <span className="truncate text-xs text-muted-foreground">
-                      {e.venue_name ?? "No venue"}
-                      {e.joined_at &&
-                        ` · Enrolled ${format(new Date(e.joined_at), "d MMM yyyy")}`}
-                      {e.subsidised && ` · Subsidised`}
-                    </span>
-                  </div>
-                  <span
-                    className={`shrink-0 rounded-md px-2 py-0.5 text-[11px] font-medium text-primary-foreground capitalize ${
-                      e.status === "active"
-                        ? "bg-green-light"
-                        : e.status === "cancelled"
-                          ? "bg-rose/80"
-                          : "bg-input text-muted-foreground"
-                    }`}
+              {enrollments.map((e) => {
+                const isWithdrawn =
+                  e.status === "cancelled" || e.status === "withdrawn"
+                const canWithdraw = !isWithdrawn
+
+                return (
+                  <div
+                    key={e.id}
+                    className="flex flex-col gap-2 py-3 first:pt-0 last:pb-0"
                   >
-                    {e.status}
-                  </span>
-                </div>
-              ))}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex min-w-0 flex-col gap-0.5">
+                        <Link
+                          href={`/programmes/${e.programme_id}`}
+                          className="truncate text-sm font-medium text-foreground transition-colors hover:text-information hover:underline"
+                        >
+                          {e.programme_name}
+                        </Link>
+                        <span className="truncate text-xs text-muted-foreground">
+                          {e.venue_name ?? "No venue"}
+                          {e.joined_at &&
+                            ` · Enrolled ${format(new Date(e.joined_at), "d MMM yyyy")}`}
+                          {e.subsidised && ` · Subsidised`}
+                        </span>
+                      </div>
+                      <span
+                        className={`shrink-0 rounded-md px-2 py-0.5 text-[11px] font-medium text-primary-foreground capitalize ${
+                          e.status === "active"
+                            ? "bg-green-light"
+                            : e.status === "cancelled" ||
+                                e.status === "withdrawn"
+                              ? "bg-rose/80"
+                              : "bg-input text-muted-foreground"
+                        }`}
+                      >
+                        {e.status}
+                      </span>
+                    </div>
+
+                    {canWithdraw && (
+                      <WithdrawEnrollmentDialog
+                        enrollmentId={e.id}
+                        memberName={member.full_name}
+                        programmeName={e.programme_name}
+                        status={e.status}
+                        trigger={
+                          <button
+                            type="button"
+                            className="flex w-fit items-center gap-1.5 text-xs text-rose transition-colors hover:underline"
+                          >
+                            <LogOut className="h-3 w-3" strokeWidth={1.75} />
+                            {e.status === "pending"
+                              ? "Cancel enrolment"
+                              : "Withdraw"}
+                          </button>
+                        }
+                      />
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </Section>
         )}
@@ -441,143 +413,95 @@ export function MemberDetailTabs({ data }: { data: MemberDetail }) {
       </TabsContent>
 
       {/* ---------- Consents ---------- */}
-      <TabsContent value="consents" className="mt-0">
+      <TabsContent value="consents" className="mt-0 flex flex-col gap-6">
         {consents.length === 0 ? (
           <EmptyCard
             title="No consents recorded"
             description="No consents have been signed for this member."
           />
         ) : (
-          <Section
-            title="Consents you've given"
-            description="POPIA consent records"
-          >
-            <div className="flex flex-col">
-              {consents.map((c) => (
-                <div
-                  key={c.id}
-                  className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
-                >
-                  <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-input">
-                      {c.signed ? (
-                        <CheckCircle2
-                          className="h-3.5 w-3.5 text-primary"
-                          strokeWidth={1.75}
-                        />
-                      ) : (
-                        <XCircle
-                          className="h-3.5 w-3.5 text-muted-foreground"
-                          strokeWidth={1.75}
-                        />
-                      )}
-                    </div>
-                    <div className="flex min-w-0 flex-col gap-0.5">
-                      <span className="truncate text-sm font-medium text-foreground capitalize">
-                        {c.consent_type.replace(/_/g, " ")}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {c.signed
-                          ? c.signed_at
-                            ? `Signed ${format(new Date(c.signed_at), "d MMM yyyy")}`
-                            : "Signed"
-                          : "Not signed"}
-                      </span>
-                    </div>
-                  </div>
-                  {c.document_url && (
-                    <a
-                      href={c.document_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex h-8 shrink-0 items-center gap-1.5 rounded-md bg-input px-2.5 text-xs font-medium text-foreground transition-colors hover:bg-accent"
-                    >
-                      <ExternalLink
-                        className="h-3.5 w-3.5"
-                        strokeWidth={1.75}
-                      />
-                      View
-                    </a>
-                  )}
+          <>
+            <Section title="Consent status" description="Compliance overview">
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green">
+                  <ShieldCheck
+                    className="h-5 w-5 text-secondary"
+                    strokeWidth={1.75}
+                  />
                 </div>
-              ))}
-            </div>
-          </Section>
-        )}
-      </TabsContent>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-2xl font-semibold tracking-tight text-foreground">
+                    {signedCount}
+                    <span className="text-base font-normal text-muted-foreground">
+                      {" "}
+                      of {totalCount}
+                    </span>
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {signedCount === totalCount
+                      ? "All consents signed"
+                      : `${totalCount - signedCount} pending`}
+                  </span>
+                </div>
+              </div>
+            </Section>
 
-      {/* ---------- Documents ---------- */}
-      <TabsContent value="documents" className="mt-0">
-        {documents.length === 0 ? (
-          <EmptyCard
-            title="No documents"
-            description="No files have been uploaded for this member yet."
-          />
-        ) : (
-          <Section
-            title="Uploaded documents"
-            description="Files you uploaded during onboarding"
-          >
-            <div className="flex flex-col">
-              {documents.map((doc) => (
-                <DocumentRow key={doc.id} doc={doc} />
-              ))}
-            </div>
-          </Section>
-        )}
-      </TabsContent>
-
-      {/* ---------- Questionnaire ---------- */}
-      <TabsContent value="questionnaire" className="mt-0">
-        {!questionnaire ? (
-          <EmptyCard
-            title="No questionnaire"
-            description="No questionnaire has been submitted for this member."
-          />
-        ) : (
-          <Section
-            title="Questionnaire"
-            description={
-              questionnaire.submitted_at
-                ? `Submitted ${format(new Date(questionnaire.submitted_at), "d MMM yyyy")}`
-                : "Not submitted"
-            }
-          >
-            <div className="flex flex-col">
-              <Detail
-                label="Self-reported skill level"
-                value={
-                  questionnaire.self_reported_skill_level
-                    ? questionnaire.self_reported_skill_level.replace(/_/g, " ")
-                    : "—"
-                }
-              />
-              <Detail
-                label="Availability"
-                value={
-                  typeof questionnaire.availability === "object"
-                    ? (questionnaire.availability?.availability ?? "—")
-                    : (questionnaire.availability ?? "—")
-                }
-              />
-              <Detail
-                label="Interests"
-                value={
-                  typeof questionnaire.interests === "object"
-                    ? (questionnaire.interests?.interests ?? "—")
-                    : (questionnaire.interests ?? "—")
-                }
-              />
-              <Detail
-                label="Gear owned"
-                value={
-                  typeof questionnaire.gear_owned === "object"
-                    ? (questionnaire.gear_owned?.gear_owned ?? "—")
-                    : (questionnaire.gear_owned ?? "—")
-                }
-              />
-            </div>
-          </Section>
+            <Section
+              title="Consent records"
+              description="POPIA consent history"
+            >
+              <div className="flex flex-col divide-y divide-border/60">
+                {consents.map((c) => (
+                  <div
+                    key={c.id}
+                    className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                          c.signed ? "bg-green" : "bg-muted"
+                        }`}
+                      >
+                        {c.signed ? (
+                          <CheckCircle2
+                            className="h-4 w-4 text-secondary"
+                            strokeWidth={1.75}
+                          />
+                        ) : (
+                          <XCircle
+                            className="h-4 w-4 text-muted-foreground"
+                            strokeWidth={1.75}
+                          />
+                        )}
+                      </div>
+                      <div className="flex min-w-0 flex-col gap-0.5">
+                        <span className="truncate text-sm font-medium text-foreground capitalize">
+                          {c.consent_type.replace(/_/g, " ")}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {c.signed
+                            ? c.signed_at
+                              ? `Signed ${format(new Date(c.signed_at), "d MMM yyyy")}`
+                              : "Signed"
+                            : "Not yet signed"}
+                        </span>
+                      </div>
+                    </div>
+                    {c.document_url && (
+                      <a
+                        href={c.document_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex h-8 shrink-0 items-center gap-1.5 rounded-md bg-input px-2.5 text-xs font-medium text-foreground transition-colors hover:bg-accent"
+                      >
+                        View
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </Section>
+          </>
         )}
       </TabsContent>
 
@@ -622,10 +546,6 @@ export function MemberDetailTabs({ data }: { data: MemberDetail }) {
             </div>
             <div className="rounded-lg bg-card p-4 shadow">
               <div className="flex flex-col">
-                <Detail
-                  label="ID / birth certificate number"
-                  value={member.id_or_birth_cert_number ?? "Not provided"}
-                />
                 <Detail
                   label="Emergency contact"
                   value={

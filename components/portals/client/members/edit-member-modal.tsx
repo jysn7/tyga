@@ -29,6 +29,9 @@ import {
   type MemberEditValues,
 } from "@/lib/validations/member"
 
+const triggerStyles =
+  "h-auto w-full justify-start border-none bg-transparent pl-2 text-[15px] font-normal text-foreground shadow-none hover:bg-transparent"
+
 function Field({
   label,
   children,
@@ -39,7 +42,7 @@ function Field({
   error?: string
 }) {
   return (
-    <div className="flex flex-col gap-1.5 border-b border-border/60 py-3 last:border-b-0">
+    <div className="flex flex-col gap-1.5">
       <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
         {label}
       </span>
@@ -49,11 +52,22 @@ function Field({
   )
 }
 
-const fieldStyles =
-  "h-auto border-none bg-muted py-2 pl-2 shadow-none text-[15px] text-foreground focus-visible:ring-0 placeholder:text-muted-foreground/50"
-
-const triggerStyles =
-  "h-auto w-full justify-start border-none bg-transparent pl-2 text-[15px] font-normal text-foreground shadow-none hover:bg-transparent"
+function Section({
+  title,
+  children,
+}: {
+  title: string
+  children: React.ReactNode
+}) {
+  return (
+    <section className="flex flex-col gap-4 border-b border-border/60 pb-6 last:border-b-0 last:pb-0">
+      <h3 className="text-xs font-semibold tracking-wide text-foreground uppercase">
+        {title}
+      </h3>
+      {children}
+    </section>
+  )
+}
 
 // Minimal shape the panel needs — matches MemberDetail["member"]
 export type EditableMember = {
@@ -96,8 +110,33 @@ function toDefaultValues(member: EditableMember): MemberEditValues {
   }
 }
 
-export function EditMemberPanel({ member }: { member: EditableMember }) {
-  const [open, setOpen] = useState(false)
+interface EditMemberPanelProps {
+  member: EditableMember
+  /** Optional controlled open state. When omitted, the panel manages its own. */
+  open?: boolean
+  /** Optional controlled open setter. Pair with `open`. */
+  onOpenChange?: (open: boolean) => void
+  /**
+   * When true, the built-in trigger button is not rendered.
+   * Use this when an external control (e.g. a dropdown menu) opens the panel.
+   */
+  hideTrigger?: boolean
+}
+
+export function EditMemberPanel({
+  member,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+  hideTrigger = false,
+}: EditMemberPanelProps) {
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
+
+  const isControlled = controlledOpen !== undefined
+  const open = isControlled ? controlledOpen : uncontrolledOpen
+  const setOpen = isControlled
+    ? (controlledOnOpenChange ?? (() => {}))
+    : setUncontrolledOpen
+
   const updateMember = useUpdateMember(member.id)
 
   const {
@@ -156,14 +195,16 @@ export function EditMemberPanel({ member }: { member: EditableMember }) {
 
   return (
     <>
-      <Button
-        variant="secondary"
-        className="w-full md:w-fit"
-        onClick={() => setOpen(true)}
-      >
-        <Pencil className="h-3.5 w-3.5" />
-        Edit
-      </Button>
+      {!hideTrigger && (
+        <Button
+          variant="secondary"
+          className="w-full md:w-fit"
+          onClick={() => setOpen(true)}
+        >
+          <Pencil className="h-3.5 w-3.5" />
+          Edit
+        </Button>
+      )}
 
       <SidePanel
         open={open}
@@ -183,124 +224,148 @@ export function EditMemberPanel({ member }: { member: EditableMember }) {
         <form
           id="edit-member-form"
           onSubmit={handleSubmit(onSubmit)}
-          className="flex flex-col"
+          className="flex flex-col gap-6"
         >
-          <Field label="Full name" error={errors.fullName?.message}>
-            <Input {...register("fullName")} />
-          </Field>
+          {/* Identity */}
+          <Section title="Identity">
+            <Field label="Full name" error={errors.fullName?.message}>
+              <Input {...register("fullName")} />
+            </Field>
 
-          <Field label="Date of birth" error={errors.dob?.message}>
-            <Controller
-              control={control}
-              name="dob"
-              render={({ field }) => (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button
-                      type="button"
-                      className="flex items-center gap-2 py-1 text-[15px] text-foreground"
+            <Field label="Date of birth" error={errors.dob?.message}>
+              <Controller
+                control={control}
+                name="dob"
+                render={({ field }) => (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className="flex h-9 w-full items-center gap-2 rounded-md border border-border bg-input px-2.5 text-sm text-foreground transition-colors hover:bg-accent/40 focus-visible:border-primary focus-visible:outline-none data-[state=open]:border-primary"
+                      >
+                        <CalendarIcon
+                          className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                          strokeWidth={1.75}
+                        />
+                        {field.value ? (
+                          <span>{format(field.value, "PPP")}</span>
+                        ) : (
+                          <span className="text-muted-foreground">
+                            Select date
+                          </span>
+                        )}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-auto border-border/60 p-0 shadow-md"
+                      align="start"
                     >
-                      <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                      {field.value ? format(field.value, "PPP") : "Select date"}
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    className="w-auto border-border/60 p-0 shadow-md"
-                    align="start"
-                  >
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) => date > new Date()}
-                      captionLayout="dropdown"
-                      startMonth={new Date(2005, 0, 1)}
-                      endMonth={new Date(new Date().getFullYear(), 11, 31)}
-                    />
-                  </PopoverContent>
-                </Popover>
-              )}
-            />
-          </Field>
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date) => date > new Date()}
+                        captionLayout="dropdown"
+                        startMonth={new Date(2005, 0, 1)}
+                        endMonth={new Date(new Date().getFullYear(), 11, 31)}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                )}
+              />
+            </Field>
 
-          <Field label="Gender" error={errors.gender?.message}>
-            <Controller
-              control={control}
-              name="gender"
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className={triggerStyles}>
-                    <SelectValue placeholder="Select gender" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="male">Male</SelectItem>
-                    <SelectItem value="female">Female</SelectItem>
-                    <SelectItem value="any">Any</SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </Field>
+            <Field label="Gender" error={errors.gender?.message}>
+              <Controller
+                control={control}
+                name="gender"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="h-9 w-full">
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="any">Any</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </Field>
+          </Section>
 
-          <Field label="School name">
-            <Input {...register("schoolName")} />
-          </Field>
+          {/* School */}
+          <Section title="School">
+            <Field label="School name">
+              <Input {...register("schoolName")} />
+            </Field>
 
-          <Field label="School grade">
-            <Input {...register("schoolGrade")} />
-          </Field>
+            <Field label="School grade">
+              <Input {...register("schoolGrade")} />
+            </Field>
 
-          <Field label="Previous team / club">
-            <Input {...register("previousClub")} />
-          </Field>
+            <Field label="Previous team / club">
+              <Input {...register("previousClub")} />
+            </Field>
+          </Section>
 
-          <Field
-            label="Emergency contact name"
-            error={errors.emergencyContactName?.message}
-          >
-            <Input {...register("emergencyContactName")} />
-          </Field>
+          {/* Emergency contact */}
+          <Section title="Emergency contact">
+            <Field
+              label="Contact name"
+              error={errors.emergencyContactName?.message}
+            >
+              <Input {...register("emergencyContactName")} />
+            </Field>
 
-          <Field
-            label="Relationship to member"
-            error={errors.emergencyContactRelationship?.message}
-          >
-            <Input {...register("emergencyContactRelationship")} />
-          </Field>
+            <Field
+              label="Relationship to member"
+              error={errors.emergencyContactRelationship?.message}
+            >
+              <Input {...register("emergencyContactRelationship")} />
+            </Field>
 
-          <Field
-            label="Emergency contact phone"
-            error={errors.emergencyContactPhone?.message}
-          >
-            <Input type="tel" {...register("emergencyContactPhone")} />
-          </Field>
+            <Field
+              label="Contact phone"
+              error={errors.emergencyContactPhone?.message}
+            >
+              <Input type="tel" {...register("emergencyContactPhone")} />
+            </Field>
+          </Section>
 
-          <Field label="Medical notes">
-            <Textarea
-              className={`${fieldStyles} min-h-20 resize-none`}
-              {...register("medicalNotes")}
-            />
-          </Field>
+          {/* Medical */}
+          <Section title="Medical">
+            <Field label="Medical notes">
+              <Textarea
+                className="min-h-20 resize-none"
+                {...register("medicalNotes")}
+              />
+            </Field>
 
-          <Field label="Medical aid details">
-            <Input {...register("medicalAidDetails")} />
-          </Field>
+            <Field label="Medical aid details">
+              <Input {...register("medicalAidDetails")} />
+            </Field>
 
-          <Field label="Doctor contact">
-            <Input {...register("doctorContact")} />
-          </Field>
+            <Field label="Doctor contact">
+              <Input {...register("doctorContact")} />
+            </Field>
+          </Section>
 
-          <Field label="Kit size (top)">
-            <Input {...register("kitSizeTop")} />
-          </Field>
+          {/* Kit */}
+          <Section title="Kit & sizes">
+            <Field label="Kit size (top)">
+              <Input {...register("kitSizeTop")} />
+            </Field>
 
-          <Field label="Kit size (bottom)">
-            <Input {...register("kitSizeBottom")} />
-          </Field>
+            <Field label="Kit size (bottom)">
+              <Input {...register("kitSizeBottom")} />
+            </Field>
 
-          <Field label="Shoe size">
-            <Input {...register("shoeSize")} />
-          </Field>
+            <Field label="Shoe size">
+              <Input {...register("shoeSize")} />
+            </Field>
+          </Section>
         </form>
       </SidePanel>
     </>

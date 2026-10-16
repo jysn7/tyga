@@ -51,94 +51,107 @@ export function StepBasicInfo() {
   )
 
   return (
-    <div className="flex flex-col">
-      <h1 className="pb-1 text-lg font-medium tracking-tight text-foreground">
-        Let&apos;s add your child
-      </h1>
+    <div className="flex flex-col gap-6">
+      {/* Intro */}
+      <div className="flex flex-col gap-1">
+        <h1 className="text-lg font-medium tracking-tight text-foreground">
+          Let&apos;s add your child
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          We&apos;ll use this to create their profile.
+        </p>
+      </div>
 
-      <p className="pb-4 text-sm text-muted-foreground">
-        We will use this information to create your child&apos;s profile.
-      </p>
+      {/* Fields */}
+      <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
+        {/* Full name — spans both columns */}
+        <div className="sm:col-span-2">
+          <Field label="Full name" required error={errors.fullName?.message}>
+            <Input placeholder="Child's full name" {...register("fullName")} />
+          </Field>
+        </div>
 
-      <Field label="Full name" required error={errors.fullName?.message}>
-        <Input placeholder="Child's full name" {...register("fullName")} />
-      </Field>
+        {/* Date of birth */}
+        <Field label="Date of birth" required error={errors.dob?.message}>
+          <Controller
+            control={control}
+            name="dob"
+            render={({ field }) => (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex h-10 w-full items-center gap-2 rounded-md border border-border bg-input px-3 text-sm text-foreground transition-colors hover:bg-accent/40 focus-visible:border-primary focus-visible:outline-none data-[state=open]:border-primary"
+                  >
+                    <CalendarIcon
+                      className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                      strokeWidth={1.75}
+                    />
+                    {field.value ? (
+                      <span>{format(field.value, "PPP")}</span>
+                    ) : (
+                      <span className="text-muted-foreground">Select date</span>
+                    )}
+                  </button>
+                </PopoverTrigger>
 
-      <Field label="Date of birth" required error={errors.dob?.message}>
-        <Controller
-          control={control}
-          name="dob"
-          render={({ field }) => (
-            <Popover>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  className="flex items-center gap-2 py-0.5 text-[15px] text-foreground"
+                <PopoverContent
+                  className="w-auto border-border/60 p-0 shadow-md"
+                  align="start"
                 >
-                  <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                  <Calendar
+                    mode="single"
+                    selected={field.value}
+                    onSelect={field.onChange}
+                    defaultMonth={field.value ?? maxDob}
+                    disabled={(date) => {
+                      const age = ageInYears(date)
+                      return date > today || age < MIN_AGE || age > MAX_AGE
+                    }}
+                    captionLayout="dropdown"
+                    startMonth={minDob}
+                    endMonth={maxDob}
+                    autoFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            )}
+          />
+        </Field>
 
-                  {field.value ? (
-                    format(field.value, "PPP")
-                  ) : (
-                    <span className="text-muted-foreground/60">
-                      Select date of birth
-                    </span>
-                  )}
-                </button>
-              </PopoverTrigger>
+        {/* Gender */}
+        <Field label="Gender" required error={errors.gender?.message}>
+          <Controller
+            control={control}
+            name="gender"
+            render={({ field }) => (
+              <Select value={field.value ?? ""} onValueChange={field.onChange}>
+                <SelectTrigger className={triggerStyles}>
+                  <SelectValue placeholder="Select gender" />
+                </SelectTrigger>
 
-              <PopoverContent
-                className="w-auto border-border/60 p-0 shadow-md"
-                align="start"
-              >
-                <Calendar
-                  mode="single"
-                  selected={field.value}
-                  onSelect={field.onChange}
-                  disabled={(date) => {
-                    const age = ageInYears(date)
-                    return date > today || age < MIN_AGE || age > MAX_AGE
-                  }}
-                  captionLayout="dropdown"
-                  startMonth={minDob}
-                  endMonth={maxDob}
-                  autoFocus
-                />
-              </PopoverContent>
-            </Popover>
-          )}
-        />
-      </Field>
+                <SelectContent>
+                  <SelectItem value="male">Male</SelectItem>
+                  <SelectItem value="female">Female</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </Field>
 
-      <Field label="Gender" required error={errors.gender?.message}>
-        <Controller
-          control={control}
-          name="gender"
-          render={({ field }) => (
-            <Select value={field.value ?? ""} onValueChange={field.onChange}>
-              <SelectTrigger className={triggerStyles}>
-                <SelectValue placeholder="Select gender" />
-              </SelectTrigger>
+        {/* School name */}
+        <Field label="School name">
+          <Input
+            placeholder="e.g. Sunnyside Primary"
+            {...register("schoolName")}
+          />
+        </Field>
 
-              <SelectContent>
-                <SelectItem value="male">Male</SelectItem>
-                <SelectItem value="female">Female</SelectItem>
-              </SelectContent>
-            </Select>
-          )}
-        />
-      </Field>
-
-      <Field label="School name">
-        <Input
-          placeholder="e.g. Sunnyside Primary"
-          {...register("schoolName")}
-        />
-      </Field>
-
-      <Field label="School grade">
-        <Input placeholder="e.g. Grade 5" {...register("schoolGrade")} />
-      </Field>
+        {/* School grade */}
+        <Field label="School grade">
+          <Input placeholder="e.g. Grade 5" {...register("schoolGrade")} />
+        </Field>
+      </div>
     </div>
   )
 }

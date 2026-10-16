@@ -3,8 +3,13 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { CheckCircle2, XCircle, ArrowRight, GraduationCap } from "lucide-react"
-import { Loader } from "@/components/portals/shared/loader"
+import {
+  CheckCircle2,
+  XCircle,
+  ArrowRight,
+  Loader2,
+  CreditCard,
+} from "lucide-react"
 
 type VerifyResult = {
   success: boolean
@@ -17,6 +22,13 @@ type VerifyResult = {
   programmeId?: number | string | null
   programmeName?: string | null
 }
+
+const money = (amount: number, currency: string) =>
+  new Intl.NumberFormat("en-ZA", {
+    style: "currency",
+    currency: currency || "ZAR",
+    maximumFractionDigits: 2,
+  }).format(amount / 100)
 
 export default function PaymentCallbackPage() {
   const params = useSearchParams()
@@ -90,144 +102,125 @@ export default function PaymentCallbackPage() {
         : "/programmes"
 
   return (
-    <div className="mx-auto flex min-h-[60vh] max-w-md flex-col justify-center py-8">
-      <div className="flex flex-col gap-5 rounded-xl bg-card p-6 shadow">
-        {/* Header */}
-        {state.kind === "loading" && (
-          <div className="flex items-center gap-3.5">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-input">
-              <GraduationCap
-                className="h-4.5 w-4.5 text-foreground"
+    <div className="mx-auto flex min-h-[60vh] max-w-md flex-col justify-center px-4 py-8 sm:px-0">
+      <div className="flex flex-col gap-6 rounded-xl bg-card p-6 shadow">
+        {/* ---------- Header ---------- */}
+        <div className="flex items-center gap-3.5">
+          <div
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
+              state.kind === "success"
+                ? "bg-green"
+                : state.kind === "failed"
+                  ? "bg-rose"
+                  : "bg-input"
+            }`}
+          >
+            {state.kind === "loading" && (
+              <Loader2
+                className="h-5 w-5 animate-spin text-muted-foreground"
                 strokeWidth={1.75}
               />
-            </div>
-            <div className="flex min-w-0 flex-col gap-0.5">
-              <h1 className="truncate text-xl font-semibold tracking-tight text-foreground">
-                Confirming payment
-              </h1>
-              <span className="truncate text-xs text-muted-foreground">
-                Please don&apos;t close this window
-              </span>
-            </div>
-          </div>
-        )}
-
-        {state.kind === "success" && (
-          <div className="flex items-center gap-3.5">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10">
+            )}
+            {state.kind === "success" && (
               <CheckCircle2
-                className="h-5 w-5 text-primary"
+                className="h-5 w-5 text-secondary"
                 strokeWidth={1.75}
               />
-            </div>
-            <div className="flex min-w-0 flex-col gap-0.5">
-              <h1 className="truncate text-xl font-semibold tracking-tight text-foreground">
-                You&apos;re enrolled
-              </h1>
-              <span className="truncate text-xs text-muted-foreground">
-                {state.data.programmeName ?? "Payment confirmed"}
-              </span>
-            </div>
+            )}
+            {state.kind === "failed" && (
+              <XCircle className="h-5 w-5 text-secondary" strokeWidth={1.75} />
+            )}
           </div>
-        )}
 
-        {state.kind === "failed" && (
-          <div className="flex items-center gap-3.5">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-destructive/10">
-              <XCircle
-                className="h-5 w-5 text-destructive"
-                strokeWidth={1.75}
-              />
-            </div>
-            <div className="flex min-w-0 flex-col gap-0.5">
-              <h1 className="truncate text-xl font-semibold tracking-tight text-foreground">
-                Payment not completed
-              </h1>
-              <span className="truncate text-xs text-muted-foreground">
-                {state.message}
-              </span>
-            </div>
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <h1 className="truncate text-xl font-semibold tracking-tight text-foreground">
+              {state.kind === "loading" && "Confirming payment"}
+              {state.kind === "success" && "You're enrolled"}
+              {state.kind === "failed" && "Payment not completed"}
+            </h1>
+            <span className="truncate text-xs text-muted-foreground">
+              {state.kind === "loading" && "Please don't close this window"}
+              {state.kind === "success" &&
+                (state.data.programmeName ?? "Payment confirmed")}
+              {state.kind === "failed" && state.message}
+            </span>
           </div>
-        )}
+        </div>
 
-        {/* Loading body */}
+        {/* ---------- Loading ---------- */}
         {state.kind === "loading" && (
-          <div className="flex items-center justify-center py-6">
-            <Loader />
-          </div>
+          <p className="text-xs text-muted-foreground">
+            This usually takes a few seconds. We&apos;re checking with the
+            payment provider.
+          </p>
         )}
 
-        {/* Success body */}
+        {/* ---------- Success ---------- */}
         {state.kind === "success" && (
           <>
             <div className="h-px bg-border/60" />
 
             <div className="flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                  Amount paid
-                </span>
+              <Row label="Amount paid">
                 <span className="text-sm font-medium tracking-tight text-foreground">
-                  {state.data.currency === "ZAR" ? "R" : ""}
-                  {(state.data.amount / 100).toFixed(2)}
+                  {money(state.data.amount, state.data.currency)}
                 </span>
-              </div>
+              </Row>
 
               {state.data.channel && (
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                    Method
-                  </span>
+                <Row label="Method">
                   <span className="text-xs text-foreground capitalize">
                     {state.data.channel}
                   </span>
-                </div>
+                </Row>
               )}
 
               {state.data.paidAt && (
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                    Paid at
-                  </span>
+                <Row label="Paid at">
                   <span className="text-xs text-foreground">
                     {new Date(state.data.paidAt).toLocaleString("en-ZA", {
                       dateStyle: "medium",
                       timeStyle: "short",
                     })}
                   </span>
-                </div>
+                </Row>
               )}
 
-              <div className="flex items-center justify-between gap-4">
-                <span className="shrink-0 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                  Reference
-                </span>
-                <span className="truncate font-mono text-[11px] text-foreground">
+              <Row label="Reference">
+                <span className="truncate font-mono text-xs text-foreground">
                   {state.data.reference}
                 </span>
-              </div>
+              </Row>
             </div>
 
             <div className="h-px bg-border/60" />
 
-            <Link
-              href={backHref}
-              className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              View programme
-              <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
-            </Link>
+            <div className="flex flex-col gap-2">
+              <Link
+                href={backHref}
+                className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-foreground text-xs font-medium text-secondary transition-colors hover:bg-foreground/90"
+              >
+                View programme
+                <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
+              </Link>
+              <Link
+                href="/dashboard"
+                className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-foreground bg-card text-xs font-medium text-foreground transition-colors hover:bg-accent"
+              >
+                Go to dashboard
+              </Link>
+            </div>
           </>
         )}
 
-        {/* Failed body */}
+        {/* ---------- Failed ---------- */}
         {state.kind === "failed" && (
           <>
             <div className="h-px bg-border/60" />
 
             <p className="text-xs leading-relaxed text-muted-foreground">
               If money left your account, it will be refunded automatically. You
-              can retry the enrollment at any time from the programme page.
+              can retry the enrolment at any time from the programme page.
             </p>
 
             <div className="h-px bg-border/60" />
@@ -235,21 +228,45 @@ export default function PaymentCallbackPage() {
             <div className="flex flex-col gap-2">
               <Link
                 href={backHref}
-                className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-foreground text-xs font-medium text-secondary transition-colors hover:bg-foreground/90"
               >
                 Try again
                 <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
               </Link>
               <Link
                 href="/programmes"
-                className="flex h-11 w-full items-center justify-center rounded-lg bg-input text-sm font-medium text-foreground transition-colors hover:bg-accent"
+                className="flex h-11 w-full items-center justify-center rounded-lg border border-foreground bg-card text-xs font-medium text-foreground transition-colors hover:bg-accent"
               >
                 Browse programmes
               </Link>
             </div>
+
+            <div className="flex items-center gap-2 border-t border-border/60 pt-4 text-xs text-muted-foreground">
+              <CreditCard className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
+              <span>
+                Need help? Contact the academy if you were charged incorrectly.
+              </span>
+            </div>
           </>
         )}
       </div>
+    </div>
+  )
+}
+
+function Row({
+  label,
+  children,
+}: {
+  label: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <span className="shrink-0 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+        {label}
+      </span>
+      {children}
     </div>
   )
 }

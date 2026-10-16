@@ -19,7 +19,7 @@ type MembershipStatus =
 
 const STATUS_CONFIG: Record<
   Exclude<MembershipStatus, null>,
-  { label: string; variant: StatusVariant; hint?: string }
+  { label: string; variant: StatusVariant }
 > = {
   pending: { label: "Pending", variant: "warning" },
   active: { label: "Active", variant: "success" },
@@ -46,7 +46,6 @@ export function MembershipCard({
   async function handleSubscribe() {
     try {
       const result = await createSub.mutateAsync()
-      // Hand off to Paystack's hosted checkout.
       window.location.href = result.authorization_url
     } catch (err) {
       toast.add({
@@ -80,23 +79,27 @@ export function MembershipCard({
   }
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl bg-card p-5 shadow">
+    <div className="flex flex-col gap-4 rounded-lg bg-card p-5 shadow">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-green-light">
-            <ShieldCheck className="h-4 w-4 text-primary" strokeWidth={1.75} />
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-card">
+            <ShieldCheck
+              className="h-4 w-4 text-foreground"
+              strokeWidth={1.75}
+            />
           </div>
           <div className="flex flex-col gap-0.5">
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-semibold tracking-tight text-foreground">
-                TYGA membership
+                Academy membership
               </h3>
               {config && (
                 <StatusPill label={config.label} variant={config.variant} />
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              R{amount.toFixed(2)} / month · Covers all members in your family
+              R{amount.toFixed(2)} per month · Required to enrol in any
+              programme
             </p>
           </div>
         </div>
@@ -106,25 +109,32 @@ export function MembershipCard({
       <div className="text-xs text-muted-foreground">
         {status === "active" && currentPeriodEnd && (
           <span>
-            Next charge on {format(new Date(currentPeriodEnd), "d MMM yyyy")}.
+            Next payment on {format(new Date(currentPeriodEnd), "d MMM yyyy")}.
           </span>
         )}
         {status === "non_renewing" && currentPeriodEnd && (
           <span>
             Your membership ends on{" "}
-            {format(new Date(currentPeriodEnd), "d MMM yyyy")}. Reactivate
-            anytime before then.
+            {format(new Date(currentPeriodEnd), "d MMM yyyy")}. Restart it
+            anytime before then to stay enrolled.
           </span>
         )}
         {status === "attention" && (
           <span className="text-destructive">
-            Your last payment failed. Update your card to keep access.
+            Your last payment didn&apos;t go through. Update your card to keep
+            your membership active.
+          </span>
+        )}
+        {status === "pending" && (
+          <span>
+            We&apos;re waiting for your bank to confirm the first payment.
+            Membership activates once it clears.
           </span>
         )}
         {(status === null || status === "cancelled") && (
           <span>
-            Subscribe to unlock all TYGA programmes and benefits for your
-            family.
+            Membership is required for every family enrolled at the academy.
+            Subscribe to complete your registration.
           </span>
         )}
       </div>
@@ -146,7 +156,11 @@ export function MembershipCard({
             ) : (
               <>
                 <CreditCard className="mr-1.5 h-3.5 w-3.5" strokeWidth={1.75} />
-                {status === "attention" ? "Update card" : "Subscribe"}
+                {status === "attention"
+                  ? "Update card"
+                  : status === "pending"
+                    ? "Retry payment"
+                    : "Subscribe"}
               </>
             )}
           </Button>

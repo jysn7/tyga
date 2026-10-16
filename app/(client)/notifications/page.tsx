@@ -153,7 +153,7 @@ export default function NotificationsPage() {
           <button
             type="button"
             onClick={resetFilters}
-            className="inline-flex h-9 shrink-0 items-center gap-1 rounded-lg px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="cursor-hover inline-flex h-9 shrink-0 items-center gap-1 rounded-lg px-3 text-xs font-medium text-rose underline transition-colors hover:text-rose/80"
           >
             <X className="h-3.5 w-3.5" strokeWidth={1.75} />
             Clear
