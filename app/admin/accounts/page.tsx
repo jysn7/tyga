@@ -4,7 +4,10 @@ import { useEffect, useState } from "react"
 import { Search } from "lucide-react"
 import { PageHeader } from "@/components/portals/shared/page-header"
 import { AccountList } from "@/components/portals/admin/accounts/account-list"
-import { useAccounts, type Account } from "@/hooks/admin/use-accounts"
+import {
+  useAccounts,
+  type Account,
+} from "@/hooks/admin/accounts/use-admin-accounts"
 import { Loader } from "@/components/portals/shared/loader"
 import { Input } from "@/components/ui/input"
 import {

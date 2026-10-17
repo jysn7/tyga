@@ -3,7 +3,6 @@ import {
   Users,
   Bell,
   Settings,
-  CalendarDays,
   CalendarClock,
   TrendingUp,
 } from "lucide-react"

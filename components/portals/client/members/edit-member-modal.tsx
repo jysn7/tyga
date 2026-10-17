@@ -29,9 +29,6 @@ import {
   type MemberEditValues,
 } from "@/lib/validations/member"
 
-const triggerStyles =
-  "h-auto w-full justify-start border-none bg-transparent pl-2 text-[15px] font-normal text-foreground shadow-none hover:bg-transparent"
-
 function Field({
   label,
   children,

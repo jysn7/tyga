@@ -1,23 +1,13 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { formatDistanceToNow, parseISO } from "date-fns"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Switch } from "@/components/ui/switch"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { toast } from "@/components/ui/toast"
-import { createClient } from "@/utils/supabase/client"
-import type { Account } from "@/hooks/admin/use-accounts"
+import type { Account } from "@/hooks/admin/accounts/use-admin-accounts"
 
 function getInitials(name: string) {
   return name
     .split(" ")
+    .filter(Boolean)
     .map((n) => n[0])
     .slice(0, 2)
     .join("")
@@ -29,104 +19,52 @@ const ROLE_LABELS: Record<Account["role"], string> = {
   admin: "Admin",
 }
 
-export function AccountTableRow({ account }: { account: Account }) {
-  const router = useRouter()
-  const [roleSaving, setRoleSaving] = useState(false)
-  const [activeSaving, setActiveSaving] = useState(false)
+const ROLE_TINT: Record<Account["role"], string> = {
+  parent: "bg-blue-light",
+  coach: "bg-green-light",
+  admin: "bg-purple-light",
+}
 
-  async function handleRoleChange(newRole: Account["role"]) {
-    if (newRole === account.role) return
-    setRoleSaving(true)
-    const toastId = `account-role-${account.id}`
+function Pill({ label, cls }: { label: string; cls: string }) {
+  return (
+    <span
+      className={`rounded-full px-2 py-0.5 text-[11px] font-medium text-foreground ${cls}`}
+    >
+      {label}
+    </span>
+  )
+}
 
-    toast.add({
-      id: toastId,
-      title: "Updating role...",
-      type: "loading",
-      timeout: 0,
-    })
-
-    try {
-      const supabase = createClient()
-      const { error } = await supabase.rpc("admin_set_account_role", {
-        p_account_id: account.id,
-        p_role: newRole,
-      })
-      if (error) throw error
-
-      toast.add({
-        id: toastId,
-        title: "Role updated",
-        description: `${account.fullName} is now ${ROLE_LABELS[newRole]}`,
-        type: "success",
-        timeout: 4000,
-      })
-      router.refresh()
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Something went wrong"
-      toast.add({
-        id: toastId,
-        title: "Failed to update role",
-        description: message,
-        type: "error",
-        timeout: 5000,
-      })
-    } finally {
-      setRoleSaving(false)
-    }
-  }
-
-  async function handleActiveToggle(next: boolean) {
-    setActiveSaving(true)
-    const toastId = `account-active-${account.id}`
-
-    toast.add({
-      id: toastId,
-      title: next ? "Activating account..." : "Deactivating account...",
-      type: "loading",
-      timeout: 0,
-    })
-
-    try {
-      const supabase = createClient()
-      const { error } = await supabase.rpc("admin_set_account_active", {
-        p_account_id: account.id,
-        p_active: next,
-      })
-      if (error) throw error
-
-      toast.add({
-        id: toastId,
-        title: next ? "Account activated" : "Account deactivated",
-        type: "success",
-        timeout: 4000,
-      })
-      router.refresh()
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Something went wrong"
-      toast.add({
-        id: toastId,
-        title: "Failed to update account",
-        description: message,
-        type: "error",
-        timeout: 5000,
-      })
-    } finally {
-      setActiveSaving(false)
-    }
-  }
+export function AccountTableRow({
+  account,
+  onOpen,
+}: {
+  account: Account
+  onOpen: (id: string) => void
+}) {
+  const open = () => onOpen(account.id)
 
   return (
-    <tr className="border-b border-border/60 text-sm transition-colors last:border-b-0 hover:bg-accent/40">
+    <tr
+      tabIndex={0}
+      role="button"
+      aria-label={`Open ${account.fullName}`}
+      onClick={open}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault()
+          open()
+        }
+      }}
+      className="cursor-pointer border-b border-border/60 text-sm transition-colors last:border-b-0 hover:bg-accent/40 focus-visible:bg-accent/40 focus-visible:outline-none"
+    >
       <td className="px-4 py-2">
         <div className="flex items-center gap-3">
           <Avatar className="h-8 w-8 shrink-0 rounded-full">
             {account.avatarUrl ? (
               <AvatarImage
                 src={account.avatarUrl}
-                alt={account.fullName}
+                alt=""
                 className="rounded-full object-cover"
               />
             ) : null}
@@ -134,11 +72,9 @@ export function AccountTableRow({ account }: { account: Account }) {
               {getInitials(account.fullName)}
             </AvatarFallback>
           </Avatar>
-          <div className="min-w-0">
-            <p className="truncate font-medium text-foreground">
-              {account.fullName}
-            </p>
-          </div>
+          <p className="min-w-0 truncate font-medium text-foreground">
+            {account.fullName}
+          </p>
         </div>
       </td>
 
@@ -147,33 +83,36 @@ export function AccountTableRow({ account }: { account: Account }) {
       </td>
 
       <td className="px-4 py-2">
-        <Select
-          value={account.role}
-          onValueChange={(v) => handleRoleChange(v as Account["role"])}
-          disabled={roleSaving}
-        >
-          <SelectTrigger className="h-8 w-28">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="parent">Parent</SelectItem>
-            <SelectItem value="coach">Coach</SelectItem>
-            <SelectItem value="admin">Admin</SelectItem>
-          </SelectContent>
-        </Select>
+        <Pill label={ROLE_LABELS[account.role]} cls={ROLE_TINT[account.role]} />
       </td>
 
       <td className="px-4 py-2">
-        <div className="flex items-center gap-2">
-          <Switch
-            checked={account.active}
-            onCheckedChange={handleActiveToggle}
-            disabled={activeSaving}
-          />
-          <span className="text-xs text-muted-foreground">
-            {account.active ? "Active" : "Inactive"}
-          </span>
-        </div>
+        {account.anonymised ? (
+          <Pill label="Anonymised" cls="bg-muted" />
+        ) : account.active ? (
+          <Pill label="Active" cls="bg-green-light" />
+        ) : (
+          <Pill label="Deactivated" cls="bg-red-light" />
+        )}
+      </td>
+
+      <td className="px-4 py-2 whitespace-nowrap text-muted-foreground">
+        {account.lastSignInAt
+          ? formatDistanceToNow(parseISO(account.lastSignInAt), {
+              addSuffix: true,
+            })
+          : "Never"}
+      </td>
+
+      <td className="px-4 py-2">
+        <Pill
+          label={account.hasMfa ? "On" : "Off"}
+          cls={account.hasMfa ? "bg-green-light" : "bg-yellow-light"}
+        />
+      </td>
+
+      <td className="px-4 py-2 text-muted-foreground">
+        {account.role === "parent" ? account.childrenCount : "—"}
       </td>
     </tr>
   )

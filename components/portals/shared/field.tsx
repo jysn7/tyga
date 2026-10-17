@@ -20,9 +20,9 @@ export function Field({
   label: string
   children: React.ReactNode
   className?: string
-  hint?: string
+  hint?: string | null
   action?: React.ReactNode
-  error?: string
+  error?: string | null
   required?: boolean
 }) {
   return (
