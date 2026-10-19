@@ -17,7 +17,7 @@ export default function SessionDetailPage() {
 
   return (
     <main className="mx-auto flex w-full flex-col gap-6 p-4 sm:p-6">
-      <Link href="/schedule" className="text-sm text-(--d-primary)">
+      <Link href="/my-schedule" className="text-sm text-(--d-primary)">
         Back to schedule
       </Link>
 

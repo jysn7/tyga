@@ -29,10 +29,10 @@ import {
 import { useProgrammes } from "@/hooks/client/use-programmes"
 
 const QUICK_LINKS = [
-  { label: "Schedule", href: "/schedule", icon: Calendar },
+  { label: "Schedule", href: "/my-schedule", icon: Calendar },
   { label: "Members", href: "/members", icon: Users },
   { label: "Programmes", href: "/programmes", icon: GraduationCap },
-  { label: "Invoices", href: "/invoices", icon: Receipt },
+  { label: "Billing", href: "/billing", icon: Receipt },
 ]
 
 export function ParentOverview() {
