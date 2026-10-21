@@ -1,11 +1,13 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
@@ -17,6 +19,7 @@ import { useSignIn, useGoogleAuth } from "@/hooks/use-auth-mutations"
 export default function LoginPage() {
   const router = useRouter()
   const { resolvedTheme } = useTheme()
+  const [showPassword, setShowPassword] = useState(false)
 
   const logoSrc =
     resolvedTheme === "dark" ? "/logo/light.png" : "/logo/dark.png"
@@ -194,12 +197,29 @@ export default function LoginPage() {
                 </Link>
               }
             >
-              <Input
-                type="password"
-                placeholder="••••••••"
-                disabled={loading}
-                {...register("password")}
-              />
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  disabled={loading}
+                  className="pr-10"
+                  {...register("password")}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  disabled={loading}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
             </Field>
 
             <Button

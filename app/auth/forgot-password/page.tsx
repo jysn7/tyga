@@ -76,7 +76,7 @@ export default function ForgotPasswordPage() {
 
           <Link
             href="/auth/signin"
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="inline-flex h-10 w-full items-center justify-center rounded-lg border border-border bg-secondary text-xs font-medium text-foreground transition-colors hover:bg-accent/30 hover:text-accent-foreground"
           >
             Back to sign in
           </Link>
@@ -109,21 +109,6 @@ export default function ForgotPasswordPage() {
               Enter your email and we&apos;ll send you a reset link
             </p>
           </div>
-
-          <div className="flex w-full rounded-lg bg-muted p-1 text-xs">
-            <Link
-              href="/auth/signin"
-              className="flex-1 rounded-md py-1.5 text-center font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/auth/signup"
-              className="flex-1 rounded-md py-1.5 text-center font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Create Account
-            </Link>
-          </div>
         </div>
 
         <form onSubmit={handleResetPassword} className="flex flex-col">
@@ -149,7 +134,7 @@ export default function ForgotPasswordPage() {
 
           <Link
             href="/auth/signin"
-            className="mt-3 text-center text-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="mt-3 inline-flex h-10 w-full items-center justify-center rounded-lg border border-border bg-secondary text-xs font-medium text-foreground transition-colors hover:bg-accent/30 hover:text-accent-foreground"
           >
             Back to sign in
           </Link>

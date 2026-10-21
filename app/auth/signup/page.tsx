@@ -1,11 +1,13 @@
 "use client"
 
+import { useMemo, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
@@ -14,9 +16,93 @@ import { Field } from "@/components/portals/shared/field"
 import { signUpSchema, type SignUpValues } from "@/lib/validations/auth"
 import { useSignUp, useGoogleAuth } from "@/hooks/use-auth-mutations"
 
+type Strength = {
+  score: 0 | 1 | 2 | 3 | 4
+  label: string
+  color: string
+  barColor: string
+  hints: string[]
+}
+
+const STRENGTH_CONFIG: Record<
+  Strength["score"],
+  Pick<Strength, "label" | "color" | "barColor">
+> = {
+  0: {
+    label: "Too weak",
+    color: "text-destructive",
+    barColor: "bg-destructive",
+  },
+  1: {
+    label: "Weak",
+    color: "text-destructive",
+    barColor: "bg-destructive",
+  },
+  2: {
+    label: "Fair",
+    color: "text-amber-600 dark:text-amber-500",
+    barColor: "bg-amber-500",
+  },
+  3: {
+    label: "Good",
+    color: "text-emerald-600 dark:text-emerald-500",
+    barColor: "bg-emerald-500",
+  },
+  4: {
+    label: "Strong",
+    color: "text-emerald-600 dark:text-emerald-500",
+    barColor: "bg-emerald-500",
+  },
+}
+
+function evaluatePassword(password: string): Strength {
+  if (!password) {
+    return {
+      score: 0,
+      label: "Enter a password",
+      color: "text-muted-foreground",
+      barColor: "bg-muted",
+      hints: [],
+    }
+  }
+
+  const hasLower = /[a-z]/.test(password)
+  const hasUpper = /[A-Z]/.test(password)
+  const hasDigit = /[0-9]/.test(password)
+  const hasSymbol = /[^a-zA-Z0-9]/.test(password)
+  const isLong = password.length >= 12
+
+  // Length is the anchor. Variety adds on top. A long passphrase can
+  // hit "Strong" on length + any one bucket; a short password needs
+  // several buckets to climb.
+  let score = 0
+  if (password.length >= 8) score++
+  if (isLong) score++
+  if (hasLower && hasUpper) score++
+  if (hasDigit || hasSymbol) score++
+  if (hasDigit && hasSymbol) score++
+
+  const finalScore = Math.min(score, 4) as Strength["score"]
+
+  const hints: string[] = []
+  if (password.length < 8) hints.push("Use at least 8 characters")
+  else if (!isLong) hints.push("12+ characters is stronger")
+  if (!hasLower || !hasUpper) hints.push("Mix upper & lowercase")
+  if (!hasDigit && !hasSymbol) hints.push("Add a number or symbol")
+  else if (!hasSymbol) hints.push("Add a symbol")
+  else if (!hasDigit) hints.push("Add a number")
+
+  return { score: finalScore, hints, ...STRENGTH_CONFIG[finalScore] }
+}
+
 export default function SignupPage() {
   const router = useRouter()
   const { resolvedTheme } = useTheme()
+
+  // One shared toggle for both password fields
+  const [showPassword, setShowPassword] = useState(false)
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
 
   const logoSrc =
     resolvedTheme === "dark" ? "/logo/light.png" : "/logo/dark.png"
@@ -29,8 +115,18 @@ export default function SignupPage() {
     resolver: zodResolver(signUpSchema),
   })
 
+  const passwordRegister = register("password")
+  const confirmPasswordRegister = register("confirmPassword")
+
   const signUp = useSignUp()
   const googleAuth = useGoogleAuth()
+
+  const strength = useMemo(() => evaluatePassword(password), [password])
+
+  const passwordsMatch =
+    confirmPassword.length > 0 && password === confirmPassword
+  const passwordsMismatch =
+    confirmPassword.length > 0 && password !== confirmPassword
 
   const onSubmit = async (values: SignUpValues) => {
     const toastId = "signup-status"
@@ -44,10 +140,11 @@ export default function SignupPage() {
     })
 
     try {
-      await signUp.mutateAsync(values)
+      const { confirmPassword: _confirm, ...payload } = values
+      await signUp.mutateAsync(payload)
 
+      toast.close(toastId)
       toast.add({
-        id: toastId,
         title: "Account created! 🎉",
         description: "Check your email to verify your account.",
         type: "success",
@@ -63,8 +160,8 @@ export default function SignupPage() {
           ? error.message
           : "An error occurred during sign up"
 
+      toast.close(toastId)
       toast.add({
-        id: toastId,
         title: "Sign up failed",
         description: message,
         type: "error",
@@ -90,8 +187,8 @@ export default function SignupPage() {
       const message =
         error instanceof Error ? error.message : "An error occurred"
 
+      toast.close(toastId)
       toast.add({
-        id: toastId,
         title: "Google sign in failed",
         description: message,
         type: "error",
@@ -188,6 +285,7 @@ export default function SignupPage() {
                 type="text"
                 placeholder="Sarah Conner"
                 disabled={loading}
+                aria-invalid={!!errors.fullName}
                 {...register("fullName")}
               />
             </Field>
@@ -197,17 +295,112 @@ export default function SignupPage() {
                 type="email"
                 placeholder="name@example.com"
                 disabled={loading}
+                aria-invalid={!!errors.email}
                 {...register("email")}
               />
             </Field>
 
             <Field label="Password" error={errors.password?.message}>
-              <Input
-                type="password"
-                placeholder="At least 8 characters"
-                disabled={loading}
-                {...register("password")}
-              />
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="At least 8 characters"
+                  disabled={loading}
+                  aria-invalid={!!errors.password}
+                  className="pr-10"
+                  {...passwordRegister}
+                  onChange={(e) => {
+                    passwordRegister.onChange(e)
+                    setPassword(e.target.value)
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  disabled={loading}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  tabIndex={-1}
+                  className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+
+              {password.length > 0 && (
+                <div className="mt-2 space-y-1.5">
+                  <div className="flex items-center gap-1.5">
+                    {[0, 1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className={`h-1 flex-1 rounded-full transition-colors ${
+                          i < strength.score ? strength.barColor : "bg-muted"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span
+                      className={`text-[11px] font-medium ${strength.color}`}
+                    >
+                      {strength.label}
+                    </span>
+                    {strength.hints.length > 0 && (
+                      <span className="text-right text-[11px] text-muted-foreground">
+                        {strength.hints.slice(0, 2).join(" · ")}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </Field>
+
+            <Field
+              label="Confirm password"
+              error={errors.confirmPassword?.message}
+            >
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Re-enter your password"
+                  disabled={loading}
+                  aria-invalid={!!errors.confirmPassword || passwordsMismatch}
+                  className="pr-10"
+                  {...confirmPasswordRegister}
+                  onChange={(e) => {
+                    confirmPasswordRegister.onChange(e)
+                    setConfirmPassword(e.target.value)
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  disabled={loading}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  tabIndex={-1}
+                  className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+
+              {passwordsMismatch && !errors.confirmPassword && (
+                <p className="mt-2 text-[11px] font-medium text-destructive">
+                  Passwords do not match
+                </p>
+              )}
+              {passwordsMatch && (
+                <p className="mt-2 text-[11px] font-medium text-emerald-600 dark:text-emerald-500">
+                  Passwords match
+                </p>
+              )}
             </Field>
 
             <Button

@@ -2,11 +2,13 @@ import { useMutation } from "@tanstack/react-query"
 import { createClient } from "@/utils/supabase/client"
 import type { SignInValues, SignUpValues } from "@/lib/validations/auth"
 
+type SignUpPayload = Omit<SignUpValues, "confirmPassword">
+
 export function useSignUp() {
   const supabase = createClient()
 
   return useMutation({
-    mutationFn: async (values: SignUpValues) => {
+    mutationFn: async (values: SignUpPayload) => {
       const { data, error } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,

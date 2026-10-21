@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useParams, notFound } from "next/navigation"
@@ -12,11 +12,21 @@ import {
   BookOpen,
   Target,
   ExternalLink,
+  AlertCircle,
+  RefreshCw,
+  HelpCircle,
+  Check,
+  X,
 } from "lucide-react"
-import { useProgrammeDetail } from "@/hooks/client/use-programmes"
+import { parseISO } from "date-fns"
+import {
+  useProgrammeDetail,
+  useEnrollableMembers,
+} from "@/hooks/client/use-programmes"
 import { Loader } from "@/components/portals/shared/loader"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { EnrollModal } from "@/components/portals/client/programmes/enroll-modal"
+import { Button } from "@/components/ui/button"
 import type { ProgrammeListItem } from "@/lib/types"
 
 const TYPE_LABELS: Record<string, string> = {
@@ -28,6 +38,70 @@ const TYPE_LABELS: Record<string, string> = {
   league: "League",
 }
 
+const TYPE_PRICE_SUFFIX: Record<string, string> = {
+  development: " / term",
+  weekly_community: " / session",
+  holiday_camp: " / camp",
+  clinic: " / clinic",
+  corporate: " / booking",
+  league: " / season",
+}
+
+const DAY_MAP: Record<string, string> = {
+  MO: "Monday",
+  TU: "Tuesday",
+  WE: "Wednesday",
+  TH: "Thursday",
+  FR: "Friday",
+  SA: "Saturday",
+  SU: "Sunday",
+}
+
+const DAY_MAP_PLURAL: Record<string, string> = {
+  MO: "Mondays",
+  TU: "Tuesdays",
+  WE: "Wednesdays",
+  TH: "Thursdays",
+  FR: "Fridays",
+  SA: "Saturdays",
+  SU: "Sundays",
+}
+
+function formatRecurrence(rule: string | null): string | null {
+  if (!rule) return null
+  const parts = rule.split(";").reduce<Record<string, string>>((acc, part) => {
+    const [k, v] = part.split("=")
+    if (k && v) acc[k] = v
+    return acc
+  }, {})
+
+  const byDay = parts.BYDAY?.split(",") ?? []
+  const days = byDay.map((d) => DAY_MAP_PLURAL[d] ?? DAY_MAP[d] ?? d)
+  if (days.length === 0) return rule
+
+  const dayLabel =
+    days.length === 1
+      ? days[0]
+      : days.length === 2
+        ? `${days[0]} and ${days[1]}`
+        : `${days.slice(0, -1).join(", ")}, and ${days[days.length - 1]}`
+
+  return dayLabel
+}
+
+function formatAge(minAge: number | null, maxAge: number | null): string {
+  if (minAge == null && maxAge == null) return "All ages"
+  if (minAge == null) return `Up to ${maxAge}`
+  if (maxAge == null) return `${minAge}+`
+  if (minAge === 0 && maxAge === 0) return "All ages"
+  return `${minAge}–${maxAge}`
+}
+
+function formatPrice(price: number, type: string): string {
+  if (price === 0) return "Free"
+  return `R${price}`
+}
+
 export default function ProgrammeDetailPage() {
   const params = useParams<{ id: string }>()
   const programmeId = Number(params.id)
@@ -36,10 +110,23 @@ export default function ProgrammeDetailPage() {
     data: programme,
     isLoading,
     error,
+    refetch,
   } = useProgrammeDetail(programmeId, null)
+
+  const { data: members } = useEnrollableMembers(programmeId)
   const [enrollOpen, setEnrollOpen] = useState(false)
 
-  if (error) console.error("[ProgrammeDetailPage] error:", error)
+  const scheduleText = useMemo(() => {
+    if (!programme) return null
+    const days = formatRecurrence(programme.recurrenceRule)
+    if (!days) return null
+    const first = programme.sessions?.[0]
+    const timeRange =
+      first?.startTime && first?.endTime
+        ? `${first.startTime.slice(0, 5)} to ${first.endTime.slice(0, 5)}`
+        : null
+    return timeRange ? `${days}, ${timeRange}` : days
+  }, [programme])
 
   if (isLoading) {
     return (
@@ -49,16 +136,40 @@ export default function ProgrammeDetailPage() {
     )
   }
 
-  if (error || !programme) notFound()
+  if (error) {
+    return (
+      <div className="mx-auto flex max-w-md flex-col items-center gap-4 py-24 text-center">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+          <AlertCircle className="h-5 w-5" />
+        </div>
+        <div className="space-y-1">
+          <h1 className="text-base font-semibold text-foreground">
+            Couldn&apos;t load this programme
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {error instanceof Error
+              ? error.message
+              : "Something went wrong. Please try again."}
+          </p>
+        </div>
+        <Button variant="outline" className="gap-2" onClick={() => refetch()}>
+          <RefreshCw className="h-3.5 w-3.5" />
+          Try again
+        </Button>
+      </div>
+    )
+  }
+
+  if (!programme) notFound()
 
   const name = programme.name ?? "Untitled Programme"
   const type = programme.type ?? ""
   const levelName = programme.levelName ?? "Unassigned level"
-  const minAge = programme.minAge ?? 0
-  const maxAge = programme.maxAge ?? 0
+  const minAge = programme.minAge ?? null
+  const maxAge = programme.maxAge ?? null
   const price = programme.price ?? 0
   const enrolledCount = programme.enrolledCount ?? 0
-  const capacity = programme.capacity ?? 1
+  const capacity = programme.capacity ?? null
   const maxRatio = programme.maxRatio ?? 0
   const venueName = programme.venueName ?? "No venue"
   const venueAddress = programme.venueAddress ?? null
@@ -69,14 +180,25 @@ export default function ProgrammeDetailPage() {
   const sessions = programme.sessions ?? []
   const curriculumModules = programme.curriculumModules ?? []
 
-  const isFull = enrolledCount >= capacity
-  const spotsLeft = Math.max(capacity - enrolledCount, 0)
+  const isFull = capacity !== null && enrolledCount >= capacity
+  const spotsLeft =
+    capacity !== null ? Math.max(capacity - enrolledCount, 0) : null
   const enrollmentPercentage =
-    capacity > 0 ? (enrolledCount / capacity) * 100 : 0
+    capacity !== null && capacity > 0 ? (enrolledCount / capacity) * 100 : 0
+  const hasCapacity = capacity !== null
+
+  const ageLabel = formatAge(minAge, maxAge)
+  const priceLabel = formatPrice(price, type)
+  const priceSuffix = price === 0 ? "" : (TYPE_PRICE_SUFFIX[type] ?? "")
+
+  const eligibleMembers = (members ?? []).filter((m) => m.isEligible)
+  const ineligibleMembers = (members ?? []).filter((m) => !m.isEligible)
+
   const mapQuery = encodeURIComponent(
     `${venueName} ${venueAddress ?? ""}`.trim()
   )
   const venueMap = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`
+  const contactHref = `/contact?programme=${encodeURIComponent(name)}`
 
   return (
     <div className="mx-auto py-6">
@@ -109,10 +231,8 @@ export default function ProgrammeDetailPage() {
           </div>
         )}
 
-        {/* Dark gradient bottom → middle */}
         <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-neutral-900/85 via-foreground/40 to-transparent" />
 
-        {/* Level + type chips top-left */}
         <div className="absolute top-4 left-4 flex flex-wrap gap-1.5">
           {type && (
             <span className="rounded-md bg-background/85 px-2 py-0.5 text-[10px] font-medium text-foreground backdrop-blur-sm">
@@ -124,22 +244,20 @@ export default function ProgrammeDetailPage() {
           </span>
         </div>
 
-        {/* Price chip top-right */}
         <div className="absolute top-4 right-4 rounded-md bg-background/85 px-2.5 py-1 text-[11px] font-medium text-foreground backdrop-blur-sm">
-          R{price}
-          <span className="text-foreground/70"> / term</span>
+          {priceLabel}
+          {priceSuffix && (
+            <span className="text-foreground/70">{priceSuffix}</span>
+          )}
         </div>
 
-        {/* Title + meta pinned to bottom of image */}
         <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1.5 p-5">
           <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
             {name}
           </h1>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-white/80">
-            <span>
-              Ages {minAge}–{maxAge}
-            </span>
-            {!isFull && spotsLeft <= 3 && (
+            <span>{ageLabel}</span>
+            {!isFull && spotsLeft !== null && spotsLeft <= 3 && (
               <>
                 <span className="text-background/40">·</span>
                 <span className="font-medium text-background">
@@ -159,7 +277,7 @@ export default function ProgrammeDetailPage() {
         </div>
       </div>
 
-      {/* Description + CTA row */}
+      {/* Description */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex-1">
           {description ? (
@@ -185,9 +303,13 @@ export default function ProgrammeDetailPage() {
               </span>
               <div className="text-right">
                 <span className="text-lg font-semibold tracking-tight text-foreground">
-                  R{price}
+                  {priceLabel}
                 </span>
-                <span className="text-xs text-muted-foreground"> / term</span>
+                {priceSuffix && (
+                  <span className="text-xs text-muted-foreground">
+                    {priceSuffix}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -211,7 +333,7 @@ export default function ProgrammeDetailPage() {
                 </div>
               </div>
 
-              {programme.recurrenceRule && (
+              {scheduleText && (
                 <div className="flex items-start gap-2.5">
                   <CalendarDays
                     className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground"
@@ -219,7 +341,7 @@ export default function ProgrammeDetailPage() {
                   />
                   <span className="text-muted-foreground">Schedule</span>
                   <span className="ml-auto text-right leading-tight text-foreground">
-                    {programme.recurrenceRule}
+                    {scheduleText}
                   </span>
                 </div>
               )}
@@ -230,9 +352,7 @@ export default function ProgrammeDetailPage() {
                   strokeWidth={1.75}
                 />
                 <span className="text-muted-foreground">Ages</span>
-                <span className="ml-auto text-foreground">
-                  {minAge}–{maxAge}
-                </span>
+                <span className="ml-auto text-foreground">{ageLabel}</span>
               </div>
 
               {maxRatio > 0 && (
@@ -249,70 +369,143 @@ export default function ProgrammeDetailPage() {
 
             <div className="h-px bg-border/60" />
 
-            {/* Enrollment */}
-            <div className="flex flex-col gap-2.5">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-medium tracking-wider text-muted-foreground uppercase">
-                  Enrollment
-                </span>
-                <span className="font-medium text-foreground">
-                  {enrolledCount}/{capacity}
-                </span>
-              </div>
+            {/* Capacity — only when limited */}
+            {hasCapacity && (
+              <div className="flex flex-col gap-2.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium tracking-wider text-muted-foreground uppercase">
+                    Enrollment
+                  </span>
+                  <span className="font-medium text-foreground">
+                    {enrolledCount}/{capacity}
+                  </span>
+                </div>
 
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-input">
                 <div
-                  className={`h-full transition-all ${
-                    isFull
-                      ? "bg-destructive"
-                      : spotsLeft <= 2
-                        ? "bg-orange"
-                        : "bg-blue"
-                  }`}
-                  style={{ width: `${enrollmentPercentage}%` }}
-                />
-              </div>
+                  role="progressbar"
+                  aria-valuenow={enrolledCount}
+                  aria-valuemin={0}
+                  aria-valuemax={capacity ?? undefined}
+                  aria-label="Programme capacity"
+                  className="h-1.5 w-full overflow-hidden rounded-full bg-input"
+                >
+                  <div
+                    className={`h-full transition-all ${
+                      isFull
+                        ? "bg-destructive"
+                        : spotsLeft !== null && spotsLeft <= 2
+                          ? "bg-orange"
+                          : "bg-blue"
+                    }`}
+                    style={{ width: `${enrollmentPercentage}%` }}
+                  />
+                </div>
 
-              <div className="text-xs">
-                {isFull ? (
-                  <span className="font-medium text-destructive">
-                    Programme full
-                  </span>
-                ) : spotsLeft <= 2 ? (
-                  <span className="font-medium text-orange">
-                    {spotsLeft} spots remaining
-                  </span>
-                ) : (
-                  <span className="text-muted-foreground">
-                    {spotsLeft} spots available
-                  </span>
-                )}
+                <div className="text-xs">
+                  {isFull ? (
+                    <span className="font-medium text-destructive">
+                      Programme full
+                    </span>
+                  ) : spotsLeft !== null && spotsLeft <= 2 ? (
+                    <span className="font-medium text-orange">
+                      {spotsLeft} spots remaining
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">
+                      {spotsLeft} spots available
+                    </span>
+                  )}
+                </div>
               </div>
+            )}
+
+            {/* Who can join */}
+            {members && members.length > 0 && (
+              <div className="flex flex-col gap-2">
+                <span className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
+                  Who can join
+                </span>
+                <div className="flex flex-col gap-1">
+                  {eligibleMembers.map((m) => (
+                    <div
+                      key={m.id}
+                      className="flex items-center gap-1.5 text-xs"
+                    >
+                      <Check
+                        className="h-3 w-3 shrink-0 text-emerald-600 dark:text-emerald-500"
+                        strokeWidth={2.5}
+                      />
+                      <span className="text-foreground">{m.fullName}</span>
+                    </div>
+                  ))}
+                  {ineligibleMembers.map((m) => (
+                    <div
+                      key={m.id}
+                      className="flex items-start gap-1.5 text-xs"
+                    >
+                      <X
+                        className="mt-0.5 h-3 w-3 shrink-0 text-destructive"
+                        strokeWidth={2.5}
+                      />
+                      <div className="min-w-0">
+                        <span className="text-foreground">{m.fullName}</span>
+                        {m.reason && (
+                          <span className="block text-[11px] text-muted-foreground">
+                            {m.reason}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Enrol button */}
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                disabled={isFull}
+                onClick={() => setEnrollOpen(true)}
+                aria-describedby={isFull ? "enrol-full-reason" : undefined}
+                className="h-10 w-full cursor-pointer rounded-md bg-foreground px-4 text-xs font-medium text-background transition-colors hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {isFull ? "Programme full" : "Enrol now"}
+              </button>
+              {isFull && (
+                <p
+                  id="enrol-full-reason"
+                  className="text-[11px] text-muted-foreground"
+                >
+                  This programme has reached capacity. Contact us to join the
+                  waitlist.
+                </p>
+              )}
             </div>
 
-            <button
-              type="button"
-              disabled={isFull}
-              onClick={() => setEnrollOpen(true)}
-              className="h-10 w-full cursor-pointer rounded-md bg-foreground px-4 text-xs font-medium text-background transition-colors hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {isFull ? "Programme full" : "Enrol now"}
-            </button>
-
-            <a
-              href={venueMap}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-1.5 text-center text-xs text-information underline transition-colors hover:text-information/70"
-            >
-              View on Google Maps
-              <ExternalLink className="h-3 w-3" strokeWidth={1.75} />
-            </a>
+            <div className="flex flex-col gap-2 text-xs">
+              <a
+                href={venueMap}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-1.5 text-center text-information underline transition-colors hover:text-information/70"
+              >
+                View on Google Maps
+                <ExternalLink className="h-3 w-3" strokeWidth={1.75} />
+              </a>
+              <Link
+                href={contactHref}
+                className="flex items-center justify-center gap-1.5 text-center text-information underline transition-colors hover:text-information/70"
+              >
+                <HelpCircle className="h-3 w-3" strokeWidth={1.75} />
+                Questions about this programme?
+              </Link>
+            </div>
           </div>
         </div>
 
         {/* Main content */}
-        <div className="flex flex-col gap-6 lg:order-1 lg:col-span-2">
+        <div className="flex flex-col gap-6 pb-24 lg:order-1 lg:col-span-2 lg:pb-0">
           {levelGoal && (
             <section className="flex flex-col gap-3">
               <div className="flex items-center gap-2">
@@ -400,14 +593,20 @@ export default function ProgrammeDetailPage() {
             <div className="rounded-xl bg-card p-5 shadow">
               {sessions.length > 0 ? (
                 <div className="flex flex-col divide-y divide-border/60">
-                  {sessions.map((s) => (
+                  {sessions.map((s, i) => (
                     <div
                       key={s.id}
                       className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0"
                     >
-                      <span className="text-sm text-foreground">
+                      <span
+                        className={`text-sm ${
+                          i === 0
+                            ? "font-medium text-foreground"
+                            : "text-foreground"
+                        }`}
+                      >
                         {s.sessionDate
-                          ? new Date(s.sessionDate).toLocaleDateString(
+                          ? parseISO(s.sessionDate).toLocaleDateString(
                               "en-ZA",
                               {
                                 weekday: "short",
@@ -416,6 +615,11 @@ export default function ProgrammeDetailPage() {
                               }
                             )
                           : "No date"}
+                        {i === 0 && (
+                          <span className="ml-1.5 rounded bg-blue-light px-1.5 py-0.5 text-[10px] font-medium text-blue">
+                            Next
+                          </span>
+                        )}
                       </span>
                       <span className="rounded-md bg-input px-2 py-0.5 text-[11px] text-muted-foreground">
                         {s.startTime?.slice(0, 5) ?? "--:--"} –{" "}
@@ -461,6 +665,33 @@ export default function ProgrammeDetailPage() {
               )}
             </div>
           </section>
+        </div>
+      </div>
+
+      {/* Sticky mobile enrol bar */}
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 p-3 backdrop-blur-sm lg:hidden">
+        <div className="flex items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs font-medium text-foreground">
+              {priceLabel}
+              {priceSuffix && (
+                <span className="font-normal text-muted-foreground">
+                  {priceSuffix}
+                </span>
+              )}
+            </p>
+            <p className="truncate text-[11px] text-muted-foreground">
+              {isFull ? "Programme full" : `${ageLabel} · ${levelName}`}
+            </p>
+          </div>
+          <button
+            type="button"
+            disabled={isFull}
+            onClick={() => setEnrollOpen(true)}
+            className="h-9 shrink-0 cursor-pointer rounded-md bg-foreground px-4 text-xs font-medium text-background transition-colors hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {isFull ? "Full" : "Enrol now"}
+          </button>
         </div>
       </div>
 
