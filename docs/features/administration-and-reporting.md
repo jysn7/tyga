@@ -37,7 +37,7 @@ Sensitive member access has its own gated flow, documented in [members-and-onboa
 
 ## Application settings
 
-`hooks/lookups/use-academy-settings.ts` provides `useAppSettings` and `useUpdateAppSettings`. The singleton `app_settings` row covers:
+`hooks/lookups/use-academy-settings.ts` provides `useAppSettings` and `useUpdateAppSettings`. `/admin/settings` exposes four tabs—Academy, Site, Notifications and Payments—and the singleton `app_settings` row covers:
 
 - Appointment behavior: lead time, lookahead, slot length, cancellation cutoff, default ratio and timezone
 - Branding/contact: site name/tagline, logo/favicon URLs, primary color, support and WhatsApp contacts, terms/privacy URLs and consent version

@@ -11,15 +11,70 @@ This document combines account settings, authentication security and login monit
 - Auth pages include `/auth/signin`, `/auth/signup`, `/auth/verify-email`, `/auth/forgot-password` and `/auth/update-password`; parent settings are under `/settings`.
 - Login monitoring currently has database schema and RPC foundations, but no matching auth API route or React hook was found in the app.
 
-## Account settings
+## Member settings
+
+The parent portal's `/settings` route now uses
+`components/portals/client/settings/new-settings-form.tsx` and
+`hooks/shared/use-my-settings.ts`. Its four tabs are Profile, Notifications,
+Security and Your data. This is a broader screen than the legacy
+`SettingsForm`; the coach settings route still uses the older settings form.
+
+### Profile
+
+- Edit full name, phone and address; phone numbers are normalized and validated
+  using South Africa as the default country when no country code is supplied.
+- Upload a JPG, PNG or WEBP avatar up to 2 MB.
+- Email is displayed but cannot be changed from the settings screen; users are
+  directed to contact TYGA.
+
+### Notifications
+
+- Manage this device's push permission independently through `PushToggle`.
+- Choose preferences for session reminders, gear due, payment due, level
+  upgrades, parent consultation reminders and announcements.
+- The current component keeps these preference switches in local state, but its
+  save handler submits only profile fields; it does not persist the preference
+  changes. Treat preference persistence as incomplete until the mutation is
+  wired to the notification-preference backend.
+
+### Security
+
+- Change a password for password-enabled accounts after verifying the current
+  password; the new password must be at least eight characters and differ from
+  the current password.
+- When the current session needs a higher MFA assurance level, a code from the
+  authenticator app is required.
+- Manage authenticator-based MFA at `/settings/security`.
+- Review active sessions/devices and sign out an individual other device or
+  all other devices. Changing a password also signs out other devices.
+
+### Your data
+
+- Download a JSON export via `get_my_data_export`. The UI describes it as
+  including profile, children, enrolments and consents.
+- Submit an account-deletion request and cancel an open request. Request
+  status, handling time and deletion blockers are returned in settings data;
+  the UI describes the request as subject to review, not an immediate account
+  deletion.
+
+The settings read uses `get_my_settings`; profile updates use
+`update_my_settings`, avatar updates use `set_my_avatar`, device revocation
+uses `revoke_my_session` / `revoke_my_other_sessions`, and data requests use
+`request_account_deletion` / `cancel_my_deletion_request`.
+
+## Legacy account settings
+
+The older `components/portals/client/settings/settings-form.tsx` remains in use
+on the coach settings route and documents the narrower legacy surface:
 
 ### Features
 
-- Edit profile information such as full name, phone number and address
+- Edit full name, phone number and address
 - Upload a JPG, PNG or WEBP avatar (2 MB maximum)
 - Toggle per-type notification preferences and this-device push permission
 - Change a password after entering the current password
-- Request account deactivation; the visible deactivation button is currently disabled and directs the user to contact TYGA
+- The deactivation control in this legacy form is disabled and directs the user
+  to contact TYGA
 
 ### Data model
 
@@ -37,7 +92,7 @@ This document combines account settings, authentication security and login monit
 - `set_my_avatar`
 - `set_notification_preference`
 
-### Key behaviours
+### Legacy key behaviours
 
 - Email is not editable from the settings screen
 - Role is not editable from the settings screen
@@ -45,7 +100,10 @@ This document combines account settings, authentication security and login monit
 - Password recovery/update uses Supabase Auth directly from the auth pages
 - Settings save profile fields first, then saves changed notification preferences; a later preference failure can therefore occur after profile fields have already been persisted
 
-The current account hook is a read hook (`get_my_account`) and includes role, active state and membership status/current period end. Keep it separate from the privileged admin account directory described in [administration-and-reporting.md](./administration-and-reporting.md).
+The older account hook is a read hook (`get_my_account`) and includes role,
+active state and membership status/current period end. Keep it separate from
+the expanded parent settings data and the privileged admin account directory
+described in [administration-and-reporting.md](./administration-and-reporting.md).
 
 ## Login tracking & lockouts: database foundation
 
