@@ -59,18 +59,9 @@ export const clientNav: NavEntry[] = [
   // Billing: one entry, two tabs inside
   { type: "link", label: "Billing", href: "/billing", icon: Wallet },
 
-  // Communication: messages + support side by side
-  {
-    type: "group",
-    label: "Communication",
-    icon: MessageCircle,
-    items: [
-      { label: "Messages", href: "/messages", icon: MessageCircle },
-      { label: "Support", href: "/support", icon: LifeBuoy },
-    ],
-  },
-
   // Standalone
+  { type: "link", label: "Messages", href: "/messages", icon: MessageCircle },
   { type: "link", label: "Notifications", href: "/notifications", icon: Bell },
+  { type: "link", label: "Support", href: "/support", icon: LifeBuoy },
   { type: "link", label: "Settings", href: "/settings", icon: Settings },
 ]

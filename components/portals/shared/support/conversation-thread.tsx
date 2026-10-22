@@ -2,9 +2,17 @@
 
 import { useEffect, useRef, useState } from "react"
 import { format, isToday, parseISO } from "date-fns"
-import { Send, Lock } from "lucide-react"
+import { Send, Lock, SmilePlus } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import EmojiPicker, { Theme } from "emoji-picker-react"
+import { useTheme } from "next-themes"
 import type { ThreadMessage } from "@/hooks/shared/use-support"
 
 const stamp = (iso: string) => {
@@ -38,7 +46,10 @@ export function ConversationThread({
   const [body, setBody] = useState("")
   const [internal, setInternal] = useState(false)
   const [resolve, setResolve] = useState(false)
+  const [emojiOpen, setEmojiOpen] = useState(false)
   const endRef = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const { resolvedTheme } = useTheme()
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end" })
@@ -54,6 +65,25 @@ export function ConversationThread({
     } catch {
       /* caller handles the error; keep what was typed */
     }
+  }
+
+  function insertEmoji(emoji: string) {
+    const el = textareaRef.current
+    if (!el) {
+      setBody((b) => b + emoji)
+      return
+    }
+    const start = el.selectionStart ?? body.length
+    const end = el.selectionEnd ?? body.length
+    const next = body.slice(0, start) + emoji + body.slice(end)
+    setBody(next)
+    // Restore cursor position after the inserted emoji
+    requestAnimationFrame(() => {
+      el.focus()
+      const pos = start + emoji.length
+      el.setSelectionRange(pos, pos)
+    })
+    setEmojiOpen(false)
   }
 
   return (
@@ -147,8 +177,9 @@ export function ConversationThread({
           )}
 
           {/* Input + send — flexbox aligned, no absolute positioning */}
-          <div className="flex w-full items-end gap-2 rounded-xl border border-border/60 bg-input px-3 py-2 focus-within:border-primary/60">
-            <textarea
+          <div className="flex w-full items-end gap-2 rounded-l-lg rounded-r-full border border-border/60 bg-input py-1 pr-2 pl-3 focus-within:border-primary/60">
+            <Textarea
+              ref={textareaRef}
               value={body}
               onChange={(e) => setBody(e.target.value)}
               onKeyDown={(e) => {
@@ -165,11 +196,42 @@ export function ConversationThread({
                   : placeholder
               }
               aria-label="Message"
-              className="max-h-32 min-h-9 w-full flex-1 resize-none bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+              className="max-h-32 min-h-9 w-full flex-1 resize-none border-none bg-transparent px-0 py-0 text-sm shadow-none outline-none placeholder:text-muted-foreground focus-visible:ring-0"
             />
+
+            <Popover open={emojiOpen} onOpenChange={setEmojiOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 w-8 shrink-0 rounded-full p-0 text-muted-foreground hover:text-foreground"
+                  aria-label="Add emoji"
+                >
+                  <SmilePlus className="h-4 w-4" strokeWidth={1.75} />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="end"
+                side="top"
+                className="w-auto border-0 p-0"
+              >
+                <EmojiPicker
+                  onEmojiClick={(e) => insertEmoji(e.emoji)}
+                  theme={resolvedTheme === "dark" ? Theme.DARK : Theme.LIGHT}
+                  lazyLoadEmojis
+                  searchPlaceholder="Search emoji"
+                  width={320}
+                  height={400}
+                  previewConfig={{ showPreview: false }}
+                />
+              </PopoverContent>
+            </Popover>
+
             <Button
               size="sm"
-              className="h-8 shrink-0 gap-1.5 px-3 text-xs"
+              variant="secondary"
+              className="h-8 shrink-0 gap-1.5 rounded-full px-3 text-xs"
               disabled={!body.trim() || sending}
               onClick={submit}
               aria-label="Send message"
@@ -203,7 +265,7 @@ export function ConversationThread({
                 )}
               </>
             )}
-            <span className="ml-auto tabular-nums">
+            <span className="ml-auto pr-4 tabular-nums">
               {body.length}/{maxLength}
             </span>
           </div>

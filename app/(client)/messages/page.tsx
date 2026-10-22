@@ -16,6 +16,7 @@ import {
 } from "@/hooks/shared/use-support"
 import { ConversationThread } from "@/components/portals/shared/support/conversation-thread"
 import { NewMessageDialog } from "@/components/portals/shared/support/new-message-dialog"
+import { useFullscreen } from "@/components/portals/shared/fullscreen-context"
 
 const initials = (name: string) =>
   name
@@ -143,6 +144,7 @@ function MessagePane({ id, onBack }: { id: number; onBack: () => void }) {
 
   return (
     <div className="flex h-full min-h-0 w-full flex-col">
+      {/* Header — fixed */}
       <div className="flex shrink-0 items-center gap-2 border-b border-border/60 px-2 py-3 sm:gap-3 sm:px-4">
         <Button
           variant="ghost"
@@ -171,6 +173,7 @@ function MessagePane({ id, onBack }: { id: number; onBack: () => void }) {
         </div>
       </div>
 
+      {/* Thread — flexes, scrolls internally, composer pinned at bottom */}
       <div className="flex min-h-0 w-full flex-1 flex-col">
         <ConversationThread
           messages={data.messages}
@@ -194,6 +197,10 @@ export default function MessagesPage() {
   const id = searchParams.get("id") ? Number(searchParams.get("id")) : null
   const [newMessage, setNewMessage] = useState(false)
 
+  // Fullscreen only when a conversation is open.
+  // Hides mobile nav + removes page padding so the chat fills the viewport.
+  useFullscreen(id !== null)
+
   const composeButton = (
     <Button
       size="sm"
@@ -206,10 +213,10 @@ export default function MessagesPage() {
     </Button>
   )
 
-  // Chat view — no page header, fills the viewport, only the thread scrolls
+  // Chat view — full viewport, no page header, only thread scrolls
   if (id !== null) {
     return (
-      <div className="flex h-svh w-full flex-col overflow-hidden">
+      <div className="flex h-full min-h-0 w-full flex-col overflow-hidden">
         <div className="grid min-h-0 w-full flex-1 grid-cols-1 overflow-hidden md:grid-cols-[20rem_1fr]">
           <div className="hidden min-h-0 w-full border-border/60 md:block md:border-r">
             <MessageList
