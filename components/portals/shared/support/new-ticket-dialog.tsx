@@ -69,6 +69,12 @@ export function NewTicketDialog({
   const canSubmit =
     !create.isPending && subject.trim().length >= 3 && body.trim().length >= 5
 
+  const selectedMemberName =
+    memberId === "none"
+      ? "Not about a specific child"
+      : (members?.find((m) => String(m.id) === memberId)?.fullName ??
+        "Select a child")
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-3xl">
@@ -79,9 +85,9 @@ export function NewTicketDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-5 md:grid-cols-[1fr_1fr]">
-          {/* Left: category picker + child select */}
-          <div className="flex flex-col gap-4">
+        <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+          {/* Left: category chips + child select */}
+          <div className="flex flex-col gap-5">
             <div className="flex flex-col gap-2">
               <span className="text-xs font-medium text-foreground">
                 What is it about?
@@ -89,7 +95,7 @@ export function NewTicketDialog({
               <div
                 role="radiogroup"
                 aria-label="Category"
-                className="grid grid-cols-1 gap-1.5"
+                className="flex flex-wrap gap-1.5"
               >
                 {TICKET_CATEGORIES.map((c) => {
                   const selected = category === c.value
@@ -100,22 +106,25 @@ export function NewTicketDialog({
                       role="radio"
                       aria-checked={selected}
                       onClick={() => setCategory(c.value)}
-                      className={`flex items-center gap-2.5 rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
                         selected
-                          ? "border-primary/60 bg-primary/5 text-foreground"
-                          : "border-border/60 text-muted-foreground hover:bg-accent/40 hover:text-foreground"
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border/60 text-muted-foreground hover:border-border hover:bg-accent/40 hover:text-foreground"
                       }`}
                     >
                       <span
-                        className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors ${
-                          selected ? "border-primary" : "border-border"
+                        className={`flex h-3 w-3 shrink-0 items-center justify-center rounded-full border ${
+                          selected
+                            ? "border-primary-foreground"
+                            : "border-current"
                         }`}
+                        aria-hidden
                       >
                         {selected && (
-                          <span className="h-2 w-2 rounded-full bg-primary" />
+                          <span className="h-1.5 w-1.5 rounded-full bg-primary-foreground" />
                         )}
                       </span>
-                      <span className="truncate">{c.label}</span>
+                      {c.label}
                     </button>
                   )
                 })}
@@ -141,7 +150,7 @@ export function NewTicketDialog({
                     id="ticket-member"
                     className="h-9 w-full text-sm"
                   >
-                    <SelectValue />
+                    <SelectValue>{selectedMemberName}</SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">
@@ -159,7 +168,7 @@ export function NewTicketDialog({
           </div>
 
           {/* Right: subject + message */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 md:border-l md:border-border/60 md:pl-6">
             <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="ticket-subject"
@@ -174,9 +183,12 @@ export function NewTicketDialog({
                 maxLength={150}
                 placeholder="A short summary"
               />
+              <p className="text-xs text-muted-foreground">
+                {subject.length}/150
+              </p>
             </div>
 
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-1 flex-col gap-1.5">
               <label
                 htmlFor="ticket-body"
                 className="text-xs font-medium text-foreground"
@@ -187,14 +199,19 @@ export function NewTicketDialog({
                 id="ticket-body"
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
-                rows={7}
+                rows={10}
                 maxLength={4000}
                 placeholder="Describe what's going on…"
-                className="resize-none"
+                className="min-h-40 resize-none"
               />
-              <p className="text-xs text-muted-foreground">
-                Please do not include ID numbers or medical details.
-              </p>
+              <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                <span>
+                  Please do not include ID numbers or medical details.
+                </span>
+                <span className="shrink-0 tabular-nums">
+                  {body.length}/4000
+                </span>
+              </div>
             </div>
 
             {create.error && (
