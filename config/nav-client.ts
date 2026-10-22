@@ -8,6 +8,8 @@ import {
   CalendarDays,
   CalendarClock,
   Flag,
+  MessageCircle,
+  LifeBuoy,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -56,6 +58,17 @@ export const clientNav: NavEntry[] = [
 
   // Billing: one entry, two tabs inside
   { type: "link", label: "Billing", href: "/billing", icon: Wallet },
+
+  // Communication: messages + support side by side
+  {
+    type: "group",
+    label: "Communication",
+    icon: MessageCircle,
+    items: [
+      { label: "Messages", href: "/messages", icon: MessageCircle },
+      { label: "Support", href: "/support", icon: LifeBuoy },
+    ],
+  },
 
   // Standalone
   { type: "link", label: "Notifications", href: "/notifications", icon: Bell },

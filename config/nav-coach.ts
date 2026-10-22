@@ -5,6 +5,8 @@ import {
   Settings,
   CalendarClock,
   TrendingUp,
+  MessageCircle,
+  LifeBuoy,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -34,6 +36,18 @@ export const coachNav: NavItem[] = [
     label: "Progressions",
     href: "/coach/progressions",
     icon: TrendingUp,
+  },
+  {
+    type: "link",
+    label: "Messages",
+    href: "/coach/messages",
+    icon: MessageCircle,
+  },
+  {
+    type: "link",
+    label: "Support",
+    href: "/coach/support",
+    icon: LifeBuoy,
   },
   {
     type: "link",

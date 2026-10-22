@@ -18,6 +18,7 @@ import {
   History,
   Settings,
   Megaphone,
+  LifeBuoy,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -95,6 +96,7 @@ export const adminNav: NavEntry[] = [
         icon: CalendarClock,
       },
       { label: "Finance", href: "/admin/finance", icon: Wallet },
+      { label: "Tickets", href: "/admin/tickets", icon: LifeBuoy },
     ],
   },
 
