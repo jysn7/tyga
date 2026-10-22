@@ -67,11 +67,21 @@ export function NotificationsDropdown() {
     <DropdownMenu>
       <DropdownMenuTrigger
         title="Notifications"
-        className="relative flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        aria-label={
+          unreadCount > 0
+            ? `Notifications, ${unreadCount} unread`
+            : "Notifications"
+        }
+        className="relative flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
       >
-        <Bell className="h-5 w-5" strokeWidth={1.75} />
+        <Bell className="h-4 w-4" strokeWidth={1.75} />
         {hasUnread && (
-          <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-destructive" />
+          <span
+            aria-hidden
+            className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose px-1 text-[10px] leading-none font-semibold text-white"
+          >
+            {unreadCount > 9 ? "9+" : unreadCount}
+          </span>
         )}
       </DropdownMenuTrigger>
 
@@ -103,7 +113,7 @@ export function NotificationsDropdown() {
               const content = (
                 <div className="flex w-full items-center gap-2.5 px-3 py-2.5">
                   {!item.isRead && (
-                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-destructive" />
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rose" />
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-col gap-0.5">

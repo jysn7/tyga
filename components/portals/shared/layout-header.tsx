@@ -1,12 +1,15 @@
 "use client"
 
-import { PanelLeftOpen, CircleHelp } from "lucide-react"
+import { PanelLeftOpen, CircleHelp, MessageCircle } from "lucide-react"
 import { useEffect, useState } from "react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
 
 import { createClient } from "@/utils/supabase/client"
 import { useAppStore } from "@/stores/useAppStore"
 import { useRealtimeNotifications } from "@/hooks/use-notifications"
+import { useUnreadMessages } from "@/hooks/shared/use-support"
 
 import { UserDropdown } from "@/components/portals/shared/user-dropdown"
 import { NotificationsDropdown } from "@/components/portals/shared/notifications-dropdown"
@@ -38,9 +41,10 @@ export function LayoutHeader({ user }: { user: SupabaseUser | null }) {
   const [helpOpen, setHelpOpen] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
 
+  const pathname = usePathname()
+  const { data: unread = 0 } = useUnreadMessages()
+
   // Realtime — opens one channel for this account's notifications.
-  // Passes null until the account is fetched, so it subscribes
-  // as soon as the account id is available.
   useRealtimeNotifications(account?.id ?? null)
 
   useEffect(() => {
@@ -119,6 +123,16 @@ export function LayoutHeader({ user }: { user: SupabaseUser | null }) {
       ? account.role
       : null
 
+  // Messages page lives under /{role}/messages for coach/admin, /messages for parents
+  const messagesHref =
+    account?.role === "admin"
+      ? "/admin/messages"
+      : account?.role === "coach"
+        ? "/coach/messages"
+        : "/messages"
+
+  const messagesActive = pathname?.startsWith(messagesHref)
+
   return (
     <>
       <header className="sticky top-0 z-20 flex shrink-0 flex-col gap-3 rounded-t-xl border-b border-border/50 bg-background px-4 py-3 sm:h-20 sm:flex-row sm:items-center sm:gap-3 sm:px-6 sm:py-0">
@@ -147,6 +161,29 @@ export function LayoutHeader({ user }: { user: SupabaseUser | null }) {
           <div className="flex-1 sm:hidden" />
 
           <div className="flex shrink-0 items-center gap-1.5">
+            <Link
+              href={messagesHref}
+              title="Messages"
+              aria-label={
+                unread > 0 ? `Messages, ${unread} unread` : "Messages"
+              }
+              className={`relative flex h-9 w-9 items-center justify-center rounded-lg transition-colors hover:bg-accent hover:text-foreground ${
+                messagesActive
+                  ? "bg-accent text-foreground"
+                  : "text-muted-foreground"
+              }`}
+            >
+              <MessageCircle className="h-4 w-4" strokeWidth={1.75} />
+              {unread > 0 && (
+                <span
+                  aria-hidden
+                  className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose px-1 text-[10px] leading-none font-semibold text-white"
+                >
+                  {unread > 9 ? "9+" : unread}
+                </span>
+              )}
+            </Link>
+
             <button
               type="button"
               onClick={() => setHelpOpen(true)}

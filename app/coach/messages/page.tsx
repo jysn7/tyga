@@ -18,6 +18,8 @@ import { ConversationThread } from "@/components/portals/shared/support/conversa
 import { NewMessageDialog } from "@/components/portals/shared/support/new-message-dialog"
 import { useFullscreen } from "@/components/portals/shared/fullscreen-context"
 
+const COACH_MESSAGES_ROUTE = "/coach/messages"
+
 const initials = (name: string) =>
   name
     .split(" ")
@@ -191,7 +193,7 @@ function MessagePane({ id, onBack }: { id: number; onBack: () => void }) {
   )
 }
 
-export default function MessagesPage() {
+export default function CoachMessagesPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const id = searchParams.get("id") ? Number(searchParams.get("id")) : null
@@ -221,7 +223,9 @@ export default function MessagesPage() {
           <div className="hidden min-h-0 w-full border-border/60 md:block md:border-r">
             <MessageList
               selected={id}
-              onSelect={(mid) => router.push(`/coach/messages?id=${mid}`)}
+              onSelect={(mid) =>
+                router.push(`${COACH_MESSAGES_ROUTE}?id=${mid}`)
+              }
             />
           </div>
 
@@ -229,7 +233,7 @@ export default function MessagesPage() {
             <MessagePane
               key={id}
               id={id}
-              onBack={() => router.push("/coach/messages")}
+              onBack={() => router.push(COACH_MESSAGES_ROUTE)}
             />
           </div>
         </div>
@@ -238,7 +242,9 @@ export default function MessagesPage() {
           <NewMessageDialog
             open={newMessage}
             onClose={() => setNewMessage(false)}
-            onCreated={(newId) => router.push(`/messages?id=${newId}`)}
+            onCreated={(newId) =>
+              router.push(`${COACH_MESSAGES_ROUTE}?id=${newId}`)
+            }
           />
         )}
       </div>
@@ -250,7 +256,7 @@ export default function MessagesPage() {
     <div className="max-w-8xl mx-auto flex h-full w-full flex-col gap-6">
       <PageHeader
         title="Messages"
-        description="Chat with your child's coaches"
+        description="Chat with parents and fellow coaches"
         action={composeButton}
       />
 
@@ -258,7 +264,7 @@ export default function MessagesPage() {
         <div className="min-h-0 w-full border-border/60 md:border-r">
           <MessageList
             selected={id}
-            onSelect={(mid) => router.push(`/messages?id=${mid}`)}
+            onSelect={(mid) => router.push(`${COACH_MESSAGES_ROUTE}?id=${mid}`)}
           />
         </div>
 
@@ -277,7 +283,9 @@ export default function MessagesPage() {
         <NewMessageDialog
           open={newMessage}
           onClose={() => setNewMessage(false)}
-          onCreated={(newId) => router.push(`/messages?id=${newId}`)}
+          onCreated={(newId) =>
+            router.push(`${COACH_MESSAGES_ROUTE}?id=${newId}`)
+          }
         />
       )}
     </div>
