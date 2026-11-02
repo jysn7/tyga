@@ -17,6 +17,7 @@ import {
   Bell,
   History,
   Settings,
+  Activity,
   Megaphone,
   LifeBuoy,
 } from "lucide-react"
@@ -104,19 +105,15 @@ export const adminNav: NavEntry[] = [
   {
     type: "link",
     label: "Marketing Site",
-    href: "/admin/marketing", // fixed typo: markteting → marketing
+    href: "/admin/marketing",
     icon: Megaphone,
   },
 
-  // System — admin-only config and records
+  // System — consolidated under /admin/system
   {
-    type: "group",
+    type: "link",
     label: "System",
+    href: "/admin/system",
     icon: SlidersHorizontal,
-    items: [
-      { label: "Notifications", href: "/admin/notifications", icon: Bell },
-      { label: "Audit Log", href: "/admin/audit", icon: History },
-      { label: "Settings", href: "/admin/settings", icon: Settings },
-    ],
   },
 ]

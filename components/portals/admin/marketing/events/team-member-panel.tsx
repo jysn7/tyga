@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { ImagePlus, Loader2, X } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -19,6 +20,7 @@ import {
 } from "@/components/ui/select"
 import { toast } from "@/components/ui/toast"
 import { useCoaches } from "@/hooks/admin/use-coaches"
+import { uploadTeamImage } from "@/hooks/admin/marketing/upload-team-image"
 import {
   useUpsertTeamMember,
   type TeamMember,
@@ -88,7 +90,30 @@ function TeamMemberPanelForm({
   const [coachId, setCoachId] = useState(initialValues.coachId)
   const [sortOrder, setSortOrder] = useState(initialValues.sortOrder)
   const [visibility, setVisibility] = useState(initialValues.visibility)
+
+  const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploading(true)
+    try {
+      const publicUrl = await uploadTeamImage(file)
+      setPortraitUrl(publicUrl)
+    } catch (err) {
+      toast.add({
+        title: "Failed to upload portrait",
+        description:
+          err instanceof Error ? err.message : "Something went wrong",
+        type: "error",
+        timeout: 5000,
+      })
+    } finally {
+      setIsUploading(false)
+    }
+  }
 
   async function handleSave() {
     setError(null)
@@ -138,22 +163,50 @@ function TeamMemberPanelForm({
         </DialogHeader>
 
         <div className="flex max-h-[60vh] flex-col gap-4 overflow-y-auto pr-1">
-          {/* Portrait preview */}
-          {portraitUrl && (
-            <div className="flex items-center gap-3">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-input">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={portraitUrl}
-                  alt={displayName || "Portrait"}
-                  className="h-full w-full object-cover"
+          {/* Portrait Upload */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs text-muted-foreground">
+              Portrait image
+            </label>
+            <div className="flex items-center gap-4">
+              {portraitUrl ? (
+                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full border border-border">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={portraitUrl}
+                    alt="Preview"
+                    className="h-full w-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setPortraitUrl("")}
+                    className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 transition-opacity hover:opacity-100"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-dashed border-border bg-input text-muted-foreground">
+                  <ImagePlus className="h-5 w-5 opacity-50" />
+                </div>
+              )}
+
+              <div className="flex-1">
+                <Input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleImageUpload}
+                  disabled={isUploading}
+                  className="cursor-pointer border-0 bg-transparent shadow-none file:bg-transparent file:text-foreground"
                 />
+                {isUploading && (
+                  <span className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Uploading...
+                  </span>
+                )}
               </div>
-              <span className="text-xs text-muted-foreground">
-                Portrait preview
-              </span>
             </div>
-          )}
+          </div>
 
           <div className="flex flex-col gap-1.5">
             <label className="text-xs text-muted-foreground">
@@ -190,21 +243,6 @@ function TeamMemberPanelForm({
               rows={3}
               className="resize-none rounded-lg border border-border bg-input px-3.5 py-2.5 text-sm"
             />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-muted-foreground">
-              Portrait URL (optional)
-            </label>
-            <Input
-              value={portraitUrl}
-              onChange={(e) => setPortraitUrl(e.target.value)}
-              placeholder="https://..."
-              className={inputClass}
-            />
-            <p className="text-[11px] text-muted-foreground">
-              Paste a URL from the uploads bucket, or leave blank and add later.
-            </p>
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -280,7 +318,7 @@ function TeamMemberPanelForm({
           </Button>
           <Button
             onClick={handleSave}
-            disabled={upsert.isPending}
+            disabled={upsert.isPending || isUploading}
             className="text-xs"
           >
             {upsert.isPending

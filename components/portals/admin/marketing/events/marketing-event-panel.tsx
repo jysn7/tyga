@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from "react"
+import { createClient } from "@/utils/supabase/client"
+import { ImagePlus, Loader2, X } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -61,6 +63,7 @@ function MarketingEventPanelForm({
   onOpenChange: (open: boolean) => void
   event: MarketingEvent | null
 }) {
+  const supabase = createClient()
   const { data: venues } = useVenues()
   const upsert = useUpsertMarketingEvent()
 
@@ -100,7 +103,45 @@ function MarketingEventPanelForm({
   const [capacity, setCapacity] = useState(initialValues.capacity)
   const [sortOrder, setSortOrder] = useState(initialValues.sortOrder)
   const [visibility, setVisibility] = useState<string>(initialValues.visibility)
+
+  const [imageUrl, setImageUrl] = useState<string | null>(
+    event?.image_url ?? null
+  )
+  const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploading(true)
+    try {
+      const fileExt = file.name.split(".").pop()
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
+
+      const { error: uploadError } = await supabase.storage
+        .from("event-images")
+        .upload(fileName, file)
+
+      if (uploadError) throw uploadError
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("event-images").getPublicUrl(fileName)
+
+      setImageUrl(publicUrl)
+    } catch (err) {
+      toast.add({
+        title: "Failed to upload image",
+        description:
+          err instanceof Error ? err.message : "Something went wrong",
+        type: "error",
+        timeout: 5000,
+      })
+    } finally {
+      setIsUploading(false)
+    }
+  }
 
   async function handleSave() {
     setError(null)
@@ -115,7 +156,7 @@ function MarketingEventPanelForm({
           eventDate,
           startTime,
           description,
-          imageUrl: event?.image_url ?? null,
+          imageUrl: imageUrl ?? null,
           entryFee: entryFee === "" ? undefined : Number(entryFee),
           capacity: capacity === "" ? undefined : Number(capacity),
           sortOrder: Number(sortOrder) || 0,
@@ -152,6 +193,49 @@ function MarketingEventPanelForm({
         </DialogHeader>
 
         <div className="flex max-h-[60vh] flex-col gap-4 overflow-y-auto pr-1">
+          {/* Image Upload */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs text-muted-foreground">Cover image</label>
+            <div className="flex items-center gap-3">
+              {imageUrl ? (
+                <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-md border border-border">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={imageUrl}
+                    alt="Preview"
+                    className="h-full w-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setImageUrl(null)}
+                    className="absolute top-1 right-1 rounded-full bg-black/50 p-1 text-white hover:bg-black/80"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex h-16 w-24 shrink-0 items-center justify-center rounded-md border border-dashed border-border bg-input text-muted-foreground">
+                  <ImagePlus className="h-5 w-5 opacity-50" />
+                </div>
+              )}
+
+              <div className="flex-1">
+                <Input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleImageUpload}
+                  disabled={isUploading}
+                  className="cursor-pointer border-0 bg-transparent shadow-none file:bg-transparent file:text-foreground"
+                />
+                {isUploading && (
+                  <span className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Uploading...
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
           <div className="flex flex-col gap-1.5">
             <label className="text-xs text-muted-foreground">Name</label>
             <Input
@@ -308,7 +392,7 @@ function MarketingEventPanelForm({
           </Button>
           <Button
             onClick={handleSave}
-            disabled={upsert.isPending}
+            disabled={upsert.isPending || isUploading}
             className="text-xs"
           >
             {upsert.isPending ? "Saving..." : event ? "Save changes" : "Create"}

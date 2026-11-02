@@ -89,3 +89,55 @@ export function useDeleteTeamMember() {
     },
   })
 }
+
+export function useToggleTeamMemberPublished() {
+  const supabase = createClient()
+  const qc = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      currentlyPublished,
+      member,
+    }: {
+      id: number
+      currentlyPublished: boolean
+      member: TeamMember
+    }) => {
+      const { error } = await supabase.rpc("admin_upsert_team_member", {
+        p_id: id,
+        p_display_name: member.display_name,
+        p_role_title: member.role_title,
+        p_bio: member.bio,
+        p_portrait_url: member.portrait_url,
+        p_coach_id: member.coach_id,
+        p_sort_order: member.sort_order,
+        p_visibility: currentlyPublished ? "draft" : "published",
+      })
+      if (error) throw new Error(error.message)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [KEY] })
+    },
+  })
+}
+
+// Used by the list view to update ONLY the image, bypassing Zod validation
+export function useSetTeamMemberImage() {
+  const supabase = createClient()
+  const qc = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ id, url }: { id: number; url: string }) => {
+      const { error } = await supabase.rpc("admin_set_content_image", {
+        p_kind: "team_member",
+        p_id: id,
+        p_url: url,
+      })
+      if (error) throw new Error(error.message)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [KEY] })
+    },
+  })
+}

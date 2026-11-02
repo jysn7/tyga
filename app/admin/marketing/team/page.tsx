@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { Users, Pencil, Trash2, Plus } from "lucide-react"
+import { useRef, useState } from "react"
+import { Users, Pencil, Trash2, Plus, ImagePlus } from "lucide-react"
 import { PageHeader } from "@/components/portals/shared/page-header"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -11,9 +11,12 @@ import {
 } from "@/components/portals/shared/status-pill"
 import { ConfirmDialog } from "@/components/portals/shared/confirm-dialog"
 import { toast } from "@/components/ui/toast"
+import { Loader } from "@/components/portals/shared/loader"
+import { uploadTeamImage } from "@/hooks/admin/marketing/upload-team-image"
 import {
   useTeamMembers,
   useDeleteTeamMember,
+  useSetTeamMemberImage,
   type TeamMember,
 } from "@/hooks/admin/marketing/use-team-members"
 import { TeamMemberPanel } from "@/components/portals/admin/marketing/events/team-member-panel"
@@ -50,11 +53,16 @@ function TeamMemberRowSkeleton() {
 export default function TeamMembersPage() {
   const { data: members, isLoading } = useTeamMembers()
   const deleteMember = useDeleteTeamMember()
+  const setTeamImage = useSetTeamMemberImage()
 
   const [filter, setFilter] = useState<Filter>("all")
   const [panelOpen, setPanelOpen] = useState(false)
   const [editing, setEditing] = useState<TeamMember | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<TeamMember | null>(null)
+
+  const [uploadingId, setUploadingId] = useState<number | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [uploadTargetId, setUploadTargetId] = useState<number | null>(null)
 
   const filtered = (members ?? []).filter(
     (m) => filter === "all" || m.visibility === filter
@@ -91,8 +99,57 @@ export default function TeamMembersPage() {
     }
   }
 
+  function triggerUpload(id: number) {
+    setUploadTargetId(id)
+    fileInputRef.current?.click()
+  }
+
+  async function handleListImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    const id = uploadTargetId
+
+    if (fileInputRef.current) fileInputRef.current.value = ""
+    if (!file || !id) return
+
+    setUploadingId(id)
+
+    try {
+      const publicUrl = await uploadTeamImage(file)
+
+      await setTeamImage.mutateAsync({
+        id: id,
+        url: publicUrl,
+      })
+
+      toast.add({
+        title: "Portrait updated",
+        type: "success",
+        timeout: 3000,
+      })
+    } catch (err) {
+      toast.add({
+        title: "Failed to upload image",
+        description:
+          err instanceof Error ? err.message : "Something went wrong",
+        type: "error",
+        timeout: 5000,
+      })
+    } finally {
+      setUploadingId(null)
+      setUploadTargetId(null)
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6">
+      <input
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        className="hidden"
+        ref={fileInputRef}
+        onChange={handleListImageUpload}
+      />
+
       <PageHeader
         title="Team"
         description="Staff profiles shown on the About page"
@@ -149,23 +206,41 @@ export default function TeamMembersPage() {
           <div className="flex flex-col divide-y divide-border/60">
             {filtered.map((m) => {
               const status = STATUS_MAP[m.visibility]
+              const isUploading = uploadingId === m.id
+
               return (
                 <div key={m.id} className="flex items-center gap-4 px-5 py-3.5">
-                  <Avatar className="h-11 w-11 shrink-0 rounded-full">
-                    {m.portrait_url && (
-                      <AvatarImage
-                        src={m.portrait_url}
-                        alt={m.display_name}
-                        className="object-cover"
-                      />
+                  <button
+                    onClick={() => triggerUpload(m.id)}
+                    disabled={isUploading}
+                    title="Change portrait"
+                    className="group relative shrink-0 overflow-hidden rounded-full disabled:opacity-50"
+                  >
+                    <Avatar className="h-11 w-11 rounded-full">
+                      {m.portrait_url && !isUploading && (
+                        <AvatarImage
+                          src={m.portrait_url}
+                          alt={m.display_name}
+                          className="object-cover"
+                        />
+                      )}
+                      <AvatarFallback className="bg-input text-xs font-semibold text-primary">
+                        {isUploading ? (
+                          <Loader className="h-4 w-4" />
+                        ) : (
+                          <Users
+                            className="h-4 w-4 text-muted-foreground"
+                            strokeWidth={1.75}
+                          />
+                        )}
+                      </AvatarFallback>
+                    </Avatar>
+                    {!isUploading && (
+                      <div className="absolute inset-0 hidden items-center justify-center bg-black/40 group-hover:flex">
+                        <ImagePlus className="h-4 w-4 text-white" />
+                      </div>
                     )}
-                    <AvatarFallback className="bg-input text-xs font-semibold text-primary">
-                      <Users
-                        className="h-4 w-4 text-muted-foreground"
-                        strokeWidth={1.75}
-                      />
-                    </AvatarFallback>
-                  </Avatar>
+                  </button>
 
                   <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <span className="truncate text-sm font-medium text-foreground">

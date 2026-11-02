@@ -8,6 +8,8 @@ export type MarketingEvent = {
   id: number
   name: string
   type: string | null
+  min_age: number | null
+  max_age: number | null
   venue_id: number | null
   event_date: string | null
   start_time: string | null
@@ -15,10 +17,10 @@ export type MarketingEvent = {
   image_url: string | null
   entry_fee: number | null
   capacity: number | null
+  status: string | null
   sort_order: number
   visibility: "draft" | "published" | "archived"
   published_at: string | null
-  created_at: string
   updated_at: string
   updated_by: string | null
 }
