@@ -1,7 +1,7 @@
 // components/portals/client/billing/membership-card.tsx
 "use client"
 
-import { format } from "date-fns"
+import { format, parseISO } from "date-fns"
 import { CreditCard, ShieldCheck, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -10,12 +10,18 @@ import {
 } from "@/components/portals/shared/status-pill"
 import { toast } from "@/components/ui/toast"
 import {
-  useCreateSubscription,
-  useCancelSubscription,
+  useStartMembership,
+  useCancelMembership,
 } from "@/hooks/client/use-membership"
 
 type MembershipStatus =
-  "pending" | "active" | "non_renewing" | "cancelled" | "attention" | null
+  | "pending"
+  | "active"
+  | "non_renewing"
+  | "cancelled"
+  | "attention"
+  | "expired"
+  | null
 
 const STATUS_CONFIG: Record<
   Exclude<MembershipStatus, null>,
@@ -25,8 +31,12 @@ const STATUS_CONFIG: Record<
   active: { label: "Active", variant: "success" },
   non_renewing: { label: "Cancels soon", variant: "warning" },
   cancelled: { label: "Cancelled", variant: "neutral" },
+  expired: { label: "Expired", variant: "neutral" },
   attention: { label: "Payment failed", variant: "danger" },
 }
+
+const formatDate = (iso: string | null) =>
+  iso ? format(parseISO(iso), "d MMM yyyy") : null
 
 export function MembershipCard({
   status,
@@ -37,16 +47,17 @@ export function MembershipCard({
   currentPeriodEnd: string | null
   amount?: number
 }) {
-  const createSub = useCreateSubscription()
-  const cancelSub = useCancelSubscription()
+  const start = useStartMembership()
+  const cancel = useCancelMembership()
 
   const isActive = status === "active" || status === "non_renewing"
   const config = status ? STATUS_CONFIG[status] : null
+  const endDate = formatDate(currentPeriodEnd)
 
   async function handleSubscribe() {
     try {
-      const result = await createSub.mutateAsync()
-      window.location.href = result.authorization_url
+      // useStartMembership redirects to Paystack itself; we never touch the URL here
+      await start.mutateAsync()
     } catch (err) {
       toast.add({
         title: "Couldn't start checkout",
@@ -60,7 +71,7 @@ export function MembershipCard({
 
   async function handleCancel() {
     try {
-      await cancelSub.mutateAsync()
+      await cancel.mutateAsync()
       toast.add({
         title: "Membership cancelled",
         description: "You'll keep access until the end of your current period.",
@@ -107,16 +118,13 @@ export function MembershipCard({
 
       {/* Context line — changes with status */}
       <div className="text-xs text-muted-foreground">
-        {status === "active" && currentPeriodEnd && (
-          <span>
-            Next payment on {format(new Date(currentPeriodEnd), "d MMM yyyy")}.
-          </span>
+        {status === "active" && endDate && (
+          <span>Next payment on {endDate}.</span>
         )}
-        {status === "non_renewing" && currentPeriodEnd && (
+        {status === "non_renewing" && endDate && (
           <span>
-            Your membership ends on{" "}
-            {format(new Date(currentPeriodEnd), "d MMM yyyy")}. Restart it
-            anytime before then to stay enrolled.
+            Your membership ends on {endDate}. Resume it anytime before then to
+            stay enrolled.
           </span>
         )}
         {status === "attention" && (
@@ -130,6 +138,9 @@ export function MembershipCard({
             We&apos;re waiting for your bank to confirm the first payment.
             Membership activates once it clears.
           </span>
+        )}
+        {status === "expired" && (
+          <span>Your membership expired. Subscribe again to keep access.</span>
         )}
         {(status === null || status === "cancelled") && (
           <span>
@@ -146,9 +157,9 @@ export function MembershipCard({
             size="sm"
             className="h-9 rounded-md bg-foreground px-4 text-xs font-medium text-background hover:bg-foreground/90"
             onClick={handleSubscribe}
-            disabled={createSub.isPending}
+            disabled={start.isPending}
           >
-            {createSub.isPending ? (
+            {start.isPending ? (
               <>
                 <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                 Redirecting…
@@ -160,7 +171,9 @@ export function MembershipCard({
                   ? "Update card"
                   : status === "pending"
                     ? "Retry payment"
-                    : "Subscribe"}
+                    : status === "expired" || status === "cancelled"
+                      ? "Resubscribe"
+                      : "Subscribe"}
               </>
             )}
           </Button>
@@ -172,9 +185,9 @@ export function MembershipCard({
             variant="outline"
             className="h-9 rounded-md text-xs"
             onClick={handleCancel}
-            disabled={cancelSub.isPending}
+            disabled={cancel.isPending}
           >
-            {cancelSub.isPending ? "Cancelling…" : "Cancel membership"}
+            {cancel.isPending ? "Cancelling…" : "Cancel membership"}
           </Button>
         )}
       </div>

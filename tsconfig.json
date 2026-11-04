@@ -43,7 +43,7 @@
     "jest.config.mjs",
     "lib/functions",
     ".next/dev/types/**/*.ts"
-  ],
+, "lib/admin/membership"  ],
   "exclude": [
     "node_modules",
     "public/sw.js",

@@ -7,6 +7,7 @@ import { AcademyTab } from "./academy-tab"
 import { SiteTab } from "./site-tab"
 import { NotificationsTab } from "./notifications-tab"
 import { PaymentsTab } from "./payments-tab"
+import { MembershipTab } from "./membership-tab"
 
 export function AdminSettingsForm() {
   const { data: settings, isLoading, error } = useAppSettings()
@@ -34,6 +35,7 @@ export function AdminSettingsForm() {
         <TabsTrigger value="site">Site</TabsTrigger>
         <TabsTrigger value="notifications">Notifications</TabsTrigger>
         <TabsTrigger value="payments">Payments</TabsTrigger>
+        <TabsTrigger value="membership">Membership</TabsTrigger>
       </TabsList>
 
       <TabsContent value="academy" className="mt-0">
@@ -50,6 +52,10 @@ export function AdminSettingsForm() {
 
       <TabsContent value="payments" className="mt-0">
         <PaymentsTab settings={settings} />
+      </TabsContent>
+
+      <TabsContent value="membership" className="mt-0">
+        <MembershipTab settings={settings} />
       </TabsContent>
     </Tabs>
   )

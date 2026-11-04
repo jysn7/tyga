@@ -52,6 +52,14 @@ export type AppSettings = {
   invoicePrefix: string
   invoiceDueDays: number
   bankDetails: string | null
+
+  // Membership
+  membershipFeeAmount: number
+  membershipFeeInterval: string
+  membershipFeeDescription: string | null
+  membershipRequired: boolean
+  membershipPlanCode: string | null
+  membershipGraceDays: number
 }
 
 // Raw row — snake_case, exactly matches the app_settings table
@@ -93,6 +101,12 @@ export type AppSettingsRow = {
   invoice_prefix: string
   invoice_due_days: number
   bank_details: string | null
+  membership_fee_amount: number
+  membership_fee_interval: string
+  membership_fee_description: string | null
+  membership_required: boolean
+  membership_plan_code: string | null
+  membership_grace_days: number
 }
 
 function toAppSettings(row: AppSettingsRow): AppSettings {
@@ -137,6 +151,13 @@ function toAppSettings(row: AppSettingsRow): AppSettings {
     invoicePrefix: row.invoice_prefix,
     invoiceDueDays: row.invoice_due_days,
     bankDetails: row.bank_details,
+
+    membershipFeeAmount: row.membership_fee_amount,
+    membershipFeeInterval: row.membership_fee_interval,
+    membershipFeeDescription: row.membership_fee_description,
+    membershipRequired: row.membership_required,
+    membershipPlanCode: row.membership_plan_code,
+    membershipGraceDays: row.membership_grace_days,
   }
 }
 
@@ -212,4 +233,44 @@ export function usePaymentSettings() {
     invoiceDueDays: data?.invoiceDueDays ?? 7,
     bankDetails: data?.bankDetails ?? null,
   }
+}
+
+export function useMembershipSettings() {
+  const { data } = useAppSettings()
+  return {
+    feeAmount: data?.membershipFeeAmount ?? 0,
+    feeInterval: data?.membershipFeeInterval ?? "monthly",
+    feeDescription: data?.membershipFeeDescription ?? null,
+    required: data?.membershipRequired ?? true,
+    planCode: data?.membershipPlanCode ?? null,
+    graceDays: data?.membershipGraceDays ?? 7,
+  }
+}
+
+export function useUpdateMembershipSettings() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (patch: {
+      required?: boolean
+      feeAmount?: number
+      feeInterval?: string
+      feeDescription?: string | null
+      planCode?: string | null
+      graceDays?: number
+    }) => {
+      const { error } = await supabase.rpc("admin_update_membership_settings", {
+        p_required: patch.required ?? null,
+        p_fee_amount: patch.feeAmount ?? null,
+        p_fee_interval: patch.feeInterval ?? null,
+        p_fee_description: patch.feeDescription ?? null,
+        p_plan_code: patch.planCode ?? null,
+        p_grace_days: patch.graceDays ?? null,
+      })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["app-settings"] })
+    },
+  })
 }
