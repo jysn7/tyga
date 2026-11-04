@@ -16,7 +16,9 @@ The admin overview page currently renders:
 
 ## Account directory
 
-The admin account query supports role, active-state and search filters. Search is trimmed and capped at 100 characters for client UX; the RPC uses bound parameters. The hook is read-only: it lists account identity/contact fields, role, active state and creation time. Account role changes are not a general mutation in this hook; the coach-promotion flow uses `admin_set_account_role` as part of creating a coach.
+The `/admin/accounts` page uses `hooks/admin/accounts/use-admin-accounts.ts` to list accounts with role, active-state and search filters, 100-row pages, and a detail panel. Detail includes sign-in/provider and MFA information, child and coach summaries, membership/open-invoice summaries, account history and blockers for anonymization.
+
+The detail panel supports role and active-state changes with an audit reason, password-reset email, admin removal of an authenticator with a reason, and account anonymization with confirmation email and reason. Successful changes refresh the account query family. These are privileged administrative actions; their RPC/server-side authorization remains authoritative. The separate `hooks/admin/use-accounts.ts` hook is a lightweight account picker used by coach creation, not the full account-management surface.
 
 ## Coach administration and invitations
 
@@ -46,21 +48,27 @@ Sensitive member access has its own gated flow, documented in [members-and-onboa
 
 Settings are updated through `admin_update_app_settings`; successful changes invalidate the app-settings query. Convenience accessors expose booking, branding and payment values with defaults while settings are not yet loaded.
 
+## System health and exports
+
+The system health surface uses `hooks/admin/use-ops.ts` to read admin health checks and job results through `admin_get_system_health`; the UI can refresh this data. The same module exports CSV data for members, enrolments, attendance or payments through `admin_export`, with optional date bounds. Export files are named with the selected export kind and the current South African date. CSV cells are escaped, and values beginning with spreadsheet formula characters are prefixed to avoid being interpreted as formulas.
+
 ## Hook and route map
 
 | Source | Capability |
 |---|---|
 | `hooks/admin/use-admin-overview.ts` | Dashboard summary, trends and report queries |
-| `hooks/admin/use-accounts.ts` | Filtered account directory |
+| `hooks/admin/accounts/use-admin-accounts.ts` | Filtered account directory, account detail and privileged account actions |
+| `hooks/admin/use-accounts.ts` | Lightweight account picker for coach creation |
 | `hooks/admin/use-coaches.ts`, `hooks/admin/use-create-coach.ts`, `hooks/admin/use-update-coach.ts` | Coach list, promotion and profile type/ratio updates |
 | `hooks/admin/invites/use-invite-coach.ts`, `hooks/admin/invites/use-coach-invites.ts` | Invite, status-filtered invite list and revoke |
 | `hooks/admin/use-audit-log.ts` | Filtered/paginated audit events |
 | `hooks/lookups/use-academy-settings.ts` | Read/update global app settings and derive settings groups |
+| `hooks/admin/use-ops.ts` | System health queries and CSV exports |
 | `/admin/overview`, `/admin/accounts`, `/admin/coaches`, `/admin/audit`, `/admin/settings`, `/admin/finance` | Admin overview, account/coach management, audit and finance/settings pages |
 
 ## Boundaries
 
 - Domain-specific CRUD behavior, validation and lifecycle constraints are documented with the owning feature.
 - This document records the current hook/API surface, not an authorization guarantee; the server RPCs and routes must enforce admin access.
-- The account directory hook does not currently expose general account activation/deactivation or role-change mutations.
+- The lightweight account picker is read-only; account activation and role changes are available only through the privileged detail actions documented above.
 - Reporting hooks can exist before a dedicated report screen is implemented; check the route's actual hook consumers before claiming a chart is visible.

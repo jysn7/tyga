@@ -31,7 +31,7 @@ export function SidePanel({
       >
         <div className="flex h-full w-full flex-col overflow-hidden">
           {header ? (
-            <SheetHeader className="gap-0 p-0 text-left">
+            <SheetHeader className="gap-0 border-b border-border p-0 text-left">
               <SheetTitle className="sr-only">{title}</SheetTitle>
               {description && (
                 <SheetDescription className="sr-only">

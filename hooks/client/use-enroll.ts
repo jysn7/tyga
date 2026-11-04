@@ -1,4 +1,3 @@
-// hooks/client/use-enroll.ts
 "use client"
 
 import { useMutation } from "@tanstack/react-query"
@@ -8,6 +7,12 @@ type EnrollResponse = {
   reference: string
   enrollment_id: number
   invoice_id: number
+}
+
+type EnrollInput = {
+  memberId: number
+  programmeId: number
+  promoCode?: string | null
 }
 
 function getErrorMessage(value: unknown): string | undefined {
@@ -20,17 +25,15 @@ function getErrorMessage(value: unknown): string | undefined {
 
 export function useEnroll() {
   return useMutation({
-    mutationFn: async ({
-      memberId,
-      programmeId,
-    }: {
-      memberId: number
-      programmeId: number
-    }) => {
+    mutationFn: async ({ memberId, programmeId, promoCode }: EnrollInput) => {
       const res = await fetch("/api/enroll", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId, programmeId }),
+        body: JSON.stringify({
+          memberId,
+          programmeId,
+          promoCode: promoCode || null,
+        }),
       })
 
       const text = await res.text()

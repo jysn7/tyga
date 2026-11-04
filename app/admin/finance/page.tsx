@@ -1,5 +1,3 @@
-// app/admin/finance/page.tsx (adjust path as needed)
-
 import { Suspense } from "react"
 import { PageHeader } from "@/components/portals/shared/page-header"
 import { AdminFinancePage } from "@/components/portals/admin/finance/admin-finance-page"

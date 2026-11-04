@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Plus } from "lucide-react"
+import Link from "next/link"
+import { Percent, Plus } from "lucide-react"
 import { PageHeader } from "@/components/portals/shared/page-header"
 import { SearchInput } from "@/components/portals/shared/search-input"
 import { Loader } from "@/components/portals/shared/loader"
@@ -98,10 +99,21 @@ export default function AdminProgrammesPage() {
         title="Programmes"
         description="Enrollable programmes across venues and levels"
         action={
-          <Button variant="secondary" size="lg" onClick={handleCreate}>
-            <Plus className="h-3.5 w-3.5" />
-            New programme
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="lg">
+              <Link
+                href="/admin/programmes/discounts"
+                className="flex items-center"
+              >
+                <Percent className="mr-2 h-3.5 w-3.5" />
+                Discounts
+              </Link>
+            </Button>
+            <Button variant="secondary" size="lg" onClick={handleCreate}>
+              <Plus className="h-3.5 w-3.5" />
+              New programme
+            </Button>
+          </div>
         }
       />
 

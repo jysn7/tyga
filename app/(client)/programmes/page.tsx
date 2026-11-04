@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/portals/shared/page-header"
 import { SearchInput } from "@/components/portals/shared/search-input"
 import { ProgrammeList } from "@/components/portals/client/programmes/programme-list"
 import { EnrollModal } from "@/components/portals/client/programmes/enroll-modal"
+import { DiscountBanner } from "@/components/portals/client/programmes/discount-banner"
 import { Loader } from "@/components/portals/shared/loader"
 import { useProgrammes } from "@/hooks/client/use-programmes"
 import { useMembers } from "@/hooks/use-members"
@@ -106,6 +107,8 @@ export default function ProgrammesPage() {
           </Select>
         }
       />
+
+      <DiscountBanner />
 
       {/* Search + filters */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">

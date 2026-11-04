@@ -37,12 +37,13 @@ Admins can also inspect and edit the curriculum tags on programme sessions throu
 | `hooks/admin/programmes/use-curriculum-mutations.ts` | Reads modules and changes session-module associations |
 | `hooks/coach/use-coach-session-detail.ts` | Loads session-specific curriculum for coaches |
 | `hooks/coach/use-coach-mutations.ts` | Lets a coach tag session curriculum |
+| `hooks/coach/use-coach-progressions.ts` | Contains progression read/write helpers, but has no current page or component consumer |
 | `hooks/client/members/use-member-progression.ts` | Reads a member's parent-visible progression |
 | `hooks/admin/use-admin-overview.ts` | Provides aggregate progression reporting for administrators |
 
 ## Current progression boundary
 
-The `member_milestones` and `level_progressions` tables exist, and parent/admin read surfaces include progression data. However, a repository search of the current hooks and Supabase migrations did not find an implemented `coach_advance_member_level`, `member_is_level_complete` or `coach_complete_module_for_enrolled` operation. Do not describe automatic milestone completion, readiness enforcement or coach level advancement as currently available until a corresponding migration, hook and UI are added and verified.
+The `member_milestones` and `level_progressions` tables exist, and parent/admin read surfaces include progression data. `hooks/coach/use-coach-progressions.ts` exports helpers that call coach progression and milestone RPCs, but no current page or component uses them, and the corresponding RPC definitions are not present in the checked-in migrations (the migration file named `20261009115350_coach_progressions.sql` is empty). Treat these helpers as unfinished/unverified, not as a shipped coach workflow. Do not describe automatic milestone completion, readiness enforcement or coach level advancement as available until the database functions and a consuming UI are deployed and verified.
 
 The `get_member_progression` read function is used by the parent hook; it is a read path and does not itself advance a member's level.
 
@@ -57,8 +58,8 @@ The `get_member_progression` read function is used by the parent hook; it is a r
 
 Use the migration history as the source of truth for schema and RPC deployment order. The level/module administration functions enforce admin access; migrations also prevent deleting levels/modules while referenced by members, programmes, progression history or milestone records. Reload PostgREST after function signature changes.
 
-## Not present in the current client hook surface
+## Not available as a shipped workflow
 
-- Coach-driven per-member milestone completion or level advancement
+- A wired UI and migration-backed coach workflow for per-member milestone completion or level advancement
 - Automatic advancement
 - Certificate/badge generation and progression notifications

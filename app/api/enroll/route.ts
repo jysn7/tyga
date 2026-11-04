@@ -15,6 +15,10 @@ export async function POST(req: NextRequest) {
     const memberId = Number(body.memberId)
     const programmeId = Number(body.programmeId)
 
+    // Extract the promo code (will be null/undefined if not provided)
+    const promoCode =
+      typeof body.promoCode === "string" ? body.promoCode.trim() : null
+
     if (
       !Number.isInteger(memberId) ||
       memberId <= 0 ||
@@ -57,6 +61,7 @@ export async function POST(req: NextRequest) {
       {
         p_member_id: memberId,
         p_programme_id: programmeId,
+        p_promo_code: promoCode, // <--- Pass the promo code to the DB engine
       }
     )
 
@@ -89,6 +94,28 @@ export async function POST(req: NextRequest) {
         { error: "Account has no email" },
         { status: 400 }
       )
+    }
+
+    // If the total is 0 (fully paid by discounts), skip Paystack and mark as paid
+    if (Number(total_amount) <= 0) {
+      const adminClient = createAdminClient(supabaseUrl, serviceRoleKey)
+
+      await adminClient.from("payments").insert({
+        invoice_id,
+        amount: 0,
+        method: "Discount",
+        gateway_reference: `FREE-${invoice_id}`,
+        status: "paid",
+      })
+
+      // The DB already sets the invoice to 'paid' and enrollment to 'active'
+      // if net is 0, so we just redirect them to the success page.
+      return NextResponse.json({
+        authorization_url: `${siteUrl}/payment/callback?reference=FREE-${invoice_id}`,
+        reference: `FREE-${invoice_id}`,
+        enrollment_id,
+        invoice_id,
+      })
     }
 
     const reference = `tyga_${invoice_id}_${Date.now()}`

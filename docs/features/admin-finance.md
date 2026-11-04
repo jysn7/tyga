@@ -25,9 +25,9 @@ The invoice tab shows invoice records and supports:
 - text search and filter controls
 - pagination for many records
 - invoice detail inspection
-- payment capture or approval actions from the invoice sheet
+- manual payment recording when the invoice permits it
 
-The invoice sheet is used for editing invoice details and capturing payment metadata, such as payment method, reference, and settlement date.
+The invoice sheet captures the payment method, reference, payment date and note; the hook does not expose a general invoice-edit mutation.
 
 ### Payments
 
@@ -35,7 +35,7 @@ The payments tab surfaces payment records, statuses, and settlement metadata. It
 
 ### Refunds and memberships
 
-These tabs handle follow-up workflows for refund or membership adjustments, typically tied to invoice and enrollment records.
+The refunds tab lists refund-review items and supports recording a refund or closing a review when no refund is due. The memberships tab is a status-filtered view; the current finance hook exposes no membership mutation.
 
 ## Form state and actions
 
@@ -50,6 +50,22 @@ This is intentionally kept close to the user interaction flow to avoid stale sta
 - monitor membership billing activity
 - route finance issues to the correct follow-up workflow
 - keep lists searchable and paginated for admin operations
+
+## Hook and RPC coverage
+
+`hooks/admin/use-admin-finance.ts` backs the finance workspace. Invoice and payment lists use 25-row pages with status/search filters; invoice detail includes line items, payment history and the enrollment link. The overview query supplies totals, outstanding/overdue/on-hold amounts, refund-review count, membership totals and revenue breakdowns. The refund tab reads the refund-review queue, and the memberships tab filters membership rows by status.
+
+| Hooks | RPCs | Responsibility |
+|---|---|---|
+| `useFinanceOverview` | `admin_get_finance_overview` | Finance totals and revenue summaries |
+| `useAdminInvoices`, `useAdminInvoiceDetail` | `admin_get_invoices`, `admin_get_invoice_detail` | Searchable invoice list and invoice detail |
+| `useAdminPayments` | `admin_get_payments` | Searchable payment history |
+| `useRefundQueue` | `admin_get_refund_queue` | Paid withdrawals awaiting a refund decision |
+| `useAdminMemberships` | `admin_get_memberships` | Membership list by status |
+| `useRecordManualPayment` | `admin_record_manual_payment` | Record EFT, cash or other manual payment details |
+| `useRecordRefund`, `useCloseRefundReview` | `admin_record_refund`, `admin_resolve_refund_review` | Record a refund or close a review when no refund is due |
+
+Successful money mutations invalidate finance, enrollment, parent schedule and coach roster queries. A refund-review decision is separate from initiating an external payment-provider refund; verify the operational refund process and provider reconciliation separately.
 
 ## Related docs
 

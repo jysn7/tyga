@@ -18,7 +18,7 @@ The account-level onboarding checklist derives its next step from child/profile 
 - Submit consent choices during intake and review consent/document records in the member profile
 - View a member profile with overview, programme, progression and settings areas
 - Edit member identity, background details, emergency information and medical notes
-- Request cancellation for active enrollments or withdraw pending ones
+- Withdraw an eligible enrollment with a reason and optional note; paid enrollments are sent for refund review rather than refunded automatically
 - Archive a member while preserving historical records
 
 ## Admin features
@@ -67,6 +67,7 @@ The account-level onboarding checklist derives its next step from child/profile 
 | `hooks/client/members/use-member-programmes.ts` | Loads the member's programme enrollment/session view |
 | `hooks/client/members/use-member-progression.ts` | Loads parent-visible progression details |
 | `hooks/client/members/use-member-mutations.ts` | Updates a member or archives one; invalidates member and onboarding state |
+| `hooks/client/use-withdraw-enrollment.ts` | Requests withdrawal, records the reason, and refreshes affected application queries |
 | `hooks/client/use-parent-overview.ts` | Parent stats, children summary, upcoming sessions, recent progress and outstanding invoice cards |
 | `hooks/admin/use-members.ts` | Admin member directory with search and active/archived filters |
 | `hooks/admin/members/use-member-detail.ts` | Logs sensitive access and loads admin detail only after the UI gate is unlocked |
@@ -90,6 +91,7 @@ The account-level onboarding checklist derives its next step from child/profile 
 - New member creation is a multi-step client operation. If questionnaire or consent submission fails after the member row was created, the hook reports partial completion and directs the parent to finish the profile; the member itself is not silently rolled back.
 - The admin sensitive-access gate logs a reason before the admin detail query is enabled. The parent detail hook is a separate, caller-scoped read.
 - Archiving is a soft-state change (`archived_at`), not destructive deletion; the hook refreshes member lists/details and onboarding state.
+- Enrollment withdrawal is handled by `parent_withdraw_enrollment`: pending/overdue invoices are cancelled, while paid/partially paid invoices create an admin refund-review item. The request itself does not issue a refund; admins handle the follow-up in finance.
 - Checklist dismissal is persisted separately from completion. The checklist remains a reminder banner until the setup is complete.
 - Member mutations use React Query invalidation to refresh member list/detail data; archive also refreshes onboarding state.
 

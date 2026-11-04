@@ -1,6 +1,7 @@
 # Programmes & Sessions
 
 This document consolidates programme management, coach session workflows, curriculum tagging, attendance and session administration.
+Discount rules and parent-facing price previews for programme enrollment are covered in [Discounts & enrollment pricing](./discounts-and-pricing.md).
 
 ## Overview
 
@@ -23,6 +24,7 @@ TYGA supports admin programme setup, parent discovery and enrollment initiation,
 
 - Browse eligible programmes for a child based on age, gender and current level
 - View programme detail, session schedule, venue and coaches
+- Open a child-specific session detail with coach notes, curriculum, attendance and previous/next session navigation
 - Enroll a child through a pending enrollment + invoice flow
 - Check programme and session eligibility before submitting payment
 
@@ -111,6 +113,7 @@ Lifecycle for enrollment status:
 |---|---|---|
 | Parent programme discovery | `hooks/client/use-programmes.ts` | Programme list/detail, per-member eligibility and enrollable member list |
 | Parent enrollment initiation | `hooks/client/use-enroll.ts` | Posts member/programme IDs to `/api/enroll`; returns checkout URL, reference and created enrollment/invoice IDs |
+| Parent session detail and attendance | `hooks/client/use-parent-sessions.ts` | Session detail, child attendance history and attendance summaries |
 | Admin programme management | `hooks/admin/programmes/use-programmes.ts`, `use-programme-mutations.ts` | Filtered list/detail, create/update/archive/delete, lookups, sessions and assignments |
 | Admin scheduling | `hooks/admin/programmes/use-session-mutations.ts` | Generate sessions, update/delete a session and add/remove/synchronize coaches |
 | Admin programme coaches | `hooks/admin/programmes/use-programme-coaches.ts` | Load and change programme-level coach assignments |
@@ -119,7 +122,7 @@ Lifecycle for enrollment status:
 | Coach session changes | `hooks/coach/use-coach-mutations.ts`, `use-sessions-mutations.ts` | Attendance, bulk attendance, notes and session curriculum tagging |
 | Calendar | `hooks/shared/use-schedule.ts` | Role-specific parent, coach and admin combined schedules |
 
-The React Query mutations invalidate the related programme/session/coach/curriculum queries. The enrollment hook delegates validation and creation to the app API route; payment completion remains webhook-driven as documented in [billing-and-payments.md](./billing-and-payments.md).
+The React Query mutations invalidate the related programme/session/coach/curriculum queries. The enrollment hook delegates validation and creation to the app API route; discounts and price previews are covered in [discounts-and-pricing.md](./discounts-and-pricing.md), and payment completion remains webhook-driven as documented in [billing-and-payments.md](./billing-and-payments.md).
 
 ## Coach session detail UX
 
@@ -130,7 +133,7 @@ The coach UX includes:
 - bulk attendance marking
 - session notes saved separately from curriculum tagging
 
-The coach hooks read sessions over an explicit start/end date range and load detail, roster and curriculum independently by session ID. Attendance and notes changes refresh the related queries. The current hook/migration surface does not expose bulk completion of curriculum modules for each attendee or a coach-driven level advancement flow; see [curriculum-progressions.md](./curriculum-progressions.md).
+The coach hooks read sessions over an explicit start/end date range and load detail, roster and curriculum independently by session ID. Attendance and notes changes refresh the related queries. The separate progression helper hooks are not wired into the current coach UI and their database functions are not present in the checked-in migrations; see [curriculum-progressions.md](./curriculum-progressions.md) for that boundary.
 
 ## Route surfaces
 

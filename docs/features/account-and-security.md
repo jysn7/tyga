@@ -7,6 +7,7 @@ This document combines account settings, authentication security and login monit
 - `hooks/use-auth-mutations.ts` implements sign-up, password sign-in and Google OAuth initiation.
 - `hooks/useAuth.ts` tracks the Supabase auth session.
 - `hooks/client/use-my-account.ts` reads the signed-in account profile and membership summary.
+- `hooks/shared/use-mfa.ts` manages authenticator enrollment, verification, step-up checks and factor removal for the settings security surface.
 - `lib/functions/save-account-settings.ts` updates name/phone/address and changed notification preferences; the settings form calls `set_my_avatar` for avatar changes. These are component/library operations, not a dedicated React Query mutation hook.
 - Auth pages include `/auth/signin`, `/auth/signup`, `/auth/verify-email`, `/auth/forgot-password` and `/auth/update-password`; parent settings are under `/settings`.
 - Login monitoring currently has database schema and RPC foundations, but no matching auth API route or React hook was found in the app.

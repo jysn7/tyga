@@ -9,6 +9,7 @@ This directory is the feature-level guide to TYGA. The documents describe the us
 | [Account & security](./account-and-security.md) | Authentication, account preferences, login monitoring and lockouts |
 | [Members & onboarding](./members-and-onboarding.md) | Family setup, child intake, profiles, consents, documents and member access |
 | [Programmes & sessions](./programmes-and-sessions.md) | Programme administration and discovery, enrollment, coach assignments, sessions, attendance and session curriculum |
+| [Discounts & enrollment pricing](./discounts-and-pricing.md) | Admin discount rules, promo codes, grants and parent-facing programme price previews |
 | [Curriculum progressions](./curriculum-progressions.md) | Level and module administration, session tags, member milestones and verified progression support |
 | [Billing & payments](./billing-and-payments.md) | Membership subscriptions, invoices, payments, checkout and reconciliation |
 | [Admin finance](./admin-finance.md) | Admin finance dashboard, invoice review, settlements, refund follow-up and membership billing operations |
