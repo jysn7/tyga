@@ -555,6 +555,7 @@ export function useSubmitProgression() {
     ...advance,
     mutateAsync: async (args: {
       memberId: number
+      toLevelId?: number
       badgeComplete: boolean
       notes: string
     }) => {

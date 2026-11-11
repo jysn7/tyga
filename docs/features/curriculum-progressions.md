@@ -31,17 +31,19 @@ Admins can also inspect and edit the curriculum tags on programme sessions throu
 
 ## Hook map
 
-| Hook | Responsibility |
-|---|---|
-| `hooks/admin/levels/use-levels.ts` | Lists configured levels |
-| `hooks/admin/levels/use-level-mutations.ts` | Creates, updates, archives/restores levels |
-| `hooks/admin/curriculums/use-curriculum-modules.ts` | Lists curriculum modules, optionally filtered by level |
-| `hooks/admin/curriculums/use-curriculum-module-mutations.ts` | Admin module create/update/archive operations |
-| `hooks/admin/programmes/use-curriculum-mutations.ts` | Reads modules and changes session-module associations |
-| `hooks/coach/use-coach-session-detail.ts` | Loads session-specific curriculum for coaches |
-| `hooks/coach/use-coach-mutations.ts` | Lets a coach tag session curriculum |
-| `hooks/client/members/use-member-progression.ts` | Reads a member's parent-visible progression |
-| `hooks/admin/use-admin-overview.ts` | Provides aggregate progression reporting for administrators |
+| Hook                                                         | Responsibility                                                                     |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| `hooks/admin/levels/use-levels.ts`                           | Lists configured levels                                                            |
+| `hooks/admin/levels/use-level-mutations.ts`                  | Creates, updates, archives/restores levels                                         |
+| `hooks/admin/curriculums/use-curriculum-modules.ts`          | Lists curriculum modules, optionally filtered by level                             |
+| `hooks/admin/curriculums/use-curriculum-module-mutations.ts` | Admin module create/update/archive operations                                      |
+| `hooks/admin/programmes/use-curriculum-mutations.ts`         | Reads modules and changes session-module associations                              |
+| `hooks/coach/use-coach-session-detail.ts`                    | Loads session-specific curriculum for coaches                                      |
+| `hooks/coach/use-coach-mutations.ts`                         | Lets a coach tag session curriculum                                                |
+| `hooks/coach/use-coach-progression-overview.ts`              | Reads active students' curriculum milestones and coach-visible progression history |
+| `hooks/coach/use-coach-progressions.ts`                      | Verifies/undoes module completion and advances a ready student                     |
+| `hooks/client/members/use-member-progression.ts`             | Reads a member's parent-visible progression                                        |
+| `hooks/admin/use-admin-overview.ts`                          | Provides aggregate progression reporting for administrators                        |
 
 ## Progression enforcement
 
@@ -65,6 +67,6 @@ Use the migration history as the source of truth for schema and RPC deployment o
 
 ## Not available as a shipped workflow
 
-- Coach-driven per-member milestone completion or level advancement
+- A wired UI and migration-backed coach workflow for per-member milestone completion or level advancement
 - Automatic advancement
 - Certificate/badge generation and progression notifications
