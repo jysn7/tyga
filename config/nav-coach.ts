@@ -4,7 +4,6 @@ import {
   Bell,
   Settings,
   CalendarClock,
-  TrendingUp,
   MessageCircle,
   LifeBuoy,
 } from "lucide-react"
@@ -20,7 +19,7 @@ export type NavItem = {
 export const coachNav: NavItem[] = [
   {
     type: "link",
-    label: "Dashboard",
+    label: "My sessions",
     href: "/coach/dashboard",
     icon: Home,
   },
@@ -30,12 +29,11 @@ export const coachNav: NavItem[] = [
     href: "/coach/appointments",
     icon: CalendarClock,
   },
-  { type: "link", label: "My Roster", href: "/coach/roster", icon: Users },
   {
     type: "link",
-    label: "Progressions",
-    href: "/coach/progressions",
-    icon: TrendingUp,
+    label: "My students",
+    href: "/coach/my-students",
+    icon: Users,
   },
   {
     type: "link",

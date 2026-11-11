@@ -17,6 +17,7 @@ import {
   Loader2,
   Check,
   AlertCircle,
+  Sparkles,
 } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -33,7 +34,10 @@ import {
   useBulkMarkAttendance,
   useSaveSessionNotes,
   useTagSessionCurriculum,
+  useMarkModuleComplete,
+  useMarkModuleCompleteBatch,
 } from "@/hooks/coach/use-coach-mutations"
+import { useMilestonePickerStudents } from "@/hooks/coach/use-coach-progressions"
 
 const STATUS_OPTIONS = [
   {
@@ -98,7 +102,6 @@ export default function CoachSessionDetailPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Breadcrumb */}
       <Link
         href="/coach/sessions"
         className="flex w-fit items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
@@ -107,7 +110,6 @@ export default function CoachSessionDetailPage() {
         sessions / {detail.programme_name}
       </Link>
 
-      {/* Header */}
       <div className="flex items-start gap-4">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-input">
           <CalendarDays
@@ -136,7 +138,6 @@ export default function CoachSessionDetailPage() {
         </div>
       </div>
 
-      {/* Tabs */}
       <Tabs defaultValue={initialTab} className="flex flex-col gap-5">
         <TabsList className="flex h-auto w-full justify-start gap-1 overflow-x-auto p-1 sm:w-fit">
           <TabsTrigger value="roster" className={TAB_TRIGGER_CLASS}>
@@ -150,7 +151,6 @@ export default function CoachSessionDetailPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* ROSTER */}
         <TabsContent
           value="roster"
           className="mt-0 data-[state=inactive]:hidden"
@@ -162,7 +162,6 @@ export default function CoachSessionDetailPage() {
           />
         </TabsContent>
 
-        {/* CURRICULUM */}
         <TabsContent
           value="curriculum"
           className="mt-0 data-[state=inactive]:hidden"
@@ -175,7 +174,6 @@ export default function CoachSessionDetailPage() {
           />
         </TabsContent>
 
-        {/* OVERVIEW */}
         <TabsContent value="overview" className="mt-0">
           <section className="flex flex-col rounded-xl bg-card p-5 shadow">
             <h2 className="pb-3 text-xs font-medium tracking-wider text-muted-foreground uppercase">
@@ -444,6 +442,11 @@ function CurriculumTab({
     Record<number, boolean>
   >({})
 
+  // Milestone picker state
+  const [activeMilestoneModuleId, setActiveMilestoneModuleId] = useState<
+    number | null
+  >(null)
+
   const readOnly = !hasStarted || isCancelled
   const taggedModuleIds = useMemo(
     () =>
@@ -620,6 +623,17 @@ function CurriculumTab({
         )}
       </section>
 
+      {/* Milestones — pick a module, tick students off */}
+      {modules && modules.length > 0 && (
+        <MilestoneSection
+          sessionId={sessionId}
+          modules={modules}
+          activeModuleId={activeMilestoneModuleId}
+          onSelectModule={setActiveMilestoneModuleId}
+          readOnly={readOnly}
+        />
+      )}
+
       {/* Notes */}
       <section className="flex flex-col gap-3">
         <h2 className="text-sm font-semibold tracking-tight text-foreground">
@@ -652,5 +666,243 @@ function CurriculumTab({
         )}
       </section>
     </div>
+  )
+}
+
+// ---------- Milestone picker ----------
+
+function MilestoneSection({
+  sessionId,
+  modules,
+  activeModuleId,
+  onSelectModule,
+  readOnly,
+}: {
+  sessionId: number
+  modules: {
+    module_id: number
+    module_name: string
+    category: string | null
+    is_tagged: boolean
+  }[]
+  activeModuleId: number | null
+  onSelectModule: (id: number | null) => void
+  readOnly: boolean
+}) {
+  const { data: students, isLoading } = useMilestonePickerStudents(
+    sessionId,
+    activeModuleId
+  )
+  const markOne = useMarkModuleComplete()
+  const markBatch = useMarkModuleCompleteBatch()
+
+  const activeModule = modules.find((m) => m.module_id === activeModuleId)
+
+  // "Everyone who is present/late and hasn't got this yet"
+  const tickableIds = useMemo(() => {
+    if (!students || !activeModuleId) return []
+    return students
+      .filter(
+        (s) =>
+          !s.completed &&
+          s.levelMatches &&
+          (s.attendanceStatus === "present" || s.attendanceStatus === "late")
+      )
+      .map((s) => s.memberId)
+  }, [students, activeModuleId])
+
+  function handleTickOne(memberId: number, completed: boolean) {
+    if (!activeModuleId) return
+    if (completed) {
+      toast.add({
+        title: "Already completed",
+        description: "This student already has this milestone.",
+        type: "default",
+        timeout: 3000,
+      })
+      return
+    }
+    markOne.mutate(
+      { memberId, moduleId: activeModuleId, sessionId },
+      {
+        onSuccess: (res) => {
+          toast.add({
+            title: res.levelNowComplete
+              ? "Milestone recorded · level complete"
+              : "Milestone recorded",
+            type: "success",
+            timeout: 3000,
+          })
+        },
+        onError: (err) =>
+          toast.add({
+            title: "Couldn't record milestone",
+            description:
+              err instanceof Error ? err.message : "Something went wrong",
+            type: "error",
+            timeout: 5000,
+          }),
+      }
+    )
+  }
+
+  function handleBulkTick() {
+    if (!activeModuleId || tickableIds.length === 0) return
+    markBatch.mutate(
+      { memberIds: tickableIds, moduleId: activeModuleId, sessionId },
+      {
+        onSuccess: () => {
+          toast.add({
+            title: `Milestone recorded for ${tickableIds.length} student${
+              tickableIds.length === 1 ? "" : "s"
+            }`,
+            type: "success",
+            timeout: 3000,
+          })
+        },
+        onError: (err) =>
+          toast.add({
+            title: "Couldn't record milestones",
+            description:
+              err instanceof Error ? err.message : "Something went wrong",
+            type: "error",
+            timeout: 5000,
+          }),
+      }
+    )
+  }
+
+  return (
+    <section className="flex flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-3.5 w-3.5 text-primary" strokeWidth={1.75} />
+          <h2 className="text-sm font-semibold tracking-tight text-foreground">
+            Milestones
+          </h2>
+        </div>
+        {activeModuleId && tickableIds.length > 0 && !readOnly && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 text-xs"
+            disabled={markBatch.isPending}
+            onClick={handleBulkTick}
+          >
+            {markBatch.isPending
+              ? "Recording…"
+              : `Tick ${tickableIds.length} present`}
+          </Button>
+        )}
+      </div>
+
+      {/* Module picker */}
+      <div className="flex flex-wrap gap-1.5">
+        {modules.map((mod) => {
+          const isActive = mod.module_id === activeModuleId
+          return (
+            <button
+              key={mod.module_id}
+              type="button"
+              onClick={() => onSelectModule(isActive ? null : mod.module_id)}
+              className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                isActive
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-card text-foreground hover:bg-accent"
+              }`}
+            >
+              {mod.module_name}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Student list for the selected module */}
+      {activeModuleId && (
+        <div className="overflow-hidden rounded-xl bg-card shadow">
+          {isLoading ? (
+            <div className="flex h-32 items-center justify-center">
+              <Loader />
+            </div>
+          ) : !students || students.length === 0 ? (
+            <p className="px-5 py-6 text-center text-sm text-muted-foreground">
+              No students on this session.
+            </p>
+          ) : (
+            <div className="flex flex-col divide-y divide-border/60">
+              {students.map((s) => {
+                const isCompleted = s.completed
+                const wasHere =
+                  s.attendanceStatus === "present" ||
+                  s.attendanceStatus === "late"
+                return (
+                  <div
+                    key={s.memberId}
+                    className="flex items-center justify-between gap-3 px-5 py-3"
+                  >
+                    <div className="flex min-w-0 flex-col gap-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="truncate text-sm text-foreground">
+                          {s.fullName}
+                        </span>
+                        {!s.levelMatches && (
+                          <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                            other level
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[11px] text-muted-foreground capitalize">
+                        {s.attendanceStatus ?? "not marked"}
+                        {isCompleted && s.completedOn
+                          ? ` · completed ${s.completedOn}`
+                          : ""}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={
+                        readOnly ||
+                        markOne.isPending ||
+                        isCompleted ||
+                        !s.levelMatches
+                      }
+                      onClick={() => handleTickOne(s.memberId, isCompleted)}
+                      title={
+                        isCompleted ? "Already completed" : "Mark complete"
+                      }
+                      className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors ${
+                        isCompleted
+                          ? "bg-green-light text-green"
+                          : wasHere
+                            ? "text-muted-foreground hover:bg-accent hover:text-foreground"
+                            : "text-muted-foreground/40"
+                      } disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent`}
+                    >
+                      {isCompleted ? (
+                        <CheckCircle2
+                          className="h-3.5 w-3.5"
+                          strokeWidth={1.75}
+                        />
+                      ) : (
+                        <Check className="h-3.5 w-3.5" strokeWidth={2} />
+                      )}
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeModule && !isLoading && students && students.length > 0 && (
+        <p className="text-[11px] text-muted-foreground">
+          {tickableIds.length} of {students.length} present student
+          {students.length === 1 ? "" : "s"} haven&apos;t been ticked for{" "}
+          <strong className="font-semibold">{activeModule.module_name}</strong>.
+        </p>
+      )}
+    </section>
   )
 }
