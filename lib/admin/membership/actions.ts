@@ -135,11 +135,17 @@ export async function resumeMyMembership(): Promise<Result> {
     method: "POST",
     body: JSON.stringify({ code: c.subscription_code, token: c.email_token }),
   })
-  if (!res.ok)
+  if (!res.ok) {
+    // If Paystack says the subscription is already active, treat it as success
+    if (/already.*(enabled|active)/i.test(res.message)) {
+      await service().rpc("membership_mark_resumed", { p_account_id: user.id })
+      return { error: null }
+    }
     return {
       error:
         "We couldn't resume it right now. Please try again or contact the academy",
     }
+  }
 
   await service().rpc("membership_mark_resumed", { p_account_id: user.id })
   return { error: null }
@@ -222,7 +228,7 @@ export async function adminSyncMembership(accountId: string): Promise<Result> {
   if (!res.ok || !res.data) return { error: `Paystack refused: ${res.message}` }
   const d = res.data
 
-  const { error: applyError } = await service().rpc(
+  const { data: applyData, error: applyError } = await service().rpc(
     "apply_membership_subscription_event",
     {
       p_event: "sync",
@@ -240,6 +246,18 @@ export async function adminSyncMembership(accountId: string): Promise<Result> {
     }
   )
   if (applyError) return { error: applyError.message }
+
+  // The RPC returns { applied: false, reason: "other_plan" } when the plan
+  // code on Paystack doesn't match app_settings.membership_plan_code.
+  // Without this check, the admin sees "synced" but nothing changed.
+  const applied = (applyData as { applied?: boolean; reason?: string } | null)
+    ?.applied
+  if (applied === false) {
+    const reason = (applyData as { reason?: string } | null)?.reason
+    return {
+      error: `Sync didn't apply: ${reason ?? "unknown reason"}. The Paystack plan may not match the configured plan.`,
+    }
+  }
 
   await supabase.rpc("admin_log_membership_action", {
     p_account_id: accountId,
