@@ -1,6 +1,6 @@
 "use client"
 import { useState } from "react"
-import { useSaveSessionNotes } from "@/hooks/coach/use-sessions-mutations"
+import { useSaveSessionNotes } from "@/hooks/coach/use-coach-mutations"
 
 export function SessionNotesTab({
   sessionId,

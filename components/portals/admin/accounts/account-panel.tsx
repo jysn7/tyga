@@ -128,6 +128,18 @@ function useStudentProgressDetail(memberId: number | null) {
   }
 }
 
+export function AccountPanel({
+  id,
+  onClose,
+}: {
+  id: string
+  onClose: () => void
+}) {
+  return (
+    <StudentProgressDrawer memberId={Number(id) || null} onClose={onClose} />
+  )
+}
+
 export function StudentProgressDrawer({
   memberId,
   onClose,
