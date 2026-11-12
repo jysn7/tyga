@@ -1,5 +1,3 @@
-// components/portals/admin/finance/admin-finance-page.tsx
-
 "use client"
 
 import { useState } from "react"
@@ -11,12 +9,16 @@ import { InvoicesTab } from "./invoices-tab"
 import { PaymentsTab } from "./payments-tab"
 import { RefundsTab } from "./refunds-tab"
 import { MembershipsTab } from "./memberships-tab"
+import { DonationsTab } from "./donations-tab"
 import { InvoiceSheet } from "./invoice-sheet"
 
-type TabKey = "overview" | "invoices" | "payments" | "refunds" | "memberships"
+type TabKey =
+  "overview" | "invoices" | "payments" | "refunds" | "donations" | "memberships"
 
 /**
- * Admin finance dashboard with overview, invoices, payments, refunds, and memberships.
+ * Admin finance dashboard with overview, invoices, payments, refunds,
+ * donations, and memberships.
+ *
  * The selected tab is preserved from the URL query so anchor links can open an
  * exact finance section directly.
  */
@@ -25,6 +27,7 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "invoices", label: "Invoices" },
   { key: "payments", label: "Payments" },
   { key: "refunds", label: "Refunds" },
+  { key: "donations", label: "Donations" },
   { key: "memberships", label: "Memberships" },
 ]
 
@@ -78,6 +81,10 @@ export function AdminFinancePage() {
 
       <TabsContent value="refunds" className="mt-0">
         <RefundsTab />
+      </TabsContent>
+
+      <TabsContent value="donations" className="mt-0">
+        <DonationsTab />
       </TabsContent>
 
       <TabsContent value="memberships" className="mt-0">

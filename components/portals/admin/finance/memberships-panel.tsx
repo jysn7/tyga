@@ -14,13 +14,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
+import { SidePanel } from "@/components/portals/shared/side-sheet"
+import { Field } from "@/components/portals/shared/field"
 import {
   intervalWord,
   type MembershipSource,
@@ -48,13 +43,32 @@ const field =
 const area =
   "rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
 
-const STATUS: Record<MembershipStatus, { label: string; cls: string }> = {
-  active: { label: "Active", cls: "bg-green-light" },
-  non_renewing: { label: "Not renewing", cls: "bg-yellow-light" },
-  attention: { label: "Needs attention", cls: "bg-red-light" },
-  cancelled: { label: "Ended", cls: "bg-muted" },
-  expired: { label: "Expired", cls: "bg-muted" },
-  pending: { label: "Pending", cls: "bg-blue-light" },
+const STATUS: Record<
+  MembershipStatus,
+  { label: string; cls: string; accent: string }
+> = {
+  active: { label: "Active", cls: "bg-green-light", accent: "text-green" },
+  non_renewing: {
+    label: "Not renewing",
+    cls: "bg-yellow-light",
+    accent: "text-yellow",
+  },
+  attention: {
+    label: "Needs attention",
+    cls: "bg-red-light",
+    accent: "text-red",
+  },
+  cancelled: {
+    label: "Ended",
+    cls: "bg-muted",
+    accent: "text-muted-foreground",
+  },
+  expired: {
+    label: "Expired",
+    cls: "bg-muted",
+    accent: "text-muted-foreground",
+  },
+  pending: { label: "Pending", cls: "bg-blue-light", accent: "text-blue" },
 }
 const SOURCE: Record<MembershipSource, string> = {
   paystack: "Card",
@@ -74,16 +88,18 @@ function Tile({
   label,
   value,
   sub,
-  tint,
+  accent,
 }: {
   label: string
   value: string | number
   sub?: string
-  tint: string
+  accent: string
 }) {
   return (
-    <div className={`rounded-2xl p-4 ${tint}`}>
-      <p className="text-xl leading-none font-semibold text-foreground">
+    <div className="rounded-2xl border border-border/60 bg-card p-4">
+      <p
+        className={`text-xl leading-none font-semibold tabular-nums ${accent}`}
+      >
         {value}
       </p>
       <p className="mt-1 text-[11px] text-muted-foreground">{label}</p>
@@ -120,7 +136,6 @@ function Detail({
 
   const busy = [sync, cancelCard, end, pay, grant].some((m) => m.isPending)
 
-  // Only the mutation that's currently active can show an error
   const activeMutation =
     mode === "pay"
       ? pay
@@ -137,6 +152,8 @@ function Detail({
   const open = !!cur?.isOpen
   const isCard = cur?.source === "paystack"
 
+  if (accountId === null) return null
+
   const done = (msg: string) => {
     setMode(null)
     setReason("")
@@ -150,394 +167,435 @@ function Detail({
   const needReason = reason.trim().length >= 5
 
   return (
-    <Sheet open={accountId !== null} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
-        <SheetHeader>
-          <SheetTitle>{data?.account.fullName ?? "Membership"}</SheetTitle>
-          <SheetDescription>{data?.account.email ?? " "}</SheetDescription>
-        </SheetHeader>
-
-        {isLoading && (
-          <div className="flex h-48 items-center justify-center">
-            <Loader />
-          </div>
-        )}
-        {error && (
-          <p className="m-4 text-xs text-destructive">{error.message}</p>
-        )}
-
-        {data && (
-          <div className="flex flex-col gap-5 px-4 pb-6">
-            <div className="flex flex-wrap items-center gap-2">
-              {cur ? (
-                <>
-                  <Pill {...STATUS[cur.status]} />
-                  <Pill label={SOURCE[cur.source]} cls="bg-blue-light" />
-                </>
-              ) : (
-                <Pill label="No membership" cls="bg-muted" />
-              )}
-              <Pill
-                label={data.hasAccess ? "Can enrol" : "Cannot enrol"}
-                cls={data.hasAccess ? "bg-green-light" : "bg-orange-light"}
-              />
+    <SidePanel
+      open
+      onOpenChange={(o) => !o && onClose()}
+      title={data?.account.fullName ?? "Membership"}
+      description={data?.account.email ?? undefined}
+      header={
+        data && (
+          <div className="flex flex-col gap-4 border-b border-border/60 px-8 pt-8 pb-6">
+            <div className="flex items-center gap-4">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-accent text-base font-semibold text-foreground">
+                {initials(data.account.fullName)}
+              </div>
+              <div className="flex min-w-0 flex-col gap-1">
+                <span className="truncate text-xl font-semibold tracking-tight text-foreground">
+                  {data.account.fullName ?? "Unnamed"}
+                </span>
+                <span className="truncate text-sm text-muted-foreground">
+                  {data.account.email}
+                </span>
+                <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                  {cur ? (
+                    <>
+                      <Pill {...STATUS[cur.status]} />
+                      <Pill label={SOURCE[cur.source]} cls="bg-blue-light" />
+                    </>
+                  ) : (
+                    <Pill label="No membership" cls="bg-muted" />
+                  )}
+                  <Pill
+                    label={data.hasAccess ? "Can enrol" : "Cannot enrol"}
+                    cls={data.hasAccess ? "bg-green-light" : "bg-orange-light"}
+                  />
+                </div>
+              </div>
             </div>
+          </div>
+        )
+      }
+    >
+      {isLoading && (
+        <div className="flex h-48 items-center justify-center">
+          <Loader />
+        </div>
+      )}
 
-            {notice && (
-              <p className="rounded-lg bg-green-light px-3 py-2 text-xs text-foreground">
-                {notice}
-              </p>
-            )}
+      {error && (
+        <div className="m-4 rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+          {error.message}
+        </div>
+      )}
 
-            {cur && (
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                {[
-                  [
-                    "Amount",
-                    cur.source === "complimentary"
-                      ? "Free"
-                      : `${money(cur.amount)} / ${intervalWord(cur.interval)}`,
-                  ],
-                  ["Paid until", day(cur.periodEnd)],
-                  ["Next charge", isCard ? day(cur.nextChargeAt) : "—"],
-                  ["Last payment", day(cur.lastPaymentAt)],
-                  ["Total paid", money(data.totalPaid)],
-                  ["Last failed", day(cur.lastFailedAt)],
-                ].map(([k, v]) => (
-                  <div key={k} className="rounded-xl bg-card p-3 shadow">
-                    <p className="text-[11px] tracking-wider text-muted-foreground uppercase">
-                      {k}
-                    </p>
-                    <p className="mt-1 text-foreground">{v}</p>
-                  </div>
-                ))}
-              </div>
-            )}
+      {data && (
+        <div className="flex flex-col gap-5 px-6 pb-6">
+          {notice && (
+            <div className="rounded-lg border border-green/40 bg-green-light px-3 py-2 text-xs text-foreground">
+              {notice}
+            </div>
+          )}
 
-            {cur?.note && (
-              <p className="text-xs text-muted-foreground">
-                Note: “{cur.note}”
-              </p>
-            )}
-
-            {isCard && open && !cur?.hasToken && (
-              <p className="rounded-lg bg-yellow-light px-3 py-2 text-xs text-foreground">
-                The Paystack cancel token isn&apos;t stored for this
-                subscription, so it can&apos;t be cancelled from here. Cancel it
-                in the Paystack dashboard, then use Sync.
-              </p>
-            )}
-
-            {mode === null && (
-              <div className="flex flex-wrap gap-2">
-                {isCard && open && (
-                  <>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={busy}
-                      onClick={() =>
-                        sync.mutate(data.account.id, {
-                          onSuccess: () => done("Synced with Paystack."),
-                        })
-                      }
-                    >
-                      {sync.isPending ? "Syncing…" : "Sync from Paystack"}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={busy || !cur?.hasToken}
-                      onClick={() => setMode("cancel")}
-                    >
-                      Cancel subscription
-                    </Button>
-                  </>
-                )}
-                {(!open || !isCard) && (
-                  <Button size="sm" onClick={() => setMode("pay")}>
-                    Record payment
-                  </Button>
-                )}
-                {!open && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setMode("grant")}
-                  >
-                    Grant complimentary
-                  </Button>
-                )}
-                {open && !isCard && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setMode("end")}
-                  >
-                    End membership
-                  </Button>
-                )}
-              </div>
-            )}
-
-            {mode && (
-              <div className="flex flex-col gap-3 rounded-xl border border-border bg-muted/40 p-4">
-                {mode === "pay" && (
-                  <>
-                    <p className="text-sm font-medium text-foreground">
-                      Record a payment made to the academy
-                    </p>
-                    <div className="grid grid-cols-2 gap-3">
-                      <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-                        Periods paid
-                        <input
-                          type="number"
-                          min={1}
-                          max={24}
-                          value={periods}
-                          onChange={(e) => setPeriods(Number(e.target.value))}
-                          className={field}
-                        />
-                      </label>
-                      <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-                        Method
-                        <Select
-                          value={method}
-                          onValueChange={(v) =>
-                            setMethod((v ?? "eft") as "eft" | "cash" | "other")
-                          }
-                        >
-                          <SelectTrigger className="h-9 text-sm">
-                            <SelectValue>
-                              {
-                                { eft: "EFT", cash: "Cash", other: "Other" }[
-                                  method
-                                ]
-                              }
-                            </SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="eft">EFT</SelectItem>
-                            <SelectItem value="cash">Cash</SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </label>
-                      <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-                        Bank reference
-                        <input
-                          value={reference}
-                          onChange={(e) => setReference(e.target.value)}
-                          className={field}
-                        />
-                      </label>
-                      <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-                        Date received
-                        <input
-                          type="date"
-                          value={paidOn}
-                          onChange={(e) => setPaidOn(e.target.value)}
-                          className={field}
-                        />
-                      </label>
-                    </div>
-                    <textarea
-                      rows={2}
-                      placeholder="Note (optional)"
-                      value={note}
-                      onChange={(e) => setNote(e.target.value)}
-                      className={area}
-                    />
-                    <p className="text-[11px] text-muted-foreground">
-                      The amount is the membership fee × periods. The membership
-                      runs from today, or from the end of the current period.
-                    </p>
-                  </>
-                )}
-
-                {mode === "grant" && (
-                  <>
-                    <p className="text-sm font-medium text-foreground">
-                      Grant a complimentary membership
-                    </p>
-                    <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-                      Until
-                      <input
-                        type="date"
-                        value={until}
-                        onChange={(e) => setUntil(e.target.value)}
-                        className={field}
-                      />
-                    </label>
-                  </>
-                )}
-
-                {(mode === "cancel" || mode === "end") && (
-                  <p className="text-sm text-foreground">
-                    {mode === "cancel"
-                      ? "This stops future card charges. The parent keeps the membership until the end of the period they paid for."
-                      : "This ends the membership now."}
+          {cur && (
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                [
+                  "Amount",
+                  cur.source === "complimentary"
+                    ? "Free"
+                    : `${money(cur.amount)} / ${intervalWord(cur.interval)}`,
+                ],
+                ["Paid until", day(cur.periodEnd)],
+                ["Next charge", isCard ? day(cur.nextChargeAt) : "—"],
+                ["Last payment", day(cur.lastPaymentAt)],
+                ["Total paid", money(data.totalPaid)],
+                ["Last failed", day(cur.lastFailedAt)],
+              ].map(([k, v]) => (
+                <div
+                  key={k}
+                  className="rounded-xl border border-border/60 bg-card p-3"
+                >
+                  <p className="text-[11px] tracking-wider text-muted-foreground uppercase">
+                    {k}
                   </p>
-                )}
+                  <p className="mt-1 text-sm text-foreground">{v}</p>
+                </div>
+              ))}
+            </div>
+          )}
 
-                {mode !== "pay" && (
-                  <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-                    Reason (required, at least 5 characters)
-                    <textarea
-                      rows={2}
-                      value={reason}
-                      onChange={(e) => setReason(e.target.value)}
-                      maxLength={300}
-                      className={area}
-                    />
-                  </label>
-                )}
+          {cur?.note && (
+            <p className="text-xs text-muted-foreground">Note: “{cur.note}”</p>
+          )}
 
-                {err && (
-                  <p role="alert" className="text-xs text-destructive">
-                    {err}
-                  </p>
-                )}
+          {isCard && open && !cur?.hasToken && (
+            <div className="rounded-lg border border-yellow/40 bg-yellow-light px-3 py-2 text-xs text-foreground">
+              The Paystack cancel token isn&apos;t stored for this subscription,
+              so it can&apos;t be cancelled from here. Cancel it in the Paystack
+              dashboard, then use Sync.
+            </div>
+          )}
 
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    disabled={
-                      busy ||
-                      (mode !== "pay" && !needReason) ||
-                      (mode === "grant" && !until)
-                    }
-                    onClick={() => {
-                      const id = data.account.id
-                      if (mode === "pay")
-                        pay.mutate(
-                          {
-                            accountId: id,
-                            periods,
-                            method,
-                            reference: reference.trim() || undefined,
-                            paidOn: paidOn || undefined,
-                            amount: null,
-                            note: note.trim() || undefined,
-                          },
-                          { onSuccess: () => done("Payment recorded.") }
-                        )
-                      if (mode === "grant")
-                        grant.mutate(
-                          { accountId: id, until, reason },
-                          {
-                            onSuccess: () =>
-                              done("Complimentary membership granted."),
-                          }
-                        )
-                      if (mode === "cancel")
-                        cancelCard.mutate(
-                          { accountId: id, reason },
-                          {
-                            onSuccess: () =>
-                              done(
-                                "The subscription was cancelled. The parent keeps access until the period ends."
-                              ),
-                          }
-                        )
-                      if (mode === "end")
-                        end.mutate(
-                          { accountId: id, reason },
-                          { onSuccess: () => done("Membership ended.") }
-                        )
-                    }}
-                  >
-                    {busy ? "Working…" : "Confirm"}
-                  </Button>
+          {mode === null && (
+            <div className="flex flex-wrap gap-2">
+              {isCard && open && (
+                <>
                   <Button
                     size="sm"
                     variant="outline"
                     disabled={busy}
-                    onClick={() => setMode(null)}
+                    onClick={() =>
+                      sync.mutate(data.account.id, {
+                        onSuccess: () => done("Synced with Paystack."),
+                      })
+                    }
+                    className="text-xs"
                   >
-                    Back
+                    {sync.isPending ? "Syncing…" : "Sync from Paystack"}
                   </Button>
-                </div>
-              </div>
-            )}
-
-            <section className="flex flex-col gap-2">
-              <h3 className="text-sm font-semibold text-foreground">Charges</h3>
-              {data.charges.length === 0 ? (
-                <p className="text-xs text-muted-foreground">No charges yet.</p>
-              ) : (
-                data.charges.map((c) => (
-                  <div
-                    key={c.id}
-                    className="flex items-start justify-between gap-3 rounded-lg border border-border/60 p-3 text-sm"
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={busy || !cur?.hasToken}
+                    onClick={() => setMode("cancel")}
+                    className="text-xs"
                   >
-                    <div>
-                      <p className="text-foreground">
-                        {money(c.amount)}{" "}
-                        <span className="text-xs text-muted-foreground">
-                          {day(c.paidAt)}
-                          {c.periodEnd ? ` · until ${day(c.periodEnd)}` : ""}
-                        </span>
-                      </p>
-                      <p className="text-[11px] break-all text-muted-foreground">
-                        {c.source === "manual"
-                          ? `${c.method ?? "manual"} · recorded by ${c.recordedBy ?? "—"} · `
-                          : ""}
-                        {c.reference}
-                      </p>
-                      {c.note && (
-                        <p className="text-[11px] text-muted-foreground">
-                          “{c.note}”
-                        </p>
-                      )}
-                    </div>
-                    <Pill
-                      label={
-                        c.status === "paid"
-                          ? "Paid"
-                          : c.status === "failed"
-                            ? "Failed"
-                            : "Refunded"
-                      }
-                      cls={
-                        c.status === "paid"
-                          ? "bg-green-light"
-                          : c.status === "failed"
-                            ? "bg-red-light"
-                            : "bg-purple-light"
-                      }
-                    />
-                  </div>
-                ))
+                    Cancel subscription
+                  </Button>
+                </>
               )}
-            </section>
+              {(!open || !isCard) && (
+                <Button
+                  size="sm"
+                  onClick={() => setMode("pay")}
+                  className="text-xs"
+                >
+                  Record payment
+                </Button>
+              )}
+              {!open && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setMode("grant")}
+                  className="text-xs"
+                >
+                  Grant complimentary
+                </Button>
+              )}
+              {open && !isCard && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setMode("end")}
+                  className="text-xs"
+                >
+                  End membership
+                </Button>
+              )}
+            </div>
+          )}
 
-            {data.actions.length > 0 && (
-              <section className="flex flex-col gap-2">
-                <h3 className="text-sm font-semibold text-foreground">
-                  Admin activity
-                </h3>
-                <ol className="flex flex-col gap-2 border-l border-border pl-4">
-                  {data.actions.map((a, i) => (
-                    <li key={i} className="text-xs">
-                      <p className="font-medium text-foreground">
-                        {a.action.replace("membership_", "").replace(/_/g, " ")}
-                        {a.reason ? `: “${a.reason}”` : ""}
+          {mode && (
+            <div className="flex flex-col gap-3 rounded-xl border border-border bg-muted/40 p-4">
+              {mode === "pay" && (
+                <>
+                  <p className="text-sm font-medium text-foreground">
+                    Record a payment made to the academy
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+                      Periods paid
+                      <input
+                        type="number"
+                        min={1}
+                        max={24}
+                        value={periods}
+                        onChange={(e) => setPeriods(Number(e.target.value))}
+                        className={field}
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+                      Method
+                      <Select
+                        value={method}
+                        onValueChange={(v) =>
+                          setMethod((v ?? "eft") as "eft" | "cash" | "other")
+                        }
+                      >
+                        <SelectTrigger className="h-9 text-sm">
+                          <SelectValue>
+                            {
+                              { eft: "EFT", cash: "Cash", other: "Other" }[
+                                method
+                              ]
+                            }
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="eft">EFT</SelectItem>
+                          <SelectItem value="cash">Cash</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </label>
+                    <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+                      Bank reference
+                      <input
+                        value={reference}
+                        onChange={(e) => setReference(e.target.value)}
+                        className={field}
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+                      Date received
+                      <input
+                        type="date"
+                        value={paidOn}
+                        onChange={(e) => setPaidOn(e.target.value)}
+                        className={field}
+                      />
+                    </label>
+                  </div>
+                  <textarea
+                    rows={2}
+                    placeholder="Note (optional)"
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    className={area}
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    The amount is the membership fee × periods. The membership
+                    runs from today, or from the end of the current period.
+                  </p>
+                </>
+              )}
+
+              {mode === "grant" && (
+                <>
+                  <p className="text-sm font-medium text-foreground">
+                    Grant a complimentary membership
+                  </p>
+                  <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+                    Until
+                    <input
+                      type="date"
+                      value={until}
+                      onChange={(e) => setUntil(e.target.value)}
+                      className={field}
+                    />
+                  </label>
+                </>
+              )}
+
+              {(mode === "cancel" || mode === "end") && (
+                <p className="text-sm text-foreground">
+                  {mode === "cancel"
+                    ? "This stops future card charges. The parent keeps the membership until the end of the period they paid for."
+                    : "This ends the membership now."}
+                </p>
+              )}
+
+              {mode !== "pay" && (
+                <Field label="Reason (required, at least 5 characters)">
+                  <textarea
+                    rows={2}
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    maxLength={300}
+                    className={area}
+                  />
+                </Field>
+              )}
+
+              {err && (
+                <p
+                  role="alert"
+                  className="rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-xs text-destructive"
+                >
+                  {err}
+                </p>
+              )}
+
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  disabled={
+                    busy ||
+                    (mode !== "pay" && !needReason) ||
+                    (mode === "grant" && !until)
+                  }
+                  onClick={() => {
+                    const id = data.account.id
+                    if (mode === "pay")
+                      pay.mutate(
+                        {
+                          accountId: id,
+                          periods,
+                          method,
+                          reference: reference.trim() || undefined,
+                          paidOn: paidOn || undefined,
+                          amount: null,
+                          note: note.trim() || undefined,
+                        },
+                        { onSuccess: () => done("Payment recorded.") }
+                      )
+                    if (mode === "grant")
+                      grant.mutate(
+                        { accountId: id, until, reason },
+                        {
+                          onSuccess: () =>
+                            done("Complimentary membership granted."),
+                        }
+                      )
+                    if (mode === "cancel")
+                      cancelCard.mutate(
+                        { accountId: id, reason },
+                        {
+                          onSuccess: () =>
+                            done(
+                              "The subscription was cancelled. The parent keeps access until the period ends."
+                            ),
+                        }
+                      )
+                    if (mode === "end")
+                      end.mutate(
+                        { accountId: id, reason },
+                        { onSuccess: () => done("Membership ended.") }
+                      )
+                  }}
+                  className="text-xs"
+                >
+                  {busy ? "Working…" : "Confirm"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() => setMode(null)}
+                  className="text-xs"
+                >
+                  Back
+                </Button>
+              </div>
+            </div>
+          )}
+
+          <section className="flex flex-col gap-2">
+            <h3 className="text-sm font-semibold text-foreground">Charges</h3>
+            {data.charges.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No charges yet.</p>
+            ) : (
+              data.charges.map((c) => (
+                <div
+                  key={c.id}
+                  className="flex items-start justify-between gap-3 rounded-lg border border-border/60 bg-card p-3"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm text-foreground">
+                      {money(c.amount)}{" "}
+                      <span className="text-xs text-muted-foreground">
+                        {day(c.paidAt)}
+                        {c.periodEnd ? ` · until ${day(c.periodEnd)}` : ""}
+                      </span>
+                    </p>
+                    <p className="text-[11px] break-all text-muted-foreground">
+                      {c.source === "manual"
+                        ? `${c.method ?? "manual"} · recorded by ${c.recordedBy ?? "—"} · `
+                        : ""}
+                      {c.reference}
+                    </p>
+                    {c.note && (
+                      <p className="text-[11px] text-muted-foreground">
+                        “{c.note}”
                       </p>
-                      <p className="text-muted-foreground">
-                        {a.by ?? "System"} ·{" "}
-                        {format(parseISO(a.at), "d MMM yyyy, HH:mm")}
-                      </p>
-                    </li>
-                  ))}
-                </ol>
-              </section>
+                    )}
+                  </div>
+                  <Pill
+                    label={
+                      c.status === "paid"
+                        ? "Paid"
+                        : c.status === "failed"
+                          ? "Failed"
+                          : "Refunded"
+                    }
+                    cls={
+                      c.status === "paid"
+                        ? "bg-green-light"
+                        : c.status === "failed"
+                          ? "bg-red-light"
+                          : "bg-purple-light"
+                    }
+                  />
+                </div>
+              ))
             )}
-          </div>
-        )}
-      </SheetContent>
-    </Sheet>
+          </section>
+
+          {data.actions.length > 0 && (
+            <section className="flex flex-col gap-2">
+              <h3 className="text-sm font-semibold text-foreground">
+                Admin activity
+              </h3>
+              <ol className="flex flex-col gap-2 border-l border-border pl-4">
+                {data.actions.map((a, i) => (
+                  <li key={i} className="text-xs">
+                    <p className="font-medium text-foreground">
+                      {a.action.replace("membership_", "").replace(/_/g, " ")}
+                      {a.reason ? `: “${a.reason}”` : ""}
+                    </p>
+                    <p className="text-muted-foreground">
+                      {a.by ?? "System"} ·{" "}
+                      {format(parseISO(a.at), "d MMM yyyy, HH:mm")}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
+        </div>
+      )}
+    </SidePanel>
   )
+}
+
+function initials(name: string | null) {
+  return (name ?? "?")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase())
+    .join("")
 }
 
 export function AdminMembershipsPanel() {
@@ -591,37 +649,37 @@ export function AdminMembershipsPanel() {
           label="Active"
           value={s?.counts.active ?? "–"}
           sub={s ? `${s.counts.complimentary} complimentary` : undefined}
-          tint="bg-green-light"
+          accent="text-green"
         />
         <Tile
           label="Needs attention"
           value={s?.counts.attention ?? "–"}
           sub="failed or missed renewal"
-          tint="bg-red-light"
+          accent="text-red"
         />
         <Tile
           label="Not renewing"
           value={s?.counts.nonRenewing ?? "–"}
           sub={s ? `${s.counts.ending7d} end within 7 days` : undefined}
-          tint="bg-yellow-light"
+          accent="text-yellow"
         />
         <Tile
           label="Expected each month"
           value={s ? money(s.monthlyValue) : "–"}
           sub="card subscriptions only"
-          tint="bg-purple-light"
+          accent="text-purple"
         />
         <Tile
           label="Received this month"
           value={s ? money(s.receivedThisMonth) : "–"}
           sub={s ? `${money(s.receivedLastMonth)} last month` : undefined}
-          tint="bg-blue-light"
+          accent="text-blue"
         />
         <Tile
           label="Failed charges (30 days)"
           value={s?.failed30d ?? "–"}
           sub={s ? `${s.counts.ended30d} ended` : undefined}
-          tint="bg-orange-light"
+          accent="text-orange"
         />
       </div>
 
@@ -702,7 +760,7 @@ export function AdminMembershipsPanel() {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[760px] text-left text-sm">
               <thead>
-                <tr className="border-b border-border/60 bg-muted/20 text-[11px] tracking-wider text-muted-foreground uppercase">
+                <tr className="border-b border-border/60 bg-foreground/80 text-[11px] tracking-wider text-secondary uppercase dark:bg-foreground">
                   {[
                     "Parent",
                     "Status",

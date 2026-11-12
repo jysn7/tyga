@@ -30,15 +30,15 @@ const SEV = {
     label: "Look at it",
     short: "Medium",
     cls: "bg-yellow-light",
-    dot: "bg-amber-500",
-    text: "text-amber-600",
+    dot: "bg-yellow",
+    text: "text-yellow",
   },
   low: {
     label: "Tidy up",
     short: "Low",
     cls: "bg-blue-light",
-    dot: "bg-blue-500",
-    text: "text-blue-600",
+    dot: "bg-blue",
+    text: "text-blue",
   },
 } as const
 
@@ -69,16 +69,16 @@ export function SystemHealthPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-48 items-center justify-center">
+      <div className="flex h-48 items-center justify-center rounded-xl bg-card shadow">
         <Loader />
       </div>
     )
   }
   if (error || !data) {
     return (
-      <p className="text-sm text-destructive">
+      <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
         {error?.message ?? "Could not load"}
-      </p>
+      </div>
     )
   }
 
@@ -102,34 +102,34 @@ export function SystemHealthPage() {
           sub="checks passing"
           value={healthy}
           icon={CheckCircle2}
-          tint={healthy > 0 ? "bg-green-light" : "bg-muted"}
+          accent={healthy > 0 ? "text-green" : "text-muted-foreground"}
         />
         <SummaryTile
           label="Issues"
           sub={totalProblems === 1 ? "check" : "checks"}
           value={totalProblems}
           icon={AlertTriangle}
-          tint={totalProblems > 0 ? "bg-red-light" : "bg-green-light"}
+          accent={totalProblems > 0 ? "text-rose" : "text-green"}
         />
         <SummaryTile
           label="Failed jobs"
           sub={failedJobs === 1 ? "job" : "jobs"}
           value={failedJobs}
           icon={Activity}
-          tint={failedJobs > 0 ? "bg-red-light" : "bg-green-light"}
+          accent={failedJobs > 0 ? "text-rose" : "text-green"}
         />
         <SummaryTile
           label="Unknown"
           sub="checks skipped"
           value={unknown.length}
           icon={Clock}
-          tint={unknown.length > 0 ? "bg-yellow-light" : "bg-blue-light"}
+          accent={unknown.length > 0 ? "text-yellow" : "text-muted-foreground"}
         />
       </div>
 
       {/* ── Status bar ── */}
       <div
-        className={`flex flex-wrap items-center justify-between gap-3 rounded-lg border px-4 py-3 ${
+        className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-3 ${
           hasAnyIssue
             ? "border-border/60 bg-card"
             : "border-green/40 bg-green-light"
@@ -199,7 +199,6 @@ export function SystemHealthPage() {
             const meta = SEV[sev]
             return (
               <section key={sev} className="flex flex-col gap-2">
-                {/* Section header */}
                 <div className="flex items-center gap-2">
                   <span
                     className={`h-1.5 w-1.5 shrink-0 rounded-full ${meta.dot}`}
@@ -212,13 +211,12 @@ export function SystemHealthPage() {
                   </span>
                 </div>
 
-                <ul className="overflow-hidden rounded-lg border border-border/60 bg-card">
+                <ul className="overflow-hidden rounded-xl border border-border/60 bg-card">
                   {items.map((c) => (
                     <li
                       key={c.code}
                       className="flex items-center gap-3 border-b border-border/60 px-4 py-3 last:border-b-0 hover:bg-accent/30"
                     >
-                      {/* Left: dot + label */}
                       <span
                         className={`h-1.5 w-1.5 shrink-0 rounded-full ${meta.dot}`}
                       />
@@ -226,7 +224,6 @@ export function SystemHealthPage() {
                         {c.label}
                       </span>
 
-                      {/* Right: count + severity tag */}
                       <div className="flex shrink-0 items-center gap-2">
                         <span
                           className={`rounded-md px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-foreground uppercase ${meta.cls}`}
@@ -248,7 +245,7 @@ export function SystemHealthPage() {
 
       {/* ── Unknown checks ── */}
       {unknown.length > 0 && (
-        <div className="flex gap-3 rounded-lg border border-amber-500/40 bg-yellow-light px-4 py-3">
+        <div className="flex gap-3 rounded-xl border border-yellow/40 bg-yellow-light px-4 py-3">
           <AlertTriangle
             className="mt-0.5 h-4 w-4 shrink-0 text-foreground"
             strokeWidth={1.75}
@@ -269,7 +266,7 @@ export function SystemHealthPage() {
             <ul className="mt-1.5 flex flex-col gap-0.5 text-xs text-muted-foreground">
               {unknown.map((c) => (
                 <li key={c.code} className="flex items-center gap-1.5">
-                  <span className="h-1 w-1 shrink-0 rounded-full bg-amber-500" />
+                  <span className="h-1 w-1 shrink-0 rounded-full bg-yellow" />
                   {c.label}
                 </li>
               ))}
@@ -295,15 +292,15 @@ export function SystemHealthPage() {
         </div>
 
         {data.jobs.length === 0 ? (
-          <p className="rounded-lg border border-border/60 bg-card px-4 py-6 text-center text-xs text-muted-foreground">
+          <p className="rounded-xl border border-border/60 bg-card px-4 py-6 text-center text-xs text-muted-foreground">
             No job has run yet.
           </p>
         ) : (
-          <div className="overflow-hidden rounded-lg border border-border/60 bg-card">
+          <div className="overflow-hidden rounded-xl border border-border/60 bg-card">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-border/60 bg-foreground/80 text-[10px] tracking-wider text-secondary uppercase">
+                  <tr className="border-b border-border/60 bg-foreground/80 text-[10px] tracking-wider text-secondary uppercase dark:bg-foreground">
                     <th className="px-4 py-2.5 font-medium">Job</th>
                     <th className="px-4 py-2.5 font-medium">Last run</th>
                     <th className="px-4 py-2.5 font-medium">Detail</th>
@@ -316,7 +313,7 @@ export function SystemHealthPage() {
                   {data.jobs.map((j) => (
                     <tr
                       key={j.job}
-                      className="border-b border-border/60 last:border-b-0"
+                      className="border-b border-border/60 last:border-b-0 hover:bg-accent/30"
                     >
                       <td className="px-4 py-3 font-medium text-foreground capitalize">
                         {j.job.replace(/_/g, " ")}
@@ -368,7 +365,7 @@ export function SystemHealthPage() {
       </section>
 
       {/* ── Export ── */}
-      <section className="flex flex-col gap-4 rounded-lg border border-border/60 bg-card p-4">
+      <section className="flex flex-col gap-4 rounded-xl border border-border/60 bg-card p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-col gap-1">
             <h2 className="text-[11px] font-semibold tracking-wider text-foreground uppercase">
@@ -437,24 +434,26 @@ function SummaryTile({
   sub,
   value,
   icon: Icon,
-  tint,
+  accent,
 }: {
   label: string
   sub: string
   value: number
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
-  tint: string
+  accent: string
 }) {
   return (
-    <div className={`flex flex-col gap-1.5 rounded-lg p-3.5 ${tint}`}>
+    <div className="flex flex-col gap-1.5 rounded-2xl border border-border/60 bg-card p-4">
       <div className="flex items-center gap-1.5">
-        <Icon className="h-3.5 w-3.5 text-foreground" strokeWidth={2} />
+        <Icon className={`h-3.5 w-3.5 ${accent}`} strokeWidth={2} />
         <span className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
           {label}
         </span>
       </div>
       <div className="flex items-baseline gap-1.5">
-        <span className="text-xl leading-none font-semibold text-foreground tabular-nums">
+        <span
+          className={`text-xl leading-none font-semibold tabular-nums ${accent}`}
+        >
           {value}
         </span>
         <span className="text-[11px] text-muted-foreground">{sub}</span>

@@ -55,6 +55,9 @@ const initials = (name: string) =>
     .join("")
     .toUpperCase() || "?"
 
+const TAB_TRIGGER_CLASS =
+  "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+
 type ThreadMessage = {
   id: number
   kind: string
@@ -86,15 +89,17 @@ function useDebounced<T>(v: T, ms = 300) {
 function Tile({
   label,
   value,
-  tint,
+  accent,
 }: {
   label: string
   value: string | number
-  tint: string
+  accent: string
 }) {
   return (
-    <div className={`rounded-lg p-3 ${tint}`}>
-      <p className="text-lg leading-none font-semibold text-foreground">
+    <div className="rounded-2xl border border-border/60 bg-card p-4">
+      <p
+        className={`text-lg leading-none font-semibold tabular-nums ${accent}`}
+      >
         {value}
       </p>
       <p className="mt-1 text-[11px] text-muted-foreground">{label}</p>
@@ -291,7 +296,7 @@ function TicketDetail({
           </div>
 
           {isDirect ? (
-            <div className="rounded-lg bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
+            <div className="rounded-lg border border-border/60 bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
               Safeguarding view: you can read this and add private notes, but
               only the two participants can reply.
             </div>
@@ -414,7 +419,7 @@ function TicketDetail({
           </div>
 
           {isDirect && data.status === "closed" ? (
-            <div className="rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
+            <div className="rounded-lg border border-border/60 bg-muted px-3 py-2 text-xs text-muted-foreground">
               This conversation is closed. Reopen it to reply.
             </div>
           ) : (
@@ -539,22 +544,22 @@ export function AdminSupportPage() {
         <Tile
           label="Needs a reply"
           value={s?.needs_reply ?? "–"}
-          tint="bg-red-light"
+          accent="text-red"
         />
         <Tile
           label="Unassigned"
           value={s?.unassigned ?? "–"}
-          tint="bg-yellow-light"
+          accent="text-yellow"
         />
         <Tile
           label="Overdue 24h+"
           value={s?.overdue ?? "–"}
-          tint="bg-orange-light"
+          accent="text-orange"
         />
         <Tile
           label="Resolved this week"
           value={s?.resolved_7d ?? "–"}
-          tint="bg-green-light"
+          accent="text-green"
         />
         <Tile
           label="Avg first reply"
@@ -563,23 +568,25 @@ export function AdminSupportPage() {
               ? `${s.avg_first_response_hours}h`
               : "–"
           }
-          tint="bg-blue-light"
+          accent="text-blue"
         />
         <Tile
           label="Avg rating"
           value={s?.avg_rating != null ? `${s.avg_rating}/5` : "–"}
-          tint="bg-purple-light"
+          accent="text-purple"
         />
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="flex rounded-md border border-border p-0.5">
-          {(
-            [
-              ["ticket", "Support tickets"],
-              ["direct", "Direct messages"],
-            ] as const
-          ).map(([k, label]) => (
+      {/* Segmented tabs — matches the app's tab style */}
+      <div className="flex w-fit gap-1 rounded-lg bg-input p-1">
+        {(
+          [
+            ["ticket", "Support tickets"],
+            ["direct", "Direct messages"],
+          ] as const
+        ).map(([k, label]) => {
+          const active = kind === k
+          return (
             <button
               key={k}
               type="button"
@@ -589,16 +596,16 @@ export function AdminSupportPage() {
                 setNeedsReply(false)
                 reset()
               }}
-              className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
-                kind === k
-                  ? "bg-foreground text-background"
+              className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                active
+                  ? "bg-card text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
               {label}
             </button>
-          ))}
-        </div>
+          )
+        })}
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -704,7 +711,7 @@ export function AdminSupportPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex h-64 items-center justify-center rounded-lg bg-card shadow">
+        <div className="flex h-64 items-center justify-center rounded-xl bg-card shadow">
           <Loader />
         </div>
       ) : error ? (
@@ -718,7 +725,7 @@ export function AdminSupportPage() {
           description="No tickets match these filters."
         />
       ) : (
-        <div className="overflow-hidden rounded-lg bg-card shadow">
+        <div className="overflow-hidden rounded-xl bg-card shadow">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[900px] text-left text-sm">
               <thead>
@@ -745,7 +752,7 @@ export function AdminSupportPage() {
                         setSelected(r.id)
                       }
                     }}
-                    className="cursor-pointer border-b border-border/60 transition-colors last:border-b-0 hover:bg-accent/40 focus-visible:bg-accent/40 focus-visible:outline-none"
+                    className="cursor-pointer border-b border-border/60 last:border-b-0 hover:bg-accent/40 focus-visible:bg-accent/40 focus-visible:outline-none"
                   >
                     <td className="px-4 py-2.5 text-xs text-muted-foreground tabular-nums">
                       {r.id}

@@ -1,16 +1,16 @@
 "use client"
 
 import { useState } from "react"
-import { format, parseISO } from "date-fns"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { format, formatDistanceToNow, parseISO } from "date-fns"
 import {
   AlertTriangle,
-  CheckCircle2,
-  Circle,
-  Loader2,
-  ShieldAlert,
-  Sparkles,
-  TrendingUp,
-  User,
+  Eraser,
+  KeyRound,
+  ShieldOff,
+  UserCheck,
+  UserX,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Loader } from "@/components/portals/shared/loader"
@@ -18,12 +18,47 @@ import { Field } from "@/components/portals/shared/field"
 import { SidePanel } from "@/components/portals/shared/side-sheet"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
-  useProgressionBoard,
-  useModuleMatrix,
-  useProgressNotes,
-  useAdvanceMembersBulk,
-} from "@/hooks/coach/use-coach-progressions"
-import { toast } from "@/components/ui/toast"
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  useAccountDetail,
+  useAnonymiseAccount,
+  useRemoveAccountMfa,
+  useSendPasswordReset,
+  useSetAccountActive,
+  useSetAccountRole,
+  type AccountRole,
+} from "@/hooks/admin/accounts/use-admin-accounts"
+
+const MEMBERS_ROUTE = "/admin/members"
+
+type ActionKey =
+  "role" | "deactivate" | "reactivate" | "reset" | "mfa" | "anonymise"
+
+const ROLE_LABEL: Record<AccountRole, string> = {
+  parent: "Parent",
+  coach: "Coach",
+  admin: "Admin",
+}
+
+const ROLE_TINT: Record<AccountRole, string> = {
+  parent: "bg-blue-light",
+  coach: "bg-green-light",
+  admin: "bg-purple-light",
+}
+
+const ACTION_LABEL: Record<string, string> = {
+  role_changed: "Role changed",
+  deactivated: "Deactivated",
+  reactivated: "Reactivated",
+  password_reset_sent: "Password reset link sent",
+  mfa_removed: "Authenticator removed",
+  anonymised: "Anonymised",
+}
 
 const fmt = (s: string | null | undefined) =>
   s ? format(parseISO(s), "d MMM yyyy") : "—"
@@ -35,14 +70,6 @@ const initials = (n: string | null) =>
     .slice(0, 2)
     .map((p) => p[0]?.toUpperCase())
     .join("")
-
-const CATEGORY_LABEL: Record<string, string> = {
-  technical: "Technical",
-  physical: "Physical",
-  mental_character: "Mental & character",
-  format: "Format & course",
-}
-const CATEGORY_ORDER = ["technical", "physical", "mental_character", "format"]
 
 const TAB_TRIGGER_CLASS =
   "flex-1 gap-1.5 rounded-md px-2.5 py-2 text-xs font-medium w-fit text-muted-foreground transition-colors hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm sm:flex-initial sm:gap-2 sm:px-3"
@@ -96,38 +123,6 @@ function ActionGroup({
   )
 }
 
-// Compose the drawer's view from RPCs that exist today.
-function useStudentProgressDetail(memberId: number | null) {
-  const board = useProgressionBoard({ sort: "name", limit: 100, offset: 0 })
-
-  const row = board.data?.find((r) => r.memberId === memberId) ?? null
-
-  const matrix = useModuleMatrix(row?.levelId ?? null, null)
-  const notes = useProgressNotes(memberId, 30)
-
-  const milestones = (() => {
-    if (!row || !matrix.data) return []
-    const me = matrix.data.students.find((s) => s.member_id === memberId)
-    const done = new Set<number>(me?.done_module_ids ?? [])
-    return matrix.data.modules.map((mod) => ({
-      moduleId: mod.id,
-      name: mod.name,
-      category: mod.category,
-      description: mod.description,
-      completed: done.has(mod.id),
-    }))
-  })()
-
-  return {
-    row,
-    milestones,
-    notes: notes.data ?? [],
-    isLoading:
-      board.isLoading || (!!row && matrix.isLoading) || notes.isLoading,
-    error: board.error ?? matrix.error ?? notes.error,
-  }
-}
-
 export function AccountPanel({
   id,
   onClose,
@@ -135,85 +130,137 @@ export function AccountPanel({
   id: string
   onClose: () => void
 }) {
-  return (
-    <StudentProgressDrawer memberId={Number(id) || null} onClose={onClose} />
-  )
-}
+  const router = useRouter()
+  const { data, isLoading, error } = useAccountDetail(id)
 
-export function StudentProgressDrawer({
-  memberId,
-  onClose,
-}: {
-  memberId: number | null
-  onClose: () => void
-}) {
-  const detail = useStudentProgressDetail(memberId)
-  const advance = useAdvanceMembersBulk()
-  const [confirming, setConfirming] = useState(false)
-  const [notes, setNotes] = useState("")
+  const setRole = useSetAccountRole()
+  const setActive = useSetAccountActive()
+  const reset = useSendPasswordReset()
+  const removeMfa = useRemoveAccountMfa()
+  const anonymise = useAnonymiseAccount()
+
+  const [pending, setPending] = useState<ActionKey | null>(null)
+  const [reason, setReason] = useState("")
+  const [newRole, setNewRole] = useState<AccountRole>("parent")
+  const [confirmEmail, setConfirmEmail] = useState("")
   const [notice, setNotice] = useState<string | null>(null)
-  const [tab, setTab] = useState("progress")
+  const [tab, setTab] = useState("details")
 
-  const row = detail.row
-  const open = memberId !== null
+  const mutation = {
+    role: setRole,
+    deactivate: setActive,
+    reactivate: setActive,
+    reset,
+    mfa: removeMfa,
+    anonymise,
+  }
+  const activeMutation = pending ? mutation[pending] : null
+  const busy = !!activeMutation?.isPending
+  const actionError = activeMutation?.error?.message ?? null
 
-  if (!open) return null
+  function resetForm() {
+    setPending(null)
+    setReason("")
+    setConfirmEmail("")
+    ;[setRole, setActive, reset, removeMfa, anonymise].forEach((m) => m.reset())
+  }
 
-  const canAdvance = !!row?.ready
-  const blockers = row
-    ? [
-        row.milestonesDone < row.milestonesTotal
-          ? `${row.milestonesTotal - row.milestonesDone} milestone${
-              row.milestonesTotal - row.milestonesDone === 1 ? "" : "s"
-            } remaining`
-          : null,
-        row.attendanceRate30d != null && row.attendanceRate30d < 60
-          ? `Attendance rate ${row.attendanceRate30d}%`
-          : null,
-        row.absencesInARow >= 2
-          ? `${row.absencesInARow} absences in a row`
-          : null,
-      ].filter((x): x is string => !!x)
-    : []
+  function start(a: ActionKey) {
+    resetForm()
+    setNotice(null)
+    if (a === "role" && data) {
+      setNewRole(data.role === "parent" ? "coach" : "parent")
+    }
+    setPending(a)
+  }
 
-  const grouped = CATEGORY_ORDER.map((category) => ({
-    category,
-    label: CATEGORY_LABEL[category] ?? category,
-    milestones: detail.milestones.filter(
-      (m) => (m.category ?? "") === category
-    ),
-  })).filter((g) => g.milestones.length > 0)
+  function done(message: string) {
+    resetForm()
+    setNotice(message)
+    router.refresh()
+  }
 
-  const hasNotes = detail.notes.length > 0
-  const hasAttendance = !!row && row.attendanceRate30d != null
+  const locked = !!data?.anonymised_at
+  const reasonRequired =
+    pending !== null && pending !== "reset" && pending !== "reactivate"
+  const blockers = data?.anonymise_blockers ?? []
+  const coachSessions = data?.coach?.upcoming_sessions ?? 0
+  const hasChildren = (data?.children.length ?? 0) > 0
+  const hasCoach = !!data?.coach
+  const hasBilling = !!data?.membership || (data?.open_invoices.count ?? 0) > 0
 
-  async function handlePromote() {
-    if (!row) return
-    try {
-      const rows = await advance.mutateAsync({
-        memberIds: [row.memberId],
-        notes: notes.trim() || null,
-      })
-      const res = rows[0]
-      if (!res?.ok) throw new Error(res?.message ?? "Promotion failed")
+  const roleBlocked =
+    data &&
+    ((data.role === "admin" &&
+    newRole !== "admin" &&
+    data.other_active_admins === 0
+      ? "This is the last active administrator."
+      : null) ||
+      (data.role === "coach" && newRole !== "coach" && coachSessions > 0
+        ? `This coach has ${coachSessions} upcoming session(s). Reassign them first.`
+        : null))
 
-      setConfirming(false)
-      setNotes("")
-      setNotice(`${row.fullName} moved to ${res.newLevelName ?? "next level"}.`)
-      toast.add({
-        title: "Level advanced",
-        description: `${row.fullName} moved to ${res.newLevelName ?? "next level"}.`,
-        type: "success",
-        timeout: 5000,
-      })
-    } catch (err) {
-      toast.add({
-        title: "Couldn't promote",
-        description:
-          err instanceof Error ? err.message : "Something went wrong",
-        type: "error",
-        timeout: 5000,
-      })
+  const canConfirm =
+    !busy &&
+    (!reasonRequired || reason.trim().length > 0) &&
+    (pending !== "role" || (!!data && newRole !== data.role && !roleBlocked)) &&
+    (pending !== "anonymise" ||
+      (blockers.length === 0 &&
+        confirmEmail.trim().toLowerCase() ===
+          (data?.email ?? "").toLowerCase() &&
+        confirmEmail.trim().length > 0))
+
+  function confirm() {
+    if (!data || !pending) return
+    const name = data.full_name ?? data.email ?? "the account"
+
+    switch (pending) {
+      case "role":
+        setRole.mutate(
+          { accountId: data.id, role: newRole, reason },
+          {
+            onSuccess: () =>
+              done(`${name} is now ${ROLE_LABEL[newRole].toLowerCase()}.`),
+          }
+        )
+        break
+      case "deactivate":
+        setActive.mutate(
+          { accountId: data.id, active: false, reason },
+          {
+            onSuccess: () =>
+              done(`${name} is deactivated and signed out everywhere.`),
+          }
+        )
+        break
+      case "reactivate":
+        setActive.mutate(
+          { accountId: data.id, active: true, reason },
+          { onSuccess: () => done(`${name} can sign in again.`) }
+        )
+        break
+      case "reset":
+        reset.mutate(data.id, {
+          onSuccess: () => done(`A reset link was emailed to ${data.email}.`),
+        })
+        break
+      case "mfa":
+        removeMfa.mutate(
+          { accountId: data.id, reason },
+          {
+            onSuccess: () =>
+              done(
+                `The authenticator was removed. ${name} will be asked to set up a new one at their next sign-in.`
+              ),
+          }
+        )
+        break
+      case "anonymise":
+        anonymise.mutate(
+          { accountId: data.id, confirmEmail, reason },
+          { onSuccess: (warning) => done(warning ?? `${name} was anonymised.`) }
+        )
+        break
     }
   }
 
@@ -221,37 +268,41 @@ export function StudentProgressDrawer({
     <SidePanel
       open
       onOpenChange={(o) => !o && onClose()}
-      title={row?.fullName ?? "Student progress"}
-      description={row?.programmes ?? undefined}
+      title={data?.full_name ?? "Account"}
+      description={data?.email ?? undefined}
       header={
-        row && (
+        data && (
           <div className="flex flex-col gap-4 border-b border-border/60 px-8 pt-8 pb-6">
             <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-blue-light text-base font-semibold text-foreground">
-                {initials(row.fullName)}
+              <div
+                className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-base font-semibold text-foreground ${ROLE_TINT[data.role]}`}
+              >
+                {initials(data.full_name)}
               </div>
               <div className="flex min-w-0 flex-col gap-1">
                 <span className="truncate text-xl font-semibold tracking-tight text-foreground">
-                  {row.fullName}
+                  {data.full_name ?? "Unnamed"}
                 </span>
                 <span className="truncate text-sm text-muted-foreground">
-                  Age {row.age} · {row.programmes ?? "No active programme"}
+                  {data.email}
                 </span>
                 <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
                   <Pill
-                    label={row.levelName ?? "No level"}
-                    cls={row.noLevel ? "bg-muted" : "bg-blue-light"}
+                    label={ROLE_LABEL[data.role]}
+                    cls={ROLE_TINT[data.role]}
                   />
-                  {row.ready ? (
-                    <Pill label="Ready to advance" cls="bg-green-light" />
-                  ) : row.stalled ? (
-                    <Pill label="Stalled" cls="bg-orange-light" />
-                  ) : row.needsAttention ? (
-                    <Pill label="Needs attention" cls="bg-red-light" />
-                  ) : null}
-                  {row.hasMedicalNotes && (
-                    <Pill label="Medical" cls="bg-red-light" />
+                  {locked ? (
+                    <Pill label="Anonymised" cls="bg-muted" />
+                  ) : data.active ? (
+                    <Pill label="Active" cls="bg-green-light" />
+                  ) : (
+                    <Pill label="Deactivated" cls="bg-red-light" />
                   )}
+                  <Pill
+                    label={data.has_mfa ? "MFA on" : "MFA off"}
+                    cls={data.has_mfa ? "bg-green-light" : "bg-yellow-light"}
+                  />
+                  {data.is_self && <Pill label="You" cls="bg-blue-light" />}
                 </div>
               </div>
             </div>
@@ -259,19 +310,19 @@ export function StudentProgressDrawer({
         )
       }
     >
-      {detail.isLoading && (
+      {isLoading && (
         <div className="flex h-48 items-center justify-center">
           <Loader />
         </div>
       )}
 
-      {detail.error && (
+      {error && (
         <div className="m-4 rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-          {detail.error.message}
+          {error.message}
         </div>
       )}
 
-      {row && (
+      {data && (
         <div className="flex flex-col gap-5 px-6 pb-6">
           {notice && (
             <div className="rounded-lg border border-green/40 bg-green-light px-3 py-2 text-xs text-foreground">
@@ -279,54 +330,202 @@ export function StudentProgressDrawer({
             </div>
           )}
 
-          {/* Pending promote confirmation — mirrors AccountPanel's pending block */}
-          {confirming && (
+          {pending && (
             <div className="flex flex-col gap-4 rounded-xl border border-border bg-muted/40 p-4">
-              <p className="text-sm font-medium text-foreground">
-                Promote to {row.nextLevelName ?? "next level"}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                <strong className="font-semibold">{row.fullName}</strong> will
-                move from {row.levelName ?? "current level"} to{" "}
-                <strong className="font-semibold">
-                  {row.nextLevelName ?? "next level"}
-                </strong>
-                . This is recorded in their level history.
-              </p>
-              <Field label="Note for the parent (optional)">
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  rows={2}
-                  maxLength={500}
-                  className="rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
-                />
-              </Field>
+              {pending === "role" && (
+                <>
+                  <p className="text-sm font-medium text-foreground">
+                    Change role
+                  </p>
+                  <Select
+                    value={newRole}
+                    onValueChange={(v) =>
+                      setNewRole((v as AccountRole) ?? newRole)
+                    }
+                  >
+                    <SelectTrigger className="h-9 w-full text-sm">
+                      <SelectValue>{ROLE_LABEL[newRole]}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(Object.keys(ROLE_LABEL) as AccountRole[]).map((r) => (
+                        <SelectItem key={r} value={r}>
+                          {ROLE_LABEL[r]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {newRole === "admin" && (
+                    <p className="text-xs text-muted-foreground">
+                      Administrators can see and change everything, including
+                      children&apos;s medical notes.
+                    </p>
+                  )}
+                  {newRole === "coach" && data.role !== "coach" && (
+                    <p className="text-xs text-muted-foreground">
+                      A coach record is created. Set their type and ratio on the
+                      Coaches tab.
+                    </p>
+                  )}
+                  {roleBlocked && (
+                    <p className="flex items-center gap-1.5 text-xs text-destructive">
+                      <AlertTriangle
+                        className="h-3.5 w-3.5"
+                        strokeWidth={1.75}
+                      />{" "}
+                      {roleBlocked}
+                    </p>
+                  )}
+                </>
+              )}
+
+              {pending === "deactivate" && (
+                <>
+                  <p className="text-sm font-medium text-foreground">
+                    Deactivate this account
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    They are signed out on every device and cannot sign in until
+                    you reactivate them. Nothing is deleted.
+                  </p>
+                  {coachSessions > 0 && (
+                    <p className="flex items-center gap-1.5 text-xs text-destructive">
+                      <AlertTriangle
+                        className="h-3.5 w-3.5"
+                        strokeWidth={1.75}
+                      />
+                      This coach still has {coachSessions} upcoming session(s)
+                      to reassign.
+                    </p>
+                  )}
+                </>
+              )}
+
+              {pending === "reactivate" && (
+                <>
+                  <p className="text-sm font-medium text-foreground">
+                    Reactivate this account
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    They will be able to sign in again.
+                  </p>
+                </>
+              )}
+
+              {pending === "reset" && (
+                <>
+                  <p className="text-sm font-medium text-foreground">
+                    Send a password reset link
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    An email goes to {data.email}. The link works once. You
+                    never see or choose their password.
+                    {data.has_mfa &&
+                      " They will still need their authenticator code."}
+                  </p>
+                </>
+              )}
+
+              {pending === "mfa" && (
+                <>
+                  <p className="text-sm font-medium text-foreground">
+                    Remove authenticator
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Removes every authenticator and signs them out everywhere.
+                    Only do this after confirming their identity, for example by
+                    phone. Staff must set up a new one at their next sign-in.
+                  </p>
+                </>
+              )}
+
+              {pending === "anonymise" && (
+                <>
+                  <p className="flex items-center gap-1.5 text-sm font-medium text-destructive">
+                    <AlertTriangle className="h-4 w-4" strokeWidth={1.75} />{" "}
+                    Anonymise this account
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    <strong>This cannot be undone.</strong> It removes the name,
+                    email, phone, address and photo, all sign-in methods, the
+                    children&apos;s names, medical and school details, emergency
+                    contacts, uploaded documents, notes and notifications.
+                    Children keep only their year of birth, gender and level.
+                    Invoices, payments, enrolments, attendance and the admin
+                    audit trail are kept, with no names.
+                  </p>
+                  {blockers.length > 0 ? (
+                    <div className="rounded-lg border border-destructive/40 bg-red-light p-3">
+                      <p className="text-xs font-medium text-foreground">
+                        Not possible yet:
+                      </p>
+                      <ul className="mt-1 list-disc pl-5 text-xs text-foreground">
+                        {blockers.map((b) => (
+                          <li key={b}>{b}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : (
+                    <Field
+                      label="Type their email to confirm"
+                      hint={data.email}
+                    >
+                      <input
+                        value={confirmEmail}
+                        onChange={(e) => setConfirmEmail(e.target.value)}
+                        autoComplete="off"
+                        className="rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                      />
+                    </Field>
+                  )}
+                </>
+              )}
+
+              {pending !== "reset" && (
+                <Field
+                  label={`Reason ${
+                    reasonRequired ? "(required)" : "(optional)"
+                  }`}
+                >
+                  <textarea
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    rows={2}
+                    maxLength={300}
+                    className="rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                  />
+                </Field>
+              )}
+
+              {actionError && (
+                <p
+                  role="alert"
+                  className="rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-xs text-destructive"
+                >
+                  {actionError}
+                </p>
+              )}
+
               <div className="flex gap-2">
                 <Button
                   size="sm"
-                  disabled={advance.isPending}
-                  className="text-xs"
-                  onClick={handlePromote}
+                  disabled={!canConfirm}
+                  className={`text-xs ${
+                    pending === "anonymise" ||
+                    pending === "deactivate" ||
+                    pending === "mfa"
+                      ? "bg-destructive text-white hover:bg-destructive/90"
+                      : ""
+                  }`}
+                  onClick={confirm}
                 >
-                  {advance.isPending ? (
-                    <>
-                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                      Promoting…
-                    </>
-                  ) : (
-                    "Confirm"
-                  )}
+                  {busy ? "Working…" : "Confirm"}
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
-                  disabled={advance.isPending}
+                  disabled={busy}
+                  onClick={resetForm}
                   className="text-xs"
-                  onClick={() => {
-                    setConfirming(false)
-                    setNotes("")
-                  }}
                 >
                   Back
                 </Button>
@@ -340,265 +539,285 @@ export function StudentProgressDrawer({
             className="flex flex-col gap-3"
           >
             <TabsList className="no-scrollbar h-auto w-fit justify-start gap-1 overflow-x-auto rounded-lg bg-input p-1">
-              <TabsTrigger value="progress" className={TAB_TRIGGER_CLASS}>
-                Progress
+              <TabsTrigger value="details" className={TAB_TRIGGER_CLASS}>
+                Details
               </TabsTrigger>
-              <TabsTrigger value="milestones" className={TAB_TRIGGER_CLASS}>
-                Milestones
-              </TabsTrigger>
-              {hasAttendance && (
-                <TabsTrigger value="attendance" className={TAB_TRIGGER_CLASS}>
-                  Attendance
+              {hasChildren && (
+                <TabsTrigger value="children" className={TAB_TRIGGER_CLASS}>
+                  Children
                 </TabsTrigger>
               )}
-              {hasNotes && (
-                <TabsTrigger value="notes" className={TAB_TRIGGER_CLASS}>
-                  Notes
+              {hasCoach && (
+                <TabsTrigger value="coach" className={TAB_TRIGGER_CLASS}>
+                  Coach
                 </TabsTrigger>
               )}
-              <TabsTrigger value="actions" className={TAB_TRIGGER_CLASS}>
-                Actions
+              {hasBilling && (
+                <TabsTrigger value="billing" className={TAB_TRIGGER_CLASS}>
+                  Billing
+                </TabsTrigger>
+              )}
+              <TabsTrigger value="activity" className={TAB_TRIGGER_CLASS}>
+                Activity
               </TabsTrigger>
+              {!locked && (
+                <TabsTrigger value="actions" className={TAB_TRIGGER_CLASS}>
+                  Actions
+                </TabsTrigger>
+              )}
             </TabsList>
 
-            {/* PROGRESS */}
-            <TabsContent value="progress" className="mt-0">
+            <TabsContent value="details" className="mt-0">
               <div className="flex flex-col">
-                <Row label="Level">{row.levelName ?? "Not assigned"}</Row>
-                <Row label="Next level">{row.nextLevelName ?? "—"}</Row>
-                <Row label="Milestones">
-                  <span className="tabular-nums">
-                    {row.milestonesDone} / {row.milestonesTotal}
-                  </span>
+                <Row label="Phone">{data.phone ?? "—"}</Row>
+                <Row label="Joined">{fmt(data.created_at)}</Row>
+                <Row label="Last sign-in">
+                  {data.last_sign_in_at
+                    ? formatDistanceToNow(parseISO(data.last_sign_in_at), {
+                        addSuffix: true,
+                      })
+                    : "Never"}
                 </Row>
-                <Row label="Progress">{row.progressPct}%</Row>
-                <Row label="Last activity">
-                  {row.lastActivityOn ? fmt(row.lastActivityOn) : "—"}
+                <Row label="Sign-in methods">
+                  {data.providers.length
+                    ? data.providers
+                        .map((p) => (p === "email" ? "Email" : p))
+                        .join(", ")
+                    : "—"}
                 </Row>
-                <Row label="Days since">{row.daysSinceActivity ?? "—"}</Row>
-                <Row label="Notes">{row.notesCount}</Row>
+                {data.has_mfa && (
+                  <Row label="Authenticator">
+                    {data.mfa_factors
+                      .map((f) => `${f.name ?? f.type} · ${fmt(f.added_at)}`)
+                      .join(", ")}
+                  </Row>
+                )}
               </div>
-
-              {row.milestonesTotal > 0 && (
-                <div className="mt-3">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">
-                      Milestone progress
-                    </span>
-                    <span className="text-foreground tabular-nums">
-                      {row.milestonesDone} / {row.milestonesTotal}
-                    </span>
-                  </div>
-                  <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-input">
-                    <div
-                      className="h-full bg-green"
-                      style={{
-                        width: `${Math.min(
-                          100,
-                          (row.milestonesDone / row.milestonesTotal) * 100
-                        )}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
             </TabsContent>
 
-            {/* MILESTONES */}
-            <TabsContent value="milestones" className="mt-0">
-              {grouped.length === 0 ? (
-                <p className="text-xs text-muted-foreground">
-                  No milestones defined for this level yet.
-                </p>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  {grouped.map((group) => (
-                    <div
-                      key={group.category}
-                      className="rounded-lg border border-border bg-card p-4"
+            {hasChildren && (
+              <TabsContent value="children" className="mt-0">
+                <div className="flex flex-col">
+                  {data.children.map((c) => (
+                    <Link
+                      key={c.id}
+                      href={`${MEMBERS_ROUTE}?member=${c.id}`}
+                      className="flex items-center justify-between gap-4 border-b border-border/60 py-2.5 text-sm transition-colors last:border-b-0 hover:text-primary"
                     >
-                      <p className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
-                        {group.label}
-                      </p>
-                      <ul className="mt-2 flex flex-col">
-                        {group.milestones.map((m) => (
-                          <li
-                            key={m.moduleId}
-                            className="flex items-start gap-2 border-b border-border/60 py-2 last:border-b-0"
-                          >
-                            {m.completed ? (
-                              <CheckCircle2
-                                className="mt-0.5 h-4 w-4 shrink-0 text-green"
-                                strokeWidth={1.75}
-                              />
-                            ) : (
-                              <Circle
-                                className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/50"
-                                strokeWidth={1.75}
-                              />
-                            )}
-                            <div className="min-w-0">
-                              <p
-                                className={
-                                  m.completed
-                                    ? "text-sm text-foreground"
-                                    : "text-sm text-muted-foreground"
-                                }
-                              >
-                                {m.name}
-                              </p>
-                              {m.description && !m.completed && (
-                                <p className="text-[11px] text-muted-foreground/70">
-                                  {m.description}
-                                </p>
-                              )}
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                      <span className="flex items-center gap-2 text-foreground">
+                        {c.full_name}
+                        {c.archived && (
+                          <span className="rounded bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground">
+                            archived
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {c.open_enrolments} open
+                      </span>
+                    </Link>
                   ))}
                 </div>
-              )}
-            </TabsContent>
-
-            {/* ATTENDANCE */}
-            {hasAttendance && (
-              <TabsContent value="attendance" className="mt-0">
-                <div className="flex flex-col">
-                  <Row label="Rate (30 days)">
-                    <span
-                      className={
-                        (row.attendanceRate30d ?? 0) < 60
-                          ? "text-destructive"
-                          : undefined
-                      }
-                    >
-                      {row.attendanceRate30d}%
-                    </span>
-                  </Row>
-                  <Row label="Absences in a row">
-                    <span
-                      className={
-                        row.absencesInARow >= 2 ? "text-destructive" : undefined
-                      }
-                    >
-                      {row.absencesInARow}
-                    </span>
-                  </Row>
-                </div>
-                {row.absencesInARow >= 2 && (
-                  <div className="mt-3 flex items-start gap-2 rounded-lg border border-destructive/40 bg-red-light p-3">
-                    <AlertTriangle
-                      className="mt-0.5 h-3.5 w-3.5 shrink-0 text-destructive"
-                      strokeWidth={1.75}
-                    />
-                    <p className="text-xs text-foreground">
-                      {row.absencesInARow} absences in a row. Consider checking
-                      in with the parent.
-                    </p>
-                  </div>
-                )}
               </TabsContent>
             )}
 
-            {/* NOTES */}
-            {hasNotes && (
-              <TabsContent value="notes" className="mt-0">
+            {hasCoach && data.coach && (
+              <TabsContent value="coach" className="mt-0">
+                <div className="flex flex-col">
+                  <Row label="Type">
+                    <span className="capitalize">
+                      {(data.coach.coach_type ?? "coach").replace(/_/g, " ")}
+                    </span>
+                  </Row>
+                  <Row label="Max ratio">
+                    {data.coach.max_student_ratio ?? "—"}
+                  </Row>
+                  <Row label="Programmes">{data.coach.programmes}</Row>
+                  <Row label="Upcoming sessions">{coachSessions}</Row>
+                </div>
+              </TabsContent>
+            )}
+
+            {hasBilling && (
+              <TabsContent value="billing" className="mt-0">
+                <div className="flex flex-col">
+                  {data.membership && (
+                    <Row label="Membership">
+                      <span className="capitalize">
+                        {data.membership.status.replace(/_/g, " ")}
+                      </span>{" "}
+                      · R{data.membership.amount} / {data.membership.interval}
+                    </Row>
+                  )}
+                  <Row label="Unpaid invoices">
+                    {data.open_invoices.count} · R{data.open_invoices.amount}
+                  </Row>
+                </div>
+              </TabsContent>
+            )}
+
+            <TabsContent value="activity" className="mt-0">
+              {data.history.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  No admin actions recorded yet.
+                </p>
+              ) : (
                 <ol className="flex flex-col gap-3 border-l border-border pl-4">
-                  {detail.notes.map((n) => (
-                    <li key={n.id} className="relative">
+                  {data.history.map((h, i) => (
+                    <li key={i} className="relative">
                       <span className="absolute top-1.5 -left-[21px] h-2 w-2 rounded-full bg-primary" />
                       <p className="text-xs font-medium text-foreground">
-                        {n.coachName ?? "Coach"}
+                        {ACTION_LABEL[h.action] ?? h.action}
+                        {h.action === "role_changed" && h.details?.from
+                          ? ` (${String(h.details.from)} to ${String(h.details.to)})`
+                          : ""}
                       </p>
-                      <p className="text-xs text-muted-foreground">{n.note}</p>
+                      {h.reason && (
+                        <p className="text-xs text-muted-foreground">
+                          &ldquo;{h.reason}&rdquo;
+                        </p>
+                      )}
                       <p className="text-[11px] text-muted-foreground">
-                        {n.sharedWithParent
-                          ? "Shared with parent"
-                          : "Coaches only"}{" "}
-                        · {fmt(n.createdAt)}
+                        {h.by ?? "System"} ·{" "}
+                        {format(parseISO(h.at), "d MMM yyyy, HH:mm")}
                       </p>
                     </li>
                   ))}
                 </ol>
-              </TabsContent>
-            )}
+              )}
+            </TabsContent>
 
-            {/* ACTIONS */}
-            <TabsContent value="actions" className="mt-0">
-              <div className="flex flex-col gap-3">
-                <ActionGroup
-                  title="Progression"
-                  description={
-                    canAdvance
-                      ? "All milestones on this level are complete. Promote when ready."
-                      : "Milestones on the current level must all be complete before promotion."
-                  }
-                >
-                  {canAdvance ? (
+            {!locked && (
+              <TabsContent value="actions" className="mt-0">
+                <div className="flex flex-col gap-3">
+                  {data.is_self && (
+                    <p className="text-xs text-muted-foreground">
+                      This is your own account. Role, status and anonymise are
+                      unavailable here.
+                    </p>
+                  )}
+
+                  <ActionGroup
+                    title="Access & permissions"
+                    description="Change what this account can see and do."
+                  >
                     <Button
                       size="sm"
                       variant="secondary"
+                      disabled={data.is_self}
+                      onClick={() => start("role")}
                       className="text-xs"
-                      disabled={confirming || advance.isPending}
-                      onClick={() => setConfirming(true)}
                     >
-                      <TrendingUp
-                        className="mr-1 h-3.5 w-3.5"
-                        strokeWidth={1.75}
-                      />
-                      Promote to {row.nextLevelName ?? "next level"}
+                      Change role
                     </Button>
-                  ) : (
-                    <div className="flex flex-col gap-1.5">
-                      {blockers.length > 0 ? (
-                        blockers.map((b) => (
-                          <p
-                            key={b}
-                            className="flex items-center gap-1.5 text-xs text-muted-foreground"
-                          >
-                            <AlertTriangle
-                              className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
-                              strokeWidth={1.75}
-                            />
-                            {b}
-                          </p>
-                        ))
-                      ) : (
-                        <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <Sparkles
-                            className="h-3.5 w-3.5"
-                            strokeWidth={1.75}
-                          />
-                          Waiting on milestone completion.
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </ActionGroup>
+                  </ActionGroup>
 
-                {row.hasMedicalNotes && (
-                  <div className="flex flex-col gap-2 rounded-lg border border-red-light/40 bg-red-light/20 p-4">
-                    <div className="flex items-start gap-3">
-                      <ShieldAlert
-                        className="mt-0.5 h-4 w-4 shrink-0 text-destructive"
-                        strokeWidth={1.75}
-                      />
-                      <div className="min-w-0 flex-1">
-                        <h4 className="text-xs font-medium text-foreground">
-                          Medical notes on file
+                  <ActionGroup
+                    title="Account status"
+                    description={
+                      data.active
+                        ? "Deactivation signs them out and blocks sign-in. Nothing is deleted."
+                        : "This account is currently deactivated. Reactivating lets them sign in again."
+                    }
+                  >
+                    {data.active ? (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled={data.is_self}
+                        onClick={() => start("deactivate")}
+                        className="text-xs"
+                      >
+                        <UserX
+                          className="mr-1 h-3.5 w-3.5"
+                          strokeWidth={1.75}
+                        />
+                        Deactivate account
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled={data.is_self}
+                        onClick={() => start("reactivate")}
+                        className="text-xs"
+                      >
+                        <UserCheck
+                          className="mr-1 h-3.5 w-3.5"
+                          strokeWidth={1.75}
+                        />
+                        Reactivate account
+                      </Button>
+                    )}
+                  </ActionGroup>
+
+                  <ActionGroup
+                    title="Sign-in & security"
+                    description="Password recovery and authenticator management."
+                  >
+                    {data.active && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => start("reset")}
+                        className="text-xs"
+                      >
+                        <KeyRound
+                          className="mr-1 h-3.5 w-3.5"
+                          strokeWidth={1.75}
+                        />
+                        Send password reset
+                      </Button>
+                    )}
+                    {data.has_mfa && !data.is_self && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => start("mfa")}
+                        className="text-xs"
+                      >
+                        <ShieldOff
+                          className="mr-1 h-3.5 w-3.5"
+                          strokeWidth={1.75}
+                        />
+                        Remove authenticator
+                      </Button>
+                    )}
+                    {!data.active && !data.has_mfa && (
+                      <p className="text-xs text-muted-foreground">
+                        No security actions available for this account.
+                      </p>
+                    )}
+                  </ActionGroup>
+
+                  {data.role !== "admin" && !data.is_self && (
+                    <div className="flex flex-col gap-3 rounded-lg border border-destructive/40 p-4">
+                      <div className="flex flex-col gap-0.5">
+                        <h4 className="text-xs font-medium text-destructive">
+                          Danger zone
                         </h4>
-                        <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-                          Open the member record in admin to view details.
-                          Access is audited.
+                        <p className="text-xs leading-relaxed text-muted-foreground">
+                          Permanently removes personal data. Cannot be undone.
                         </p>
                       </div>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => start("anonymise")}
+                        >
+                          <Eraser
+                            className="mr-1 h-3.5 w-3.5"
+                            strokeWidth={1.75}
+                          />
+                          Anonymise account
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            </TabsContent>
+                  )}
+                </div>
+              </TabsContent>
+            )}
           </Tabs>
         </div>
       )}

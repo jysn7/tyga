@@ -31,6 +31,124 @@ function useDebounced<T>(value: T, ms = 300) {
   return v
 }
 
+// ============================================================
+// Status pipeline — stacked horizontal bar
+// ============================================================
+
+function StatusPipeline({
+  total,
+  active,
+  pending,
+  paused,
+  completed,
+  withdrawn,
+}: {
+  total: number
+  active: number
+  pending: number
+  paused: number
+  completed: number
+  withdrawn: number
+}) {
+  if (total === 0) return null
+
+  const segments = [
+    {
+      key: "active",
+      label: "Active",
+      n: active,
+      bg: "bg-green",
+      fg: "text-green",
+    },
+    {
+      key: "pending",
+      label: "Pending",
+      n: pending,
+      bg: "bg-blue",
+      fg: "text-blue",
+    },
+    {
+      key: "paused",
+      label: "Paused",
+      n: paused,
+      bg: "bg-yellow",
+      fg: "text-yellow",
+    },
+    {
+      key: "completed",
+      label: "Completed",
+      n: completed,
+      bg: "bg-teal",
+      fg: "text-teal",
+    },
+    {
+      key: "withdrawn",
+      label: "Withdrawn",
+      n: withdrawn,
+      bg: "bg-orange",
+      fg: "text-orange",
+    },
+  ].filter((s) => s.n > 0)
+
+  const accountedFor = segments.reduce((s, x) => s + x.n, 0)
+  const other = Math.max(0, total - accountedFor)
+
+  const parts = [
+    ...segments,
+    ...(other > 0
+      ? [
+          {
+            key: "other",
+            label: "Other",
+            n: other,
+            bg: "bg-muted",
+            fg: "text-muted-foreground",
+          },
+        ]
+      : []),
+  ]
+
+  return (
+    <div className="rounded-2xl border border-border/60 bg-card p-5 shadow">
+      <div className="flex items-baseline justify-between">
+        <h2 className="text-sm font-semibold tracking-tight text-foreground">
+          Enrollment pipeline
+        </h2>
+        <span className="text-xs text-muted-foreground">
+          {total} enrollment{total === 1 ? "" : "s"}
+        </span>
+      </div>
+
+      <div className="mt-4 flex h-3 w-full overflow-hidden rounded-full bg-muted">
+        {parts.map((p) => (
+          <div
+            key={p.key}
+            className={`${p.bg} transition-all`}
+            style={{ width: `${(p.n / total) * 100}%` }}
+            title={`${p.label}: ${p.n} (${Math.round((p.n / total) * 100)}%)`}
+          />
+        ))}
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
+        {parts.map((p) => (
+          <div key={p.key} className="flex items-center gap-2 text-xs">
+            <span className={`h-2 w-2 shrink-0 rounded-full ${p.bg}`} />
+            <span className="flex-1 truncate text-muted-foreground">
+              {p.label}
+            </span>
+            <span className={`font-medium tabular-nums ${p.fg}`}>{p.n}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ============================================================
+// Page
+// ============================================================
+
 export function AdminEnrollmentsPage() {
   const [status, setStatus] = useState<EnrollmentStatus | null>(null)
   const [payment, setPayment] = useState<PaymentFilter | null>(null)
@@ -60,17 +178,21 @@ export function AdminEnrollmentsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <EnrollmentTiles
-        summary={summary}
-        currentStatus={status}
-        onSelectStatus={(s) => {
-          setStatus(s)
-          setPage(0)
-        }}
-      />
+      <EnrollmentTiles summary={summary} />
+
+      {summary && (summary.total ?? 0) > 0 && (
+        <StatusPipeline
+          total={summary.total ?? 0}
+          active={summary.active ?? 0}
+          pending={summary.pending ?? 0}
+          paused={summary.paused ?? 0}
+          completed={summary.completed ?? 0}
+          withdrawn={summary.withdrawn ?? 0}
+        />
+      )}
 
       {!!summary?.refund_reviews && (
-        <div className="flex items-center gap-2 rounded-xl border border-orange bg-orange-light px-4 py-2.5 text-sm text-foreground">
+        <div className="flex items-center gap-2 rounded-xl border border-orange/40 bg-orange-light px-4 py-2.5 text-sm text-foreground">
           <AlertTriangle className="h-4 w-4 shrink-0" strokeWidth={1.75} />
           {summary.refund_reviews} refund{" "}
           {summary.refund_reviews === 1 ? "review needs" : "reviews need"} a
@@ -115,7 +237,9 @@ export function AdminEnrollmentsPage() {
         />
       ) : (
         <div
-          className={`overflow-hidden rounded-xl bg-card shadow ${isFetching ? "opacity-70" : ""}`}
+          className={`overflow-hidden rounded-xl bg-card shadow transition-opacity ${
+            isFetching ? "opacity-70" : ""
+          }`}
         >
           <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] text-left text-sm">
@@ -141,15 +265,15 @@ export function AdminEnrollmentsPage() {
                         setSelectedId(r.enrollment_id)
                       }
                     }}
-                    className="cursor-pointer border-b border-border/60 transition-colors last:border-b-0 hover:bg-accent/40 focus-visible:bg-accent/40 focus-visible:outline-none"
+                    className="cursor-pointer border-b border-border/60 last:border-b-0 hover:bg-accent/40 focus-visible:bg-accent/40 focus-visible:outline-none"
                   >
-                    <td className="px-4 py-2 text-foreground">
+                    <td className="px-4 py-2.5 text-foreground">
                       {r.member_name}
                     </td>
-                    <td className="px-4 py-2 text-muted-foreground">
+                    <td className="px-4 py-2.5 text-muted-foreground">
                       {r.parent_name ?? "—"}
                     </td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2.5">
                       <p className="text-foreground">{r.programme_name}</p>
                       {r.level_name && (
                         <p className="text-xs text-muted-foreground">
@@ -157,7 +281,7 @@ export function AdminEnrollmentsPage() {
                         </p>
                       )}
                     </td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2.5">
                       <div className="flex items-center gap-1.5">
                         <StatusBadge status={r.status} />
                         {r.refund_review && (
@@ -169,13 +293,13 @@ export function AdminEnrollmentsPage() {
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2.5">
                       <PaymentBadge
                         status={r.invoice_status}
                         overdue={r.is_overdue}
                       />
                     </td>
-                    <td className="px-4 py-2 text-muted-foreground">
+                    <td className="px-4 py-2.5 text-muted-foreground">
                       {r.joined_at ? fmtDate(r.joined_at) : "—"}
                     </td>
                   </tr>

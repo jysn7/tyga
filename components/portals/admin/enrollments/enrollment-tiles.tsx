@@ -9,74 +9,73 @@ interface EnrollmentTilesProps {
         paused?: number
         withdrawn?: number
         completed?: number
+        cancelled?: number
       }
     | undefined
-  currentStatus: EnrollmentStatus | null
-  onSelectStatus: (status: EnrollmentStatus | null) => void
+  currentStatus?: EnrollmentStatus | null
+  onSelectStatus?: (status: EnrollmentStatus | null) => void
 }
 
-export function EnrollmentTiles({
-  summary,
-  currentStatus,
-  onSelectStatus,
-}: EnrollmentTilesProps) {
+export function EnrollmentTiles({ summary }: EnrollmentTilesProps) {
   const tiles: {
-    key: EnrollmentStatus | null
+    key: string
     label: string
     value: number | undefined
-    tint: string
+    accent: string
   }[] = [
-    { key: null, label: "All", value: summary?.total, tint: "bg-blue-light" },
+    { key: "all", label: "All", value: summary?.total, accent: "text-blue" },
     {
       key: "active",
       label: "Active",
       value: summary?.active,
-      tint: "bg-green-light",
+      accent: "text-green",
     },
     {
       key: "pending",
       label: "Pending",
       value: summary?.pending,
-      tint: "bg-yellow-light",
+      accent: "text-yellow",
     },
     {
       key: "paused",
       label: "Paused",
       value: summary?.paused,
-      tint: "bg-purple-light",
-    },
-    {
-      key: "withdrawn",
-      label: "Withdrawn",
-      value: summary?.withdrawn,
-      tint: "bg-red-light",
+      accent: "text-purple",
     },
     {
       key: "completed",
       label: "Completed",
       value: summary?.completed,
-      tint: "bg-purple-light",
+      accent: "text-teal",
+    },
+    {
+      key: "withdrawn",
+      label: "Withdrawn",
+      value: summary?.withdrawn,
+      accent: "text-orange",
+    },
+    {
+      key: "cancelled",
+      label: "Cancelled",
+      value: summary?.cancelled,
+      accent: "text-muted-foreground",
     },
   ]
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-6">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
       {tiles.map((t) => (
-        <button
-          key={t.label}
-          type="button"
-          onClick={() => onSelectStatus(t.key)}
-          className={`rounded-2xl p-4 text-left transition-shadow ${t.tint} ${
-            currentStatus === t.key
-              ? "ring-2 ring-foreground/70"
-              : "hover:shadow"
-          }`}
+        <div
+          key={t.key}
+          className="rounded-2xl border border-border/60 bg-card p-4"
         >
-          <p className="text-xl leading-none font-semibold text-foreground">
+          <p
+            className={`text-xl leading-none font-semibold tabular-nums ${t.accent}`}
+          >
             {t.value ?? "–"}
           </p>
           <p className="mt-1 text-[11px] text-muted-foreground">{t.label}</p>
-        </button>
+        </div>
       ))}
     </div>
   )

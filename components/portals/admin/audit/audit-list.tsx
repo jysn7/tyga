@@ -41,10 +41,10 @@ export function AuditList({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="overflow-x-auto rounded-lg bg-card shadow">
+      <div className="overflow-x-auto rounded-xl bg-card shadow">
         <Table>
-          <TableHeader className="">
-            <TableRow className="border-b border-border/60 text-left text-[11px] font-medium tracking-wider text-background uppercase">
+          <TableHeader>
+            <TableRow className="border-b border-border/60 bg-foreground/80 text-[11px] tracking-wider text-secondary uppercase dark:bg-foreground">
               <TableHead>Timestamp</TableHead>
               <TableHead>Actor</TableHead>
               <TableHead>Action</TableHead>
@@ -71,6 +71,7 @@ export function AuditList({
             onClick={() => onPageChange(Math.max(0, page - 1))}
             disabled={page === 0}
             className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+            aria-label="Previous page"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -79,6 +80,7 @@ export function AuditList({
             onClick={() => onPageChange(page + 1)}
             disabled={!hasNextPage}
             className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+            aria-label="Next page"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
