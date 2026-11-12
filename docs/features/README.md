@@ -12,7 +12,7 @@ This directory is the feature-level guide to TYGA. The documents describe the us
 | [Discounts & enrollment pricing](./discounts-and-pricing.md) | Admin discount rules, promo codes, grants and parent-facing programme price previews |
 | [Curriculum progressions](./curriculum-progressions.md) | Level and module administration, session tags, member milestones and verified progression support |
 | [Billing & payments](./billing-and-payments.md) | Membership subscriptions, invoices, payments, checkout and reconciliation |
-| [Admin finance](./admin-finance.md) | Admin finance dashboard, invoice review, settlements, refund follow-up and membership billing operations |
+| [Admin finance](./admin-finance.md) | Admin finance dashboard, invoice review, settlements, donation tracking and membership billing operations |
 | [Admin enrollments](./admin-enrollments.md) | Enrollment review workflow, application triage, lifecycle states and admin follow-up actions |
 | [Appointments](./appointments.md) | Coach availability, parent bookings, assessment queue and unified schedules |
 | [Messaging & Support](./messaging-and-support.md) | Parent/coach direct messages, support tickets and the admin support queue |

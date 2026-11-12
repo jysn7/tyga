@@ -10,6 +10,7 @@ The application is a single Next.js App Router project with role-specific parent
 - Coach and session administration, attendance, curriculum and progression tracking
 - Appointment availability, assessment bookings and schedules
 - Admin tools for accounts, coaches, academy settings, venues and events
+- Finance tools for invoices, membership operations, refunds and donation tracking
 - Supabase-backed authentication and data access
 - Paystack checkout and webhook-based payment confirmation
 - In-app notifications, optional web push and installable PWA support

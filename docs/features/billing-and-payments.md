@@ -50,7 +50,9 @@ TYGA uses Paystack for membership fees and programme fee collection. The app sta
 
 ### Admin features
 
-The admin finance route and reporting hooks provide revenue/finance visibility. No dedicated admin membership-history hook was found in the current hook tree.
+The `/admin/finance` membership tab provides admin membership operations in addition to the basic finance status list: account search/filtering, membership and charge history, manual payment recording, complimentary grants, membership ending, Paystack cancellation and Paystack synchronization. See [Admin finance](./admin-finance.md) for the hook/RPC map and the distinction between local recording and provider-side actions.
+
+Donations are a separate finance ledger and are not programme invoices or membership subscriptions. The current documented donation surface is admin-side tracking, receipt follow-up, refund recording and CSV export; see [Admin finance](./admin-finance.md). A donor-facing checkout flow was not found in the current route/hook tree.
 
 ### Data model
 
