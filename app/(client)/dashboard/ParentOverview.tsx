@@ -27,6 +27,7 @@ import {
   useParentOutstandingInvoices,
 } from "@/hooks/client/use-parent-overview"
 import { useProgrammes } from "@/hooks/client/use-programmes"
+import { useAppStore } from "@/stores/useAppStore"
 
 const QUICK_LINKS = [
   { label: "Schedule", href: "/my-schedule", icon: Calendar },
@@ -35,7 +36,16 @@ const QUICK_LINKS = [
   { label: "Billing", href: "/billing", icon: Receipt },
 ]
 
+function firstName(fullName: string | null | undefined): string | null {
+  if (!fullName) return null
+  const first = fullName.trim().split(/\s+/)[0]
+  return first || null
+}
+
 export function ParentOverview() {
+  const account = useAppStore((s) => s.account)
+  const name = firstName(account?.full_name)
+
   const { data: stats, isLoading: statsLoading } = useParentStats()
   const { data: children, isLoading: childrenLoading } = useParentChildren()
   const { data: sessions, isLoading: sessionsLoading } =
@@ -56,17 +66,14 @@ export function ParentOverview() {
   return (
     <div className="flex flex-col gap-2">
       <PageHeader
-        title="Welcome back"
+        title={name ? `Welcome back, ${name}` : "Welcome back"}
         description="Here's what's happening with your family"
       />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Main column */}
         <div className="flex w-full flex-col gap-6 lg:col-span-2">
-          {/* Onboarding — checklist (mobile) or banner, nothing when complete */}
           <OnboardingBlock />
 
-          {/* Stats — on mobile: active members + badges side by side,
-              outstanding balance full width below. Desktop: same layout. */}
           {statsLoading || !stats ? (
             <div className="flex min-h-50 items-center justify-center">
               <Loader />
@@ -172,7 +179,6 @@ export function ParentOverview() {
 
         {/* Sidebar */}
         <aside className="flex w-full flex-col gap-6 lg:sticky lg:top-6 lg:col-span-1 lg:self-start">
-          {/* Onboarding checklist — desktop only, at the top of the sidebar */}
           <OnboardingBlockSidebar />
 
           {sessionsLoading ? (

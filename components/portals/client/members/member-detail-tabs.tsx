@@ -31,7 +31,9 @@ function Detail({
     <div className="flex flex-col gap-0.5 py-2 first:pt-0 last:pb-0">
       <div className="flex items-baseline justify-between gap-4">
         <span className="shrink-0 text-xs text-muted-foreground">{label}</span>
-        <span className="text-right text-sm text-foreground">{value}</span>
+        <span className="min-w-0 text-right text-sm break-words text-foreground">
+          {value}
+        </span>
       </div>
       {hint && (
         <span className="text-xs leading-relaxed text-muted-foreground">
@@ -52,7 +54,7 @@ function Section({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex min-w-0 flex-col gap-2">
       <div className="flex flex-col gap-0.5">
         <h2 className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
           {title}
@@ -63,7 +65,7 @@ function Section({
           </p>
         )}
       </div>
-      <div className="rounded-lg bg-card p-4 shadow">{children}</div>
+      <div className="min-w-0 rounded-lg bg-card p-4 shadow">{children}</div>
     </div>
   )
 }
@@ -85,8 +87,9 @@ function EmptyCard({
   )
 }
 
+// shrink-0 so triggers keep their size inside the horizontal scroller
 const TAB_TRIGGER_CLASS =
-  "flex-1 gap-1.5 rounded-md px-2.5 py-2 text-xs font-medium w-fit text-muted-foreground transition-colors hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm sm:flex-initial sm:gap-2 sm:px-3"
+  "flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm sm:gap-2 sm:px-3"
 
 export function MemberDetailTabs({ data }: { data: MemberDetail }) {
   const {
@@ -109,7 +112,7 @@ export function MemberDetailTabs({ data }: { data: MemberDetail }) {
       defaultValue="overview"
       className="flex w-full min-w-0 flex-col gap-5"
     >
-      <TabsList className="no-scrollbar h-auto w-fit justify-start gap-1 overflow-x-auto rounded-lg bg-input p-1">
+      <TabsList className="no-scrollbar h-auto w-full justify-start gap-1 overflow-x-auto rounded-lg bg-input p-1">
         <TabsTrigger value="overview" className={TAB_TRIGGER_CLASS}>
           <User className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
           <span className="inline">Overview</span>
@@ -227,7 +230,7 @@ export function MemberDetailTabs({ data }: { data: MemberDetail }) {
               {recent_attendance.map((a) => (
                 <div
                   key={a.id}
-                  className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
+                  className="flex items-start justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
                 >
                   <div className="flex min-w-0 flex-col gap-0.5">
                     <span className="text-sm font-medium text-foreground">
@@ -280,9 +283,9 @@ export function MemberDetailTabs({ data }: { data: MemberDetail }) {
                 return (
                   <div
                     key={e.id}
-                    className="flex flex-col gap-2 py-3 first:pt-0 last:pb-0"
+                    className="flex min-w-0 flex-col gap-2 py-3 first:pt-0 last:pb-0"
                   >
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 items-start justify-between gap-3">
                       <div className="flex min-w-0 flex-col gap-0.5">
                         <Link
                           href={`/programmes/${e.programme_id}`}
@@ -290,7 +293,7 @@ export function MemberDetailTabs({ data }: { data: MemberDetail }) {
                         >
                           {e.programme_name}
                         </Link>
-                        <span className="truncate text-xs text-muted-foreground">
+                        <span className="line-clamp-2 text-xs break-words text-muted-foreground">
                           {e.venue_name ?? "No venue"}
                           {e.joined_at &&
                             ` · Enrolled ${format(new Date(e.joined_at), "d MMM yyyy")}`}
@@ -377,7 +380,7 @@ export function MemberDetailTabs({ data }: { data: MemberDetail }) {
                   {progressions.map((p) => (
                     <div
                       key={p.id}
-                      className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
+                      className="flex min-w-0 items-start justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
                     >
                       <div className="flex min-w-0 flex-col gap-0.5">
                         <span className="text-sm font-medium text-foreground">
@@ -393,13 +396,13 @@ export function MemberDetailTabs({ data }: { data: MemberDetail }) {
                           </span>
                         )}
                       </div>
-                      <div className="flex shrink-0 items-center gap-2">
+                      <div className="flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-2">
                         {p.badge_complete && (
                           <span className="rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
                             Badge
                           </span>
                         )}
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs whitespace-nowrap text-muted-foreground">
                           {format(new Date(p.date), "d MMM yyyy")}
                         </span>
                       </div>
@@ -429,7 +432,7 @@ export function MemberDetailTabs({ data }: { data: MemberDetail }) {
                     strokeWidth={1.75}
                   />
                 </div>
-                <div className="flex flex-col gap-0.5">
+                <div className="flex min-w-0 flex-col gap-0.5">
                   <span className="text-2xl font-semibold tracking-tight text-foreground">
                     {signedCount}
                     <span className="text-base font-normal text-muted-foreground">
@@ -454,7 +457,7 @@ export function MemberDetailTabs({ data }: { data: MemberDetail }) {
                 {consents.map((c) => (
                   <div
                     key={c.id}
-                    className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
+                    className="flex min-w-0 items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
                   >
                     <div className="flex min-w-0 items-center gap-3">
                       <div

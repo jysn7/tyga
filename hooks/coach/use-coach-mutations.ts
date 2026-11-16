@@ -405,7 +405,6 @@ export function useDeleteProgressNote() {
   return useMutation({
     mutationFn: async ({
       noteId,
-      memberId,
     }: {
       noteId: number
       memberId: number

@@ -5,7 +5,6 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 
 export const createClient = (request: NextRequest) => {
-  // Create an unmodified response
   let supabaseResponse = NextResponse.next({
     request: {
       headers: request.headers,
@@ -31,5 +30,7 @@ export const createClient = (request: NextRequest) => {
     },
   })
 
-  return { supabase, response: supabaseResponse }
+  // Return a getter so callers always read the latest response,
+  // including after setAll has reassigned it during auth work.
+  return { supabase, response: () => supabaseResponse }
 }

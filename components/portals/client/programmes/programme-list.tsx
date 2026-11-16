@@ -1,7 +1,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { MapPin, Clock, Users, GraduationCap } from "lucide-react"
+import { MapPin, Clock, Users, GraduationCap, Lock } from "lucide-react"
 import { EmptyState } from "@/components/portals/shared/empty-state"
 import type { ProgrammeListItem } from "@/lib/types"
 
@@ -13,9 +13,13 @@ function truncate(text: string, max: number) {
 export function ProgrammeList({
   programmes,
   onEnroll,
+  membershipRequired = false,
+  hasMembership = false,
 }: {
   programmes: ProgrammeListItem[]
   onEnroll: (programme: ProgrammeListItem) => void
+  membershipRequired?: boolean
+  hasMembership?: boolean
 }) {
   if (programmes.length === 0) {
     return (
@@ -25,6 +29,8 @@ export function ProgrammeList({
       />
     )
   }
+
+  const membershipBlocked = membershipRequired && !hasMembership
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -66,6 +72,23 @@ export function ProgrammeList({
                     </span>
                   </div>
                 )}
+
+                {/* Membership lock — takes priority over the waitlist chip */}
+                {membershipBlocked ? (
+                  <div className="absolute top-2.5 right-2.5">
+                    <span className="inline-flex items-center gap-1 rounded-md bg-background/85 px-2 py-0.5 text-[10px] font-medium text-destructive backdrop-blur-sm">
+                      <Lock className="h-3 w-3" strokeWidth={2} />
+                      Membership required
+                    </span>
+                  </div>
+                ) : isFull ? (
+                  <div className="absolute top-2.5 right-2.5">
+                    <span className="inline-flex items-center gap-1 rounded-md bg-background/85 px-2 py-0.5 text-[10px] font-medium text-information backdrop-blur-sm">
+                      <Clock className="h-3 w-3" strokeWidth={2} />
+                      Waitlist open
+                    </span>
+                  </div>
+                ) : null}
 
                 {/* Name + price pinned to bottom of image */}
                 <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 px-3 pb-2.5">
@@ -129,14 +152,14 @@ export function ProgrammeList({
                   <span
                     className={
                       isFull
-                        ? "font-medium text-destructive"
+                        ? "font-medium text-information"
                         : spotsLeft !== null && spotsLeft <= 2
                           ? "font-medium text-orange"
                           : "text-muted-foreground"
                     }
                   >
                     {isFull
-                      ? "Full"
+                      ? "Full — waitlist available"
                       : spotsLeft !== null
                         ? `${spotsLeft} spots left`
                         : "Open"}
@@ -144,19 +167,36 @@ export function ProgrammeList({
                 </div>
               </div>
 
-              {/* Action */}
+              {/* Action — priority order:
+                  already enrolled > membership blocked > full > enrol */}
               {p.alreadyEnrolled ? (
                 <div className="flex h-8 w-full items-center justify-center rounded-md bg-input text-xs font-medium text-muted-foreground">
                   Already enrolled
                 </div>
+              ) : membershipBlocked ? (
+                <Link
+                  href="/billing/membership"
+                  className="flex h-8 w-full items-center justify-center gap-1.5 rounded-md bg-secondary text-xs font-medium text-secondary-foreground transition-colors hover:bg-secondary/80"
+                >
+                  <Lock className="h-3 w-3" strokeWidth={2} />
+                  Set up membership
+                </Link>
+              ) : isFull ? (
+                <Button
+                  variant="outline"
+                  className="h-8 w-full rounded-md text-xs text-information"
+                  onClick={() => onEnroll(p)}
+                >
+                  <Clock className="mr-1.5 h-3 w-3" strokeWidth={2} />
+                  Join waitlist
+                </Button>
               ) : (
                 <Button
-                  disabled={isFull}
                   variant="secondary"
                   className="h-8 w-full rounded-md text-xs"
                   onClick={() => onEnroll(p)}
                 >
-                  {isFull ? "Programme full" : "Enrol"}
+                  Enrol
                 </Button>
               )}
             </div>

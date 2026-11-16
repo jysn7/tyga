@@ -1,18 +1,13 @@
 // components/portals/client/billing/membership-card.tsx
 "use client"
 
+import Link from "next/link"
 import { format, parseISO } from "date-fns"
-import { CreditCard, ShieldCheck, Loader2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { ShieldCheck, ArrowRight } from "lucide-react"
 import {
   StatusPill,
   type StatusVariant,
 } from "@/components/portals/shared/status-pill"
-import { toast } from "@/components/ui/toast"
-import {
-  useStartMembership,
-  useCancelMembership,
-} from "@/hooks/client/use-membership"
 
 type MembershipStatus =
   | "pending"
@@ -47,48 +42,12 @@ export function MembershipCard({
   currentPeriodEnd: string | null
   amount?: number
 }) {
-  const start = useStartMembership()
-  const cancel = useCancelMembership()
-
-  const isActive = status === "active" || status === "non_renewing"
   const config = status ? STATUS_CONFIG[status] : null
   const endDate = formatDate(currentPeriodEnd)
 
-  async function handleSubscribe() {
-    try {
-      // useStartMembership redirects to Paystack itself; we never touch the URL here
-      await start.mutateAsync()
-    } catch (err) {
-      toast.add({
-        title: "Couldn't start checkout",
-        description:
-          err instanceof Error ? err.message : "Something went wrong",
-        type: "error",
-        timeout: 5000,
-      })
-    }
-  }
-
-  async function handleCancel() {
-    try {
-      await cancel.mutateAsync()
-      toast.add({
-        title: "Membership cancelled",
-        description: "You'll keep access until the end of your current period.",
-        type: "success",
-        timeout: 5000,
-      })
-    } catch (err) {
-      toast.add({
-        title: "Couldn't cancel",
-        description:
-          err instanceof Error ? err.message : "Something went wrong",
-        type: "error",
-        timeout: 5000,
-      })
-    }
-  }
-
+  // The "Manage" link is always visible. The card never acts — it only
+  // summarises. Everything that mutates happens on /billing/membership,
+  // which owns the start/cancel/resume flows.
   return (
     <div className="flex flex-col gap-4 rounded-lg bg-card p-5 shadow">
       <div className="flex items-start justify-between gap-4">
@@ -150,46 +109,17 @@ export function MembershipCard({
         )}
       </div>
 
-      {/* Action */}
-      <div className="flex items-center gap-2">
-        {!isActive && (
-          <Button
-            size="sm"
-            className="h-9 rounded-md bg-foreground px-4 text-xs font-medium text-background hover:bg-foreground/90"
-            onClick={handleSubscribe}
-            disabled={start.isPending}
-          >
-            {start.isPending ? (
-              <>
-                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                Redirecting…
-              </>
-            ) : (
-              <>
-                <CreditCard className="mr-1.5 h-3.5 w-3.5" strokeWidth={1.75} />
-                {status === "attention"
-                  ? "Update card"
-                  : status === "pending"
-                    ? "Retry payment"
-                    : status === "expired" || status === "cancelled"
-                      ? "Resubscribe"
-                      : "Subscribe"}
-              </>
-            )}
-          </Button>
-        )}
-
-        {isActive && (
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-9 rounded-md text-xs"
-            onClick={handleCancel}
-            disabled={cancel.isPending}
-          >
-            {cancel.isPending ? "Cancelling…" : "Cancel membership"}
-          </Button>
-        )}
+      {/* Action — always a link, never a mutation */}
+      <div>
+        <Link
+          href="/billing/membership"
+          className="inline-flex items-center gap-1 text-sm font-medium text-information underline underline-offset-4 hover:opacity-80"
+        >
+          {status === null || status === "cancelled" || status === "expired"
+            ? "Set up membership"
+            : "Manage membership"}
+          <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
+        </Link>
       </div>
     </div>
   )

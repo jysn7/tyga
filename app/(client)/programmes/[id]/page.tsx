@@ -17,12 +17,16 @@ import {
   HelpCircle,
   Check,
   X,
+  Lock,
+  Clock,
+  ArrowRight,
 } from "lucide-react"
-import { parseISO } from "date-fns"
+import { parseISO, format } from "date-fns"
 import {
   useProgrammeDetail,
   useEnrollableMembers,
 } from "@/hooks/client/use-programmes"
+import { useMyMembership } from "@/hooks/client/use-membership"
 import { Loader } from "@/components/portals/shared/loader"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { EnrollModal } from "@/components/portals/client/programmes/enroll-modal"
@@ -97,9 +101,18 @@ function formatAge(minAge: number | null, maxAge: number | null): string {
   return `${minAge}–${maxAge}`
 }
 
-function formatPrice(price: number, type: string): string {
+function formatPrice(price: number): string {
   if (price === 0) return "Free"
   return `R${price}`
+}
+
+function formatTermDate(iso: string | null | undefined): string | null {
+  if (!iso) return null
+  try {
+    return format(parseISO(iso), "d MMM yyyy")
+  } catch {
+    return null
+  }
 }
 
 export default function ProgrammeDetailPage() {
@@ -114,6 +127,7 @@ export default function ProgrammeDetailPage() {
   } = useProgrammeDetail(programmeId, null)
 
   const { data: members } = useEnrollableMembers(programmeId)
+  const { data: myMembership } = useMyMembership()
   const [enrollOpen, setEnrollOpen] = useState(false)
 
   const scheduleText = useMemo(() => {
@@ -180,6 +194,14 @@ export default function ProgrammeDetailPage() {
   const sessions = programme.sessions ?? []
   const curriculumModules = programme.curriculumModules ?? []
 
+  // The detail type carries term dates, but be defensive in case they're absent.
+  const termStart =
+    (programme as unknown as { termStart?: string | null }).termStart ?? null
+  const termEnd =
+    (programme as unknown as { termEnd?: string | null }).termEnd ?? null
+  const termStartLabel = formatTermDate(termStart)
+  const termEndLabel = formatTermDate(termEnd)
+
   const isFull = capacity !== null && enrolledCount >= capacity
   const spotsLeft =
     capacity !== null ? Math.max(capacity - enrolledCount, 0) : null
@@ -188,17 +210,30 @@ export default function ProgrammeDetailPage() {
   const hasCapacity = capacity !== null
 
   const ageLabel = formatAge(minAge, maxAge)
-  const priceLabel = formatPrice(price, type)
+  const priceLabel = formatPrice(price)
   const priceSuffix = price === 0 ? "" : (TYPE_PRICE_SUFFIX[type] ?? "")
 
   const eligibleMembers = (members ?? []).filter((m) => m.isEligible)
   const ineligibleMembers = (members ?? []).filter((m) => !m.isEligible)
+
+  const membershipRequired = myMembership?.required === true
+  const hasMembership = myMembership?.hasAccess === true
+  const membershipBlocked = membershipRequired && !hasMembership
+  const membershipStatus = myMembership?.membership?.status ?? null
 
   const mapQuery = encodeURIComponent(
     `${venueName} ${venueAddress ?? ""}`.trim()
   )
   const venueMap = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`
   const contactHref = `/contact?programme=${encodeURIComponent(name)}`
+
+  // Primary call-to-action label and destination — depends on three states:
+  // blocked (membership), full (waitlist), or normal (enrol).
+  const primaryCta = membershipBlocked
+    ? { label: "Set up membership", href: "/billing/membership" as const }
+    : isFull
+      ? { label: "Join waitlist", href: null }
+      : { label: "Enrol now", href: null }
 
   return (
     <div className="mx-auto py-6">
@@ -257,6 +292,14 @@ export default function ProgrammeDetailPage() {
           </h1>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-white/80">
             <span>{ageLabel}</span>
+            {termStartLabel && termEndLabel && (
+              <>
+                <span className="text-background/40">·</span>
+                <span>
+                  {termStartLabel} – {termEndLabel}
+                </span>
+              </>
+            )}
             {!isFull && spotsLeft !== null && spotsLeft <= 3 && (
               <>
                 <span className="text-background/40">·</span>
@@ -267,9 +310,9 @@ export default function ProgrammeDetailPage() {
             )}
             {isFull && (
               <>
-                <span className="text-background/40">·</span>
-                <span className="font-medium text-background">
-                  Programme full
+                <span className="text-foreground">·</span>
+                <span className="/80 font-medium text-purple">
+                  Programme full — waitlist open
                 </span>
               </>
             )}
@@ -333,6 +376,25 @@ export default function ProgrammeDetailPage() {
                 </div>
               </div>
 
+              {(termStartLabel || termEndLabel) && (
+                <div className="flex items-start gap-2.5">
+                  <CalendarDays
+                    className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                    strokeWidth={1.75}
+                  />
+                  <span className="text-muted-foreground">Term</span>
+                  <span className="ml-auto text-right leading-tight text-foreground">
+                    {termStartLabel ?? "TBC"}
+                    {termEndLabel && (
+                      <>
+                        {" – "}
+                        {termEndLabel}
+                      </>
+                    )}
+                  </span>
+                </div>
+              )}
+
               {scheduleText && (
                 <div className="flex items-start gap-2.5">
                   <CalendarDays
@@ -392,7 +454,7 @@ export default function ProgrammeDetailPage() {
                   <div
                     className={`h-full transition-all ${
                       isFull
-                        ? "bg-destructive"
+                        ? "bg-information"
                         : spotsLeft !== null && spotsLeft <= 2
                           ? "bg-orange"
                           : "bg-blue"
@@ -403,8 +465,8 @@ export default function ProgrammeDetailPage() {
 
                 <div className="text-xs">
                   {isFull ? (
-                    <span className="font-medium text-destructive">
-                      Programme full
+                    <span className="font-medium text-information">
+                      Full — waitlist available
                     </span>
                   ) : spotsLeft !== null && spotsLeft <= 2 ? (
                     <span className="font-medium text-orange">
@@ -431,11 +493,23 @@ export default function ProgrammeDetailPage() {
                       key={m.id}
                       className="flex items-center gap-1.5 text-xs"
                     >
-                      <Check
-                        className="h-3 w-3 shrink-0 text-emerald-600 dark:text-emerald-500"
-                        strokeWidth={2.5}
-                      />
+                      {isFull ? (
+                        <Clock
+                          className="h-3 w-3 shrink-0 text-information"
+                          strokeWidth={2.5}
+                        />
+                      ) : (
+                        <Check
+                          className="h-3 w-3 shrink-0 text-emerald-600 dark:text-emerald-500"
+                          strokeWidth={2.5}
+                        />
+                      )}
                       <span className="text-foreground">{m.fullName}</span>
+                      {isFull && (
+                        <span className="text-[10px] text-muted-foreground">
+                          (waitlist)
+                        </span>
+                      )}
                     </div>
                   ))}
                   {ineligibleMembers.map((m) => (
@@ -461,24 +535,49 @@ export default function ProgrammeDetailPage() {
               </div>
             )}
 
-            {/* Enrol button */}
+            {/* Enrol button — membership > waitlist > enrol */}
             <div className="flex flex-col gap-2">
-              <button
-                type="button"
-                disabled={isFull}
-                onClick={() => setEnrollOpen(true)}
-                aria-describedby={isFull ? "enrol-full-reason" : undefined}
-                className="h-10 w-full cursor-pointer rounded-md bg-foreground px-4 text-xs font-medium text-background transition-colors hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                {isFull ? "Programme full" : "Enrol now"}
-              </button>
-              {isFull && (
-                <p
-                  id="enrol-full-reason"
-                  className="text-[11px] text-muted-foreground"
+              {primaryCta.href ? (
+                <Link
+                  href={primaryCta.href}
+                  className="flex h-10 w-full items-center justify-center gap-1.5 rounded-md bg-secondary px-4 text-xs font-medium text-secondary-foreground transition-colors hover:bg-secondary/80"
                 >
-                  This programme has reached capacity. Contact us to join the
-                  waitlist.
+                  <Lock className="h-3 w-3" strokeWidth={2} />
+                  {primaryCta.label}
+                  <ArrowRight className="h-3 w-3" />
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setEnrollOpen(true)}
+                  className="h-10 w-full cursor-pointer rounded-md bg-foreground px-4 text-xs font-medium text-background transition-colors hover:bg-foreground/90"
+                >
+                  {isFull ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      <Clock className="h-3 w-3" strokeWidth={2} />
+                      {primaryCta.label}
+                    </span>
+                  ) : (
+                    primaryCta.label
+                  )}
+                </button>
+              )}
+
+              {isFull && !membershipBlocked && (
+                <p className="text-[11px] text-muted-foreground">
+                  This programme is full. Join the waitlist and we&apos;ll
+                  notify you when a place opens up.
+                </p>
+              )}
+              {membershipBlocked && (
+                <p className="text-[11px] text-muted-foreground">
+                  Membership is required before you can enrol.{" "}
+                  <Link
+                    href="/billing/membership"
+                    className="font-medium text-information underline underline-offset-4"
+                  >
+                    Learn more
+                  </Link>
                 </p>
               )}
             </div>
@@ -681,17 +780,37 @@ export default function ProgrammeDetailPage() {
               )}
             </p>
             <p className="truncate text-[11px] text-muted-foreground">
-              {isFull ? "Programme full" : `${ageLabel} · ${levelName}`}
+              {membershipBlocked
+                ? "Membership required"
+                : isFull
+                  ? "Programme full — waitlist open"
+                  : `${ageLabel} · ${levelName}`}
             </p>
           </div>
-          <button
-            type="button"
-            disabled={isFull}
-            onClick={() => setEnrollOpen(true)}
-            className="h-9 shrink-0 cursor-pointer rounded-md bg-foreground px-4 text-xs font-medium text-background transition-colors hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {isFull ? "Full" : "Enrol now"}
-          </button>
+          {membershipBlocked ? (
+            <Link
+              href="/billing/membership"
+              className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md bg-secondary px-4 text-xs font-medium text-secondary-foreground transition-colors hover:bg-secondary/80"
+            >
+              <Lock className="h-3 w-3" strokeWidth={2} />
+              Set up membership
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setEnrollOpen(true)}
+              className="inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-md bg-foreground px-4 text-xs font-medium text-background transition-colors hover:bg-foreground/90"
+            >
+              {isFull ? (
+                <>
+                  <Clock className="h-3 w-3" strokeWidth={2} />
+                  Join waitlist
+                </>
+              ) : (
+                "Enrol now"
+              )}
+            </button>
+          )}
         </div>
       </div>
 
@@ -699,6 +818,8 @@ export default function ProgrammeDetailPage() {
         programme={programme as unknown as ProgrammeListItem}
         open={enrollOpen}
         onOpenChange={setEnrollOpen}
+        membershipBlocked={membershipBlocked}
+        membershipStatus={membershipStatus}
       />
     </div>
   )

@@ -7,7 +7,7 @@ import { format, isToday, parseISO } from "date-fns"
 import { Lock, Send, Ticket } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import type { ThreadMessage } from "@/hooks/shared/use-support"
 
 const stamp = (iso: string) => {

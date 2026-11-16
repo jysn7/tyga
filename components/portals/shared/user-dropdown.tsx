@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
@@ -16,6 +17,12 @@ import {
   HelpCircle,
   Keyboard,
   Loader2,
+  CalendarDays,
+  GraduationCap,
+  LayoutDashboard,
+  UserCog,
+  Inbox,
+  ReceiptText,
 } from "lucide-react"
 import { useTheme } from "next-themes"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -35,19 +42,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { createClient } from "@/utils/supabase/client"
 import { toast } from "@/components/ui/toast"
+import { useAppStore, type Account, type Role } from "@/stores/useAppStore"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
-
-type Account = {
-  id: string
-  role: "parent" | "coach" | "admin"
-  full_name: string | null
-  email: string | null
-  phone: string | null
-  address: string | null
-  avatar_url: string | null
-  active: boolean
-  created_at: string
-}
 
 function getInitials(name: string) {
   return name
@@ -70,16 +66,29 @@ export function UserDropdown({
   const router = useRouter()
   const supabase = createClient()
   const { theme, setTheme } = useTheme()
+  const setAccount = useAppStore((s) => s.setAccount)
+  const setShortcutsOpen = useAppStore((s) => s.setShortcutsOpen)
 
-  // Use account data primarily, fallback to email from auth for display
+  // Publish the account to the store so the keyboard shortcut provider
+  // (and anything else that needs the role) can read it without a second query.
+  useEffect(() => {
+    if (account) setAccount(account)
+  }, [account, setAccount])
+
   const fullName = account?.full_name || "User"
   const email = account?.email || user?.email || ""
   const avatarUrl = account?.avatar_url
+  const role: Role = account?.role ?? "parent"
+
+  const isParent = role === "parent"
+  const isCoach = role === "coach"
+  const isAdmin = role === "admin"
 
   const handleSignOut = async () => {
     try {
       const { error } = await supabase.auth.signOut()
       if (error) throw error
+      setAccount(null)
       router.push("/auth/signin")
       toast.add({
         title: "Signed out",
@@ -145,14 +154,19 @@ export function UserDropdown({
               <span className="truncate text-xs text-muted-foreground">
                 {email}
               </span>
+              <span className="mt-0.5 inline-flex w-fit items-center rounded-full bg-teal px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-secondary">
+                {role}
+              </span>
             </div>
           </div>
 
-          <DropdownMenuItem>
-            <Link href="/members/new" className="w-full cursor-pointer">
-              Add a member
-            </Link>
-          </DropdownMenuItem>
+          {isParent && (
+            <DropdownMenuItem>
+              <Link href="/members/new" className="w-full cursor-pointer">
+                Add a member
+              </Link>
+            </DropdownMenuItem>
+          )}
 
           <DropdownMenuItem>
             <Link
@@ -169,28 +183,100 @@ export function UserDropdown({
 
         <DropdownMenuGroup>
           <DropdownMenuLabel className="text-xs tracking-wide text-muted-foreground uppercase">
-            TYGA
+            {isParent ? "TYGA" : isCoach ? "Coaching" : "Administration"}
           </DropdownMenuLabel>
 
-          <DropdownMenuItem>
-            <Link
-              href="/settings"
-              className="flex w-full cursor-pointer items-center gap-2"
-            >
-              <Settings className="h-4 w-4 text-muted-foreground" />
-              Settings
-            </Link>
-          </DropdownMenuItem>
+          {isParent && (
+            <DropdownMenuItem>
+              <Link
+                href="/programmes"
+                className="flex w-full cursor-pointer items-center gap-2"
+              >
+                <Users className="h-4 w-4 text-muted-foreground" />
+                Enrol a golfer
+              </Link>
+            </DropdownMenuItem>
+          )}
 
-          <DropdownMenuItem>
-            <Link
-              href="/billing"
-              className="flex w-full cursor-pointer items-center gap-2"
-            >
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
-              Billing & invoices
-            </Link>
-          </DropdownMenuItem>
+          {isParent && (
+            <DropdownMenuItem>
+              <Link
+                href="/billing"
+                className="flex w-full cursor-pointer items-center gap-2"
+              >
+                <CreditCard className="h-4 w-4 text-muted-foreground" />
+                Billing &amp; invoices
+              </Link>
+            </DropdownMenuItem>
+          )}
+
+          {isCoach && (
+            <DropdownMenuItem>
+              <Link
+                href="/coach/dashboard"
+                className="flex w-full cursor-pointer items-center gap-2"
+              >
+                <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                My sessions
+              </Link>
+            </DropdownMenuItem>
+          )}
+          {isCoach && (
+            <DropdownMenuItem>
+              <Link
+                href="/coach/my-students"
+                className="flex w-full cursor-pointer items-center gap-2"
+              >
+                <GraduationCap className="h-4 w-4 text-muted-foreground" />
+                My students
+              </Link>
+            </DropdownMenuItem>
+          )}
+
+          {isAdmin && (
+            <DropdownMenuItem>
+              <Link
+                href="/admin/overview"
+                className="flex w-full cursor-pointer items-center gap-2"
+              >
+                <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
+                Admin dashboard
+              </Link>
+            </DropdownMenuItem>
+          )}
+          {isAdmin && (
+            <DropdownMenuItem>
+              <Link
+                href="/admin/accounts"
+                className="flex w-full cursor-pointer items-center gap-2"
+              >
+                <UserCog className="h-4 w-4 text-muted-foreground" />
+                Manage users
+              </Link>
+            </DropdownMenuItem>
+          )}
+          {isAdmin && (
+            <DropdownMenuItem>
+              <Link
+                href="/admin/finance"
+                className="flex w-full cursor-pointer items-center gap-2"
+              >
+                <ReceiptText className="h-4 w-4 text-muted-foreground" />
+                Finance
+              </Link>
+            </DropdownMenuItem>
+          )}
+          {isAdmin && (
+            <DropdownMenuItem>
+              <Link
+                href="/admin/tickets"
+                className="flex w-full cursor-pointer items-center gap-2"
+              >
+                <Inbox className="h-4 w-4 text-muted-foreground" />
+                Support inbox
+              </Link>
+            </DropdownMenuItem>
+          )}
 
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
@@ -216,17 +302,22 @@ export function UserDropdown({
           </DropdownMenuSub>
         </DropdownMenuGroup>
 
-        <DropdownMenuSeparator className="my-2" />
-
-        <DropdownMenuItem>
-          <Link
-            href="/programmes"
-            className="flex w-full cursor-pointer items-center gap-2"
-          >
-            <Users className="h-4 w-4 text-muted-foreground" />
-            Enroll a golfer
-          </Link>
-        </DropdownMenuItem>
+        {isAdmin && (
+          <>
+            <DropdownMenuSeparator className="my-2" />
+            <DropdownMenuGroup>
+              <DropdownMenuItem>
+                <Link
+                  href="/admin/system"
+                  className="flex w-full cursor-pointer items-center gap-2"
+                >
+                  <Settings className="h-4 w-4 text-muted-foreground" />
+                  System settings
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </>
+        )}
 
         <DropdownMenuSeparator className="my-2" />
 
@@ -241,21 +332,19 @@ export function UserDropdown({
             </Link>
           </DropdownMenuItem>
 
-          <DropdownMenuItem>
-            <Link
-              href="/shortcuts"
-              className="flex w-full cursor-pointer items-center gap-2"
-            >
-              <Keyboard className="h-4 w-4 text-muted-foreground" />
-              Shortcuts
-            </Link>
+          <DropdownMenuItem
+            onClick={() => setShortcutsOpen(true)}
+            className="cursor-pointer"
+          >
+            <Keyboard className="h-4 w-4 text-muted-foreground" />
+            Shortcuts
           </DropdownMenuItem>
         </DropdownMenuGroup>
 
         <DropdownMenuSeparator className="my-2" />
 
         <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
-          <LogOut className="h-4 w-4 text-muted-foreground" />
+          <LogOut className="h-4 w-4 text-destructive" />
           Log out
         </DropdownMenuItem>
       </DropdownMenuContent>

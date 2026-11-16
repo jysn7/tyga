@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils"
 import { Toaster } from "@/components/ui/toast"
 import { Providers } from "@/components/provider"
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register"
+import { KeyboardShortcutsProvider } from "@/components/keyboard-shortcuts-provider"
+import { ShortcutsModal } from "@/components/portals/shared/shortcuts-modal"
 
 export const metadata: Metadata = {
   title: "TYGA Junior Golf",
@@ -42,7 +44,12 @@ export default function RootLayout({
         <Toaster />
         <ServiceWorkerRegister />
         <Providers>
-          <ThemeProvider>{children}</ThemeProvider>
+          <KeyboardShortcutsProvider>
+            <ThemeProvider>
+              {children}
+              <ShortcutsModal />
+            </ThemeProvider>
+          </KeyboardShortcutsProvider>
         </Providers>
       </body>
     </html>

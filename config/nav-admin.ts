@@ -14,10 +14,6 @@ import {
   Wallet,
   ClipboardCheck,
   SlidersHorizontal,
-  Bell,
-  History,
-  Settings,
-  Activity,
   Megaphone,
   LifeBuoy,
 } from "lucide-react"

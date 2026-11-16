@@ -81,10 +81,6 @@ export function BrowseSlotsTab() {
   function goNext() {
     setAnchor((d) => (view === "week" ? addWeeks(d, 1) : addMonths(d, 1)))
   }
-  function goToday() {
-    setAnchor(new Date())
-  }
-
   const selectedLevelName =
     levelFilter === "all"
       ? "All levels"

@@ -277,6 +277,8 @@ export type ProgrammeListItem = {
   maxRatio: number | null
   minAge: number
   maxAge: number
+  termStart: string | null
+  termEnd: string | null
   genderRestriction: string | null
   description: string | null
   imageUrl: string | null
@@ -322,6 +324,7 @@ export type EnrollableMember = {
   fullName: string
   isEligible: boolean
   reason: string | null
+  programmeFull: boolean
 }
 
 export interface Enrollment {

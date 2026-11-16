@@ -1,6 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
-import { MapPin, ArrowUpRight, GraduationCap } from "lucide-react"
+import { MapPin, ArrowUpRight, GraduationCap, Clock, Users } from "lucide-react"
 
 export type Programme = {
   id: string
@@ -72,6 +72,14 @@ export function ProgrammeCard({ programme }: { programme: Programme }) {
         {/* Dark gradient overlay from bottom → middle */}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-foreground/90 via-foreground/40 to-transparent" />
 
+        {/* Waitlist / Full pill — top-right, on the image */}
+        {isFull && (
+          <div className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-background/90 px-2 py-0.5 text-[10px] font-medium text-foreground backdrop-blur-sm">
+            <Clock className="h-3 w-3" strokeWidth={2} />
+            Waitlist open
+          </div>
+        )}
+
         {/* Overlaid content pinned to bottom */}
         <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-4">
           <div className="flex min-w-0 flex-col gap-0.5">
@@ -82,10 +90,17 @@ export function ProgrammeCard({ programme }: { programme: Programme }) {
               {programme.name}
             </h3>
           </div>
-          <ArrowUpRight
-            className="h-4 w-4 shrink-0 text-background/70 opacity-0 transition-opacity group-hover:opacity-100"
-            strokeWidth={1.75}
-          />
+          {isFull ? (
+            <Clock
+              className="h-4 w-4 shrink-0 text-background/70 opacity-0 transition-opacity group-hover:opacity-100"
+              strokeWidth={1.75}
+            />
+          ) : (
+            <ArrowUpRight
+              className="h-4 w-4 shrink-0 text-background/70 opacity-0 transition-opacity group-hover:opacity-100"
+              strokeWidth={1.75}
+            />
+          )}
         </div>
       </div>
 
@@ -121,20 +136,21 @@ export function ProgrammeCard({ programme }: { programme: Programme }) {
               <span className="text-muted-foreground">
                 {programme.enrolledCount}/{programme.capacity} enrolled
               </span>
-              <span
-                className={
-                  isFull
-                    ? "font-medium text-destructive"
-                    : "text-muted-foreground"
-                }
-              >
-                {isFull ? "Full" : `${spotsLeft} spots left`}
-              </span>
+              {isFull ? (
+                <span className="inline-flex items-center gap-1 font-medium text-information">
+                  <Users className="h-3 w-3" strokeWidth={2} />
+                  Join waitlist
+                </span>
+              ) : (
+                <span className="text-muted-foreground">
+                  {spotsLeft} {spotsLeft === 1 ? "spot" : "spots"} left
+                </span>
+              )}
             </div>
             <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
               <div
                 className={`h-full transition-all duration-300 ${
-                  isFull ? "bg-destructive" : "bg-foreground"
+                  isFull ? "bg-information" : "bg-foreground"
                 }`}
                 style={{ width: `${fillPercentage}%` }}
               />

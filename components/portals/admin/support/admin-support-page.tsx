@@ -55,9 +55,6 @@ const initials = (name: string) =>
     .join("")
     .toUpperCase() || "?"
 
-const TAB_TRIGGER_CLASS =
-  "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm"
-
 type ThreadMessage = {
   id: number
   kind: string

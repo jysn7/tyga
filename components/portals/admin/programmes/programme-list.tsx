@@ -8,6 +8,7 @@ import {
   ArchiveRestore,
   GraduationCap,
   CalendarDays,
+  RotateCcw,
 } from "lucide-react"
 import { EmptyState } from "@/components/portals/shared/empty-state"
 import { toast } from "@/components/ui/toast"
@@ -32,14 +33,29 @@ const TYPE_STYLES: Record<AdminProgramme["type"], string> = {
   league: "bg-pink",
 }
 
+// Rollover is offered when the term has ended, or ends within 14 days.
+// Kept in sync with the buckets in RolloverView so the two surfaces agree.
+function canRollOver(programme: AdminProgramme): boolean {
+  if (programme.archivedAt) return false
+  if (!programme.termEnd) return false
+  const end = new Date(programme.termEnd)
+  const today = new Date()
+  const daysUntilEnd = Math.ceil(
+    (end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+  )
+  return daysUntilEnd <= 14
+}
+
 export function ProgrammeList({
   programmes,
   onEdit,
   onManageSessions,
+  onRollover,
 }: {
   programmes: AdminProgramme[]
   onEdit: (programme: AdminProgramme) => void
   onManageSessions: (programme: AdminProgramme) => void
+  onRollover: (programme: AdminProgramme) => void
 }) {
   const toggleArchive = useToggleProgrammeArchive()
   const [togglingId, setTogglingId] = useState<number | null>(null)
@@ -100,6 +116,7 @@ export function ProgrammeList({
           {programmes.map((programme) => {
             const isArchived = programme.archivedAt !== null
             const isFull = programme.enrolledCount >= programme.capacity
+            const rolloverAvailable = canRollOver(programme)
             const fillPercentage = Math.min(
               100,
               Math.round(
@@ -150,6 +167,16 @@ export function ProgrammeList({
                       )}
                       <p className="text-[11px] text-muted-foreground">
                         Ages {programme.minAge}–{programme.maxAge}
+                        {programme.termEnd && (
+                          <>
+                            {" · "}
+                            Ends{" "}
+                            {new Date(programme.termEnd).toLocaleDateString(
+                              undefined,
+                              { day: "numeric", month: "short" }
+                            )}
+                          </>
+                        )}
                       </p>
                     </div>
                   </div>
@@ -211,6 +238,16 @@ export function ProgrammeList({
 
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-1">
+                    {rolloverAvailable && (
+                      <button
+                        type="button"
+                        onClick={() => onRollover(programme)}
+                        title="Roll over to next term"
+                        className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" strokeWidth={1.75} />
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => onManageSessions(programme)}

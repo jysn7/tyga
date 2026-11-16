@@ -10,7 +10,7 @@ const PORTAL_HOME: Record<Portal, string> = {
   admin: "/admin/overview",
 }
 
-// Paths a logged-in but not-yet-AAL2 user must be able to reach
+// Paths a logged-in but not-yet-AAL2 user must be able to reach.
 const MFA_EXEMPT_PATHS = [
   "/auth/mfa/enroll",
   "/auth/mfa/challenge",
@@ -19,13 +19,11 @@ const MFA_EXEMPT_PATHS = [
 ]
 
 // Skip MFA enforcement entirely outside production.
-// This prevents local dev from being forced into enrollment/challenge.
 const MFA_ENFORCED = process.env.NODE_ENV === "production"
 
 function isPortalPathAllowed(path: string, role: Portal): boolean {
-  if (role === "admin") return true // admins can access anything
+  if (role === "admin") return true
   if (role === "coach") return !path.startsWith("/admin")
-  // role === "client"
   return !path.startsWith("/admin") && !path.startsWith("/coach")
 }
 
@@ -33,23 +31,34 @@ function isMfaExempt(path: string) {
   return MFA_EXEMPT_PATHS.some((p) => path === p || path.startsWith(p + "/"))
 }
 
+/**
+ * Redirect helper that preserves any cookies the Supabase client wrote
+ * onto the current response (rotated tokens, cleared cookies, etc.).
+ * Without this, a redirect silently discards the refreshed session and
+ * the browser keeps sending the stale token on the next request.
+ */
+function redirectWithCookies(
+  url: URL | string,
+  source: NextResponse
+): NextResponse {
+  const redirect = NextResponse.redirect(url)
+  source.cookies.getAll().forEach((cookie) => {
+    redirect.cookies.set(cookie)
+  })
+  return redirect
+}
+
 export async function proxy(request: NextRequest) {
-  const { supabase, response } = createClient(request)
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-
+  const { supabase, response: getResponse } = createClient(request)
   const path = request.nextUrl.pathname
 
-  // Public routes that don't need session checks
+  // ---- Public / pass-through routes ----
   const isHelpPage = path === "/help" || path.startsWith("/help/")
   const isCallback = path === "/auth/callback"
   const isWebhook = path.startsWith("/api/paystack/webhook")
   const isApiRoute = path.startsWith("/api/")
   const isOfflinePage = path === "/~offline" || path.startsWith("/~offline/")
 
-  // PWA assets — must bypass auth or the SW/manifest fetch gets redirected
   const isManifest =
     path === "/manifest.json" || path === "/manifest.webmanifest"
   const isServiceWorker =
@@ -57,7 +66,6 @@ export async function proxy(request: NextRequest) {
     path.startsWith("/serwist/") ||
     path.startsWith("/workbox-")
 
-  // Allow these to pass through without session check
   if (
     isOfflinePage ||
     isCallback ||
@@ -66,41 +74,62 @@ export async function proxy(request: NextRequest) {
     isManifest ||
     isServiceWorker
   ) {
-    return response
+    return getResponse()
   }
 
-  // MFA-exempt pages: always let through. They handle their own auth state.
-  // Without this, the isAuthPage redirect below would loop on the
-  // challenge and enroll pages.
+  // MFA-exempt pages handle their own auth state. Without this, the
+  // isAuthPage redirect below would loop on challenge and enroll.
   if (isMfaExempt(path)) {
-    return response
+    return getResponse()
   }
 
   const isAuthPage = path.startsWith("/auth/")
   const isProtectedPage = !isAuthPage && !isHelpPage
 
-  // Not signed in → kick to signin
-  if (!session && isProtectedPage) {
-    return NextResponse.redirect(new URL("/auth/signin", request.url))
+  // ---- Verify the session server-side ----
+  // getUser() refreshes the token if needed and writes the rotated
+  // cookies through setAll. Unlike getSession(), it verifies with the
+  // auth server and returns { user, error } instead of throwing on a
+  // stale refresh token — which is exactly what we need here.
+  let user = null
+  try {
+    const { data, error } = await supabase.auth.getUser()
+    if (error) {
+      // refresh_token_not_found, expired token, revoked session, etc.
+      // Treat as signed out; getUser will have written cookie clears
+      // onto the current response, which we preserve below.
+      user = null
+    } else {
+      user = data.user
+    }
+  } catch {
+    // Network failure or unexpected throw — treat as signed out.
+    user = null
   }
 
-  // Signed in and we need to know the role (for auth page redirect
-  // and for portal access checks). Fetch once if needed.
-  if (session && (isAuthPage || !isHelpPage)) {
+  // Not signed in → sign-in page for protected routes
+  if (!user && isProtectedPage) {
+    return redirectWithCookies(
+      new URL("/auth/signin", request.url),
+      getResponse()
+    )
+  }
+
+  // ---- Signed-in branch: role, portal, MFA ----
+  if (user && (isAuthPage || !isHelpPage)) {
     const { data: account, error } = await supabase
       .rpc("get_my_account")
       .single<{ role: Portal }>()
 
     if (error || !account) {
-      // If we can't figure out the role, safest is to let them through
-      // to /dashboard and let the client-side auth handle it, or bounce to signin.
-      // Letting through avoids a redirect loop if get_my_account is failing.
-      return response
+      // Role lookup failed. Fall through rather than loop — client-side
+      // auth will handle the state.
+      return getResponse()
     }
 
     const home = PORTAL_HOME[account.role] ?? "/dashboard"
 
-    // --- MFA enforcement (before the auth-page and portal redirects) ---
+    // ---- MFA enforcement (production only) ----
     if (MFA_ENFORCED) {
       const { data: aal } =
         await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
@@ -109,34 +138,37 @@ export async function proxy(request: NextRequest) {
         aal?.currentLevel === "aal1" && aal?.nextLevel === "aal2"
       const isPrivileged = account.role === "coach" || account.role === "admin"
 
-      // Has a factor enrolled but hasn't verified → challenge
+      // Factor enrolled but not verified → challenge
       if (mustVerify) {
         const challengeUrl = new URL("/auth/mfa/challenge", request.url)
         challengeUrl.searchParams.set("next", path)
-        return NextResponse.redirect(challengeUrl)
+        return redirectWithCookies(challengeUrl, getResponse())
       }
 
       // Privileged user with no factor enrolled → force enrollment.
-      // Parents are skipped — MFA is optional for them.
+      // Parents are exempt — MFA is optional for them.
       const hasNoFactor =
         aal?.currentLevel === "aal1" && aal?.nextLevel === "aal1"
       if (isPrivileged && hasNoFactor && !isAuthPage) {
-        return NextResponse.redirect(new URL("/auth/mfa/enroll", request.url))
+        return redirectWithCookies(
+          new URL("/auth/mfa/enroll", request.url),
+          getResponse()
+        )
       }
     }
 
-    // Redirect signed-in users away from auth pages to their portal home
+    // Signed-in users landing on an auth page → their portal home
     if (isAuthPage) {
-      return NextResponse.redirect(new URL(home, request.url))
+      return redirectWithCookies(new URL(home, request.url), getResponse())
     }
 
-    // Block cross-portal access
+    // Block cross-portal access (e.g. a parent hitting /admin)
     if (!isPortalPathAllowed(path, account.role)) {
-      return NextResponse.redirect(new URL(home, request.url))
+      return redirectWithCookies(new URL(home, request.url), getResponse())
     }
   }
 
-  return response
+  return getResponse()
 }
 
 export const config = {

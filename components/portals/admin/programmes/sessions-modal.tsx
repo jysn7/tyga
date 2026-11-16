@@ -39,7 +39,6 @@ import {
   assignCoachSchema,
   SESSION_STATUSES,
   SESSION_ROLES,
-  SESSION_GRACE_MINUTES,
   todayIso,
   nowHm,
 } from "@/lib/validations/sessions"

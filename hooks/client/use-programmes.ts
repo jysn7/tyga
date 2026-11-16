@@ -29,6 +29,8 @@ type ProgrammeListRow = {
   description?: string | null
   image_url?: string | null
   already_enrolled?: boolean
+  term_start?: string | null
+  term_end?: string | null
 }
 
 type ProgrammeDetailRow = ProgrammeListRow & {
@@ -97,6 +99,8 @@ export function useProgrammes(
         enrolledCount: Number(row.enrolled_count ?? 0),
         maxRatio: row.max_ratio ?? null,
         minAge: row.min_age ?? 0,
+        termStart: row.term_start ?? null,
+        termEnd: row.term_end ?? null,
         maxAge: row.max_age ?? 0,
         genderRestriction: row.gender_restriction ?? null,
         description: row.description ?? null,
@@ -173,6 +177,8 @@ export function useProgrammeDetail(
         venueAddress: row.venue_address ?? null,
         minAge: row.min_age ?? 0,
         maxAge: row.max_age ?? 0,
+        termStart: row.term_start ?? null,
+        termEnd: row.term_end ?? null,
         genderRestriction: row.gender_restriction ?? null,
         recurrenceRule: row.recurrence_rule ?? null,
         price: Number(row.price ?? 0),

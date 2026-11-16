@@ -15,6 +15,10 @@ const service = () =>
     }
   )
 
+// Set PAYSTACK_DEBUG=true in .env to surface Paystack's message to the UI.
+// Remove after diagnosing, so parents don't see raw gateway errors.
+const PAYSTACK_DEBUG = process.env.PAYSTACK_DEBUG === "true"
+
 async function paystack<T>(path: string, init?: RequestInit) {
   const res = await fetch(`https://api.paystack.co${path}`, {
     ...init,
@@ -29,6 +33,25 @@ async function paystack<T>(path: string, init?: RequestInit) {
     ok: !!json?.status,
     message: (json?.message as string) ?? "Paystack error",
     data: (json?.data ?? null) as T | null,
+    httpStatus: res.status,
+  }
+}
+
+// Every caller of paystack() that swallows the message should go through this.
+// It logs once, and (in debug mode) appends the raw message to the user-facing error.
+function paystackFailure(
+  context: string,
+  res: Awaited<ReturnType<typeof paystack>>,
+  userMessage: string,
+  extra: Record<string, unknown> = {}
+): Result {
+  console.error(`Paystack ${context} failed:`, {
+    http_status: res.httpStatus,
+    message: res.message,
+    ...extra,
+  })
+  return {
+    error: PAYSTACK_DEBUG ? `${userMessage} (${res.message})` : userMessage,
   }
 }
 
@@ -90,8 +113,14 @@ export async function startMembership(): Promise<Result & { url?: string }> {
       }),
     }
   )
-  if (!res.ok || !res.data)
-    return { error: "We couldn't start the payment. Please try again" }
+  if (!res.ok || !res.data) {
+    return paystackFailure(
+      "/transaction/initialize",
+      res,
+      "We couldn't start the payment. Please try again",
+      { account_id: user.id }
+    )
+  }
   return { error: null, url: res.data.authorization_url }
 }
 
@@ -109,11 +138,14 @@ export async function cancelMyMembership(): Promise<Result> {
     method: "POST",
     body: JSON.stringify({ code: c.subscription_code, token: c.email_token }),
   })
-  if (!res.ok)
-    return {
-      error:
-        "We couldn't cancel it right now. Please try again or contact the academy",
-    }
+  if (!res.ok) {
+    return paystackFailure(
+      "/subscription/disable",
+      res,
+      "We couldn't cancel it right now. Please try again or contact the academy",
+      { account_id: user.id, subscription_code: c.subscription_code }
+    )
+  }
 
   await service().rpc("membership_mark_not_renewing", { p_account_id: user.id })
   return { error: null }
@@ -136,15 +168,25 @@ export async function resumeMyMembership(): Promise<Result> {
     body: JSON.stringify({ code: c.subscription_code, token: c.email_token }),
   })
   if (!res.ok) {
-    // If Paystack says the subscription is already active, treat it as success
+    // Paystack sometimes says the subscription is already re-enabled;
+    // treat that as a successful idempotent resume.
     if (/already.*(enabled|active)/i.test(res.message)) {
       await service().rpc("membership_mark_resumed", { p_account_id: user.id })
       return { error: null }
     }
-    return {
-      error:
-        "We couldn't resume it right now. Please try again or contact the academy",
-    }
+    return paystackFailure(
+      "/subscription/enable",
+      res,
+      "We couldn't resume it right now. Please try again or contact the academy",
+      {
+        account_id: user.id,
+        subscription_code: c.subscription_code,
+        local_status: c.status,
+        token_present: !!c.email_token,
+        token_length: c.email_token?.length ?? 0,
+        current_period_end: c.current_period_end,
+      }
+    )
   }
 
   await service().rpc("membership_mark_resumed", { p_account_id: user.id })
@@ -164,8 +206,14 @@ export async function getCardUpdateLink(): Promise<Result & { url?: string }> {
   const res = await paystack<{ link: string }>(
     `/subscription/${encodeURIComponent(c.subscription_code)}/manage/link`
   )
-  if (!res.ok || !res.data?.link)
-    return { error: "We couldn't open the card page. Please try again" }
+  if (!res.ok || !res.data?.link) {
+    return paystackFailure(
+      `/subscription/${c.subscription_code}/manage/link`,
+      res,
+      "We couldn't open the card page. Please try again",
+      { account_id: user.id, subscription_code: c.subscription_code }
+    )
+  }
   return { error: null, url: res.data.link }
 }
 
@@ -195,7 +243,15 @@ export async function adminCancelMembership(
     method: "POST",
     body: JSON.stringify({ code: c.subscription_code, token: c.email_token }),
   })
-  if (!res.ok) return { error: `Paystack refused: ${res.message}` }
+  if (!res.ok) {
+    console.error("Admin cancel: Paystack refused /subscription/disable:", {
+      account_id: accountId,
+      subscription_code: c.subscription_code,
+      message: res.message,
+      http_status: res.httpStatus,
+    })
+    return { error: `Paystack refused: ${res.message}` }
+  }
 
   await service().rpc("membership_mark_not_renewing", {
     p_account_id: accountId,
@@ -225,7 +281,15 @@ export async function adminSyncMembership(accountId: string): Promise<Result> {
   const res = await paystack<any>(
     `/subscription/${encodeURIComponent(c.subscription_code)}`
   )
-  if (!res.ok || !res.data) return { error: `Paystack refused: ${res.message}` }
+  if (!res.ok || !res.data) {
+    console.error("Admin sync: Paystack refused /subscription/:code:", {
+      account_id: accountId,
+      subscription_code: c.subscription_code,
+      message: res.message,
+      http_status: res.httpStatus,
+    })
+    return { error: `Paystack refused: ${res.message}` }
+  }
   const d = res.data
 
   const { data: applyData, error: applyError } = await service().rpc(
