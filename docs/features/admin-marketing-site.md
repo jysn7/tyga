@@ -26,7 +26,7 @@ All five feature hooks use the browser Supabase client and React Query. Read and
 | `hooks/admin/marketing/use-gallery.ts` | `admin_get_gallery_images` | `admin_upsert_gallery_image`, `admin_delete_gallery_image` |
 | `hooks/admin/marketing/use-site-content.ts` | `admin_get_site_content` | `admin_update_site_content` |
 
-Gallery binaries are uploaded separately to the Supabase Storage bucket `gallery-images`; the hook then obtains a public URL, which is saved on the gallery record through `admin_upsert_gallery_image`. The gallery hook validates file type and size before upload. Other image fields accept URLs through their form validation.
+Gallery binaries are uploaded separately to the Supabase Storage bucket `gallery-images`; the hook then obtains a public URL, which is saved on the gallery record through `admin_upsert_gallery_image`. The gallery hook validates file type and size before upload. Team portraits can also be uploaded as JPEG, PNG or WebP files to the `gallery-images` bucket, and the resulting public URL is saved with the team profile. Other image fields accept URLs through their form validation.
 
 The hooks validate form data with schemas in `lib/validations/marketing/` before calling the RPCs. Notable limits include up to six marketing statements, eight programme bullets, and a 160-character SEO description. See those schemas for the complete constraints; the database migrations and RPC definitions remain authoritative for server-side validation and authorization.
 

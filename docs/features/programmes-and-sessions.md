@@ -14,6 +14,7 @@ TYGA supports admin programme setup, parent discovery and enrollment initiation,
 - Create, edit, archive and soft-delete programmes
 - Default age-range and coaching-ratio settings from the selected level
 - Assign lead, assistant and volunteer coaches per programme
+- Review programmes by term status and roll a programme forward into the next term
 - Generate sessions from recurrence patterns (days of week + time + date range)
 - Update session time, venue, status and notes
 - Add or remove session-level coach overrides without changing programme defaults
@@ -26,6 +27,7 @@ TYGA supports admin programme setup, parent discovery and enrollment initiation,
 - View programme detail, session schedule, venue and coaches
 - Open a child-specific session detail with coach notes, curriculum, attendance and previous/next session navigation
 - Enroll a child through a pending enrollment + invoice flow
+- Join the waitlist when a programme is full, check waitlist position/status and leave the waitlist
 - Check programme and session eligibility before submitting payment
 
 ### Coach
@@ -34,6 +36,13 @@ TYGA supports admin programme setup, parent discovery and enrollment initiation,
 - Open a session detail screen with roster, curriculum and notes tabs
 - Mark attendance for enrolled members
 - Bulk-mark attendance and tag the session curriculum
+- Record module completion for an individual student or bulk-complete for eligible students marked present or late
+
+### Waitlists and term rollover
+
+When a programme is full, parents can join its waitlist instead of starting enrollment. They can see their position and status and leave the waitlist. Admins can review waitlist entries and counts, including waiting and notified entries.
+
+The admin rollover view groups unarchived programmes as ended, ending within 14 days or upcoming. Rolling a programme forward creates a next-term programme; admins can choose to copy its coaches and carry its students forward as pending enrollments. Parent notification is optional, and a notification failure does not undo the rollover.
 
 ## Data model
 
@@ -46,7 +55,7 @@ TYGA supports admin programme setup, parent discovery and enrollment initiation,
 | `enrollments` | Parent/member-to-programme enrollment lifecycle |
 | `curriculum_modules` | Catalogue of modules for a level |
 | `session_curriculum_modules` | Modules tagged on a specific session |
-| `member_milestones` | Per-member curriculum completion records (the current session hooks do not expose a bulk-completion action) |
+| `member_milestones` | Per-member curriculum completion records |
 
 Lifecycle for enrollment status:
 
@@ -113,8 +122,10 @@ Lifecycle for enrollment status:
 |---|---|---|
 | Parent programme discovery | `hooks/client/use-programmes.ts` | Programme list/detail, per-member eligibility and enrollable member list |
 | Parent enrollment initiation | `hooks/client/use-enroll.ts` | Posts member/programme IDs to `/api/enroll`; returns checkout URL, reference and created enrollment/invoice IDs |
+| Parent programme waitlist | `hooks/client/use-waitlist.ts` | Join or leave a full-programme waitlist and read position/status |
 | Parent session detail and attendance | `hooks/client/use-parent-sessions.ts` | Session detail, child attendance history and attendance summaries |
 | Admin programme management | `hooks/admin/programmes/use-programmes.ts`, `use-programme-mutations.ts` | Filtered list/detail, create/update/archive/delete, lookups, sessions and assignments |
+| Admin programme rollover and waitlists | `hooks/admin/programmes/use-rollover-programme.ts`, `use-waitlist.ts` | Review term groups and waitlist entries; roll a programme forward with optional coach and student carry-forward |
 | Admin scheduling | `hooks/admin/programmes/use-session-mutations.ts` | Generate sessions, update/delete a session and add/remove/synchronize coaches |
 | Admin programme coaches | `hooks/admin/programmes/use-programme-coaches.ts` | Load and change programme-level coach assignments |
 | Admin session curriculum | `hooks/admin/programmes/use-curriculum-mutations.ts` | Read level/session modules, replace session tags and add/remove a module |
@@ -131,9 +142,10 @@ The coach UX includes:
 - a weekly overview with stats tiles, day strip and attention queue
 - a session detail page with a roster and attendance tab, notes and curriculum tab, and overview tab
 - bulk attendance marking
+- individual module completion and bulk completion for eligible present/late students
 - session notes saved separately from curriculum tagging
 
-The coach hooks read sessions over an explicit start/end date range and load detail, roster and curriculum independently by session ID. Attendance and notes changes refresh the related queries. The separate progression helper hooks are not wired into the current coach UI and their database functions are not present in the checked-in migrations; see [curriculum-progressions.md](./curriculum-progressions.md) for that boundary.
+The coach hooks read sessions over an explicit start/end date range and load detail, roster and curriculum independently by session ID. Attendance, notes and completion changes refresh the related queries. Session curriculum tags record what was covered; they do not automatically mark every attendee's module complete. See [curriculum-progressions.md](./curriculum-progressions.md) for coach progression workflows.
 
 ## Route surfaces
 
@@ -150,5 +162,3 @@ Apply the levels/venues, programmes, sessions, curriculum links and enrollment m
 - Drag-and-drop rescheduling UI
 - Bulk coach reassignment across sessions
 - Automated under-staffing digest
-- Waitlist for full programmes
-- Per-attendee bulk curriculum completion

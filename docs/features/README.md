@@ -8,7 +8,7 @@ This directory is the feature-level guide to TYGA. The documents describe the us
 |---|---|
 | [Account & security](./account-and-security.md) | Authentication, account preferences, login monitoring and lockouts |
 | [Members & onboarding](./members-and-onboarding.md) | Family setup, child intake, profiles, consents, documents and member access |
-| [Programmes & sessions](./programmes-and-sessions.md) | Programme administration and discovery, enrollment, coach assignments, sessions, attendance and session curriculum |
+| [Programmes & sessions](./programmes-and-sessions.md) | Programme administration and discovery, enrollment, waitlists, term rollover, coach assignments, sessions, attendance and session curriculum |
 | [Discounts & enrollment pricing](./discounts-and-pricing.md) | Admin discount rules, promo codes, grants and parent-facing programme price previews |
 | [Curriculum progressions](./curriculum-progressions.md) | Level and module administration, session tags, member milestones and verified progression support |
 | [Billing & payments](./billing-and-payments.md) | Membership subscriptions, invoices, payments, checkout and reconciliation |
@@ -19,7 +19,7 @@ This directory is the feature-level guide to TYGA. The documents describe the us
 | [Events](./events.md) | Admin-managed events, registration visibility and event image storage |
 | [Admin marketing site](./admin-marketing-site.md) | Admin-managed public-site events, programme cards, team profiles, gallery and site copy |
 | [Venues](./venues.md) | Venue records, address capture, map selection and lookups |
-| [Notifications, search & PWA](./notifications-and-search.md) | Notification inbox, preferences and delivery, role-scoped search and installability |
+| [Notifications, search & PWA](./notifications-and-search.md) | Notification inbox, preferences and delivery, role-scoped search, keyboard shortcuts and installability |
 | [Administration & reporting](./administration-and-reporting.md) | Admin dashboard, accounts, coaches, invitations, settings and audit/reporting hooks |
 
 ## How the hooks fit

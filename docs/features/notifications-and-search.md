@@ -68,6 +68,10 @@ No new tables are required. Search reads directly from `members`, `programmes`, 
 - The hook accepts a role and calls the corresponding `parent_global_search`, `coach_global_search` or `admin_global_search` RPC; each backend RPC defines its permitted result scope
 - `hooks/use-global-search.ts` returns role-scoped results with type, title, subtitle and destination URL; its default result limit is five
 
+## Keyboard shortcuts
+
+Press `?` to open the keyboard-shortcuts dialog. It lists the navigation shortcuts available to the current portal, including role-specific `g` sequences. Sequences are ignored while focus is in an editable field and expire if not completed within 1.5 seconds.
+
 ## Installability and delivery notes
 
 - Service worker behavior is handled outside the React Query hooks; it is disabled in development builds.

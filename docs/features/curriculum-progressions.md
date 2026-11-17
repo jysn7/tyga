@@ -23,8 +23,8 @@ Admins can also inspect and edit the curriculum tags on programme sessions throu
 ## Coach and parent capabilities
 
 - Coaches can read the curriculum associated with their session and tag modules covered in a session.
-- Coaches can review active students' current-level curriculum completion and progression records they submitted from `/coach/progressions`.
-- Coaches can manually verify and undo module completion for students actively enrolled in their programmes.
+- On the session detail screen, coaches can mark a module complete for an individual student or bulk-complete it for eligible students marked present or late.
+- From `/coach/progressions`, coaches can review active students' current-level curriculum completion and progression records, manually verify or undo module completion for enrolled students, and advance a student who is ready.
 - A student is ready to advance when every non-archived module marked as a milestone in their current level is complete. If the level has no active milestones, the student is eligible to advance. Non-milestone modules do not affect progression readiness. The coach confirms advancement; the operation records the transition, optional badge status and notes, and updates the student's current level atomically.
 - Parents can read the member progression view through `get_member_progression`.
 - Member detail views may show progression history and attendance summary.
@@ -65,8 +65,8 @@ The `get_member_progression` function used by the parent hook remains a read pat
 
 Use the migration history as the source of truth for schema and RPC deployment order. The level/module administration functions enforce admin access; migrations also prevent deleting levels/modules while referenced by members, programmes, progression history or milestone records. Reload PostgREST after function signature changes.
 
-## Not available as a shipped workflow
+## Not available
 
-- A wired UI and migration-backed coach workflow for per-member milestone completion or level advancement
-- Automatic advancement
-- Certificate/badge generation and progression notifications
+- Automatic milestone completion based on session curriculum tags
+- Automatic level advancement without coach confirmation
+- Certificate generation and progression notifications
