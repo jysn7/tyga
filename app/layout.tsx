@@ -9,13 +9,19 @@ import { KeyboardShortcutsProvider } from "@/components/keyboard-shortcuts-provi
 import { ShortcutsModal } from "@/components/portals/shared/shortcuts-modal"
 
 export const metadata: Metadata = {
-  title: "TYGA Junior Golf",
-  description: "Junior golf programme management for TYGA",
+  metadataBase: new URL("https://app.tygachamps.co.za"),
+  title: {
+    default: "TYGA Champs",
+    template: "%s | TYGA Champs",
+  },
+  description:
+    "The Thipe Youth Golf Academy portal for players, parents and coaches",
+  applicationName: "TYGA Champs",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "TYGA",
+    title: "TYGA Champs",
   },
   icons: {
     icon: "/icons/icon-192.png",

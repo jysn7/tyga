@@ -1,4 +1,3 @@
-// app/auth/mfa/enroll/page.tsx
 import { redirect } from "next/navigation"
 import { createClient } from "@/utils/supabase/server"
 import { EnrollMFA } from "@/components/portals/shared/enroll-mfa"
@@ -6,7 +5,7 @@ import { cookies } from "next/headers"
 
 const PORTAL_HOME: Record<string, string> = {
   admin: "/admin/overview",
-  coach: "/coach/overview",
+  coach: "/coach/dashboard",
   parent: "/dashboard",
 }
 

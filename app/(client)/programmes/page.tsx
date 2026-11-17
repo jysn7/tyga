@@ -9,6 +9,7 @@ import { DiscountBanner } from "@/components/portals/client/programmes/discount-
 import { Loader } from "@/components/portals/shared/loader"
 import { useProgrammes } from "@/hooks/client/use-programmes"
 import { useMembers } from "@/hooks/use-members"
+import { useMyMembership } from "@/hooks/client/use-membership"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import {
   Select,
@@ -31,6 +32,7 @@ const TYPE_OPTIONS = [
 
 export default function ProgrammesPage() {
   const { data: members, isLoading: membersLoading } = useMembers()
+  const { data: myMembership } = useMyMembership()
 
   const [selectedMemberId, setSelectedMemberId] = useState<string>("all")
   const [searchInput, setSearchInput] = useState("")
@@ -54,6 +56,12 @@ export default function ProgrammesPage() {
       ? "All members"
       : (members?.find((m) => String(m.id) === selectedMemberId)?.fullName ??
         "Select a member")
+
+  // Membership gate — applied to both the card CTA and the modal.
+  const membershipRequired = myMembership?.required === true
+  const hasMembership = myMembership?.hasAccess === true
+  const membershipBlocked = membershipRequired && !hasMembership
+  const membershipStatus = myMembership?.membership?.status ?? null
 
   // Client-side filters
   const filteredProgrammes = (programmes ?? []).filter((p) => {
@@ -144,6 +152,8 @@ export default function ProgrammesPage() {
         <ProgrammeList
           programmes={filteredProgrammes}
           onEnroll={handleEnroll}
+          membershipRequired={membershipRequired}
+          hasMembership={hasMembership}
         />
       )}
 
@@ -151,6 +161,8 @@ export default function ProgrammesPage() {
         programme={enrollTarget}
         open={enrollOpen}
         onOpenChange={setEnrollOpen}
+        membershipBlocked={membershipBlocked}
+        membershipStatus={membershipStatus}
       />
     </div>
   )

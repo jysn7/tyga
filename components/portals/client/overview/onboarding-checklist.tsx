@@ -1,5 +1,3 @@
-// components/portals/client/overview/onboarding-checklist.tsx
-
 "use client"
 
 import { useState } from "react"
@@ -11,15 +9,19 @@ import {
   useDismissChecklist,
 } from "@/hooks/shared/use-onboarding-state"
 
-import { STEP_CONFIG, getActiveMemberId } from "@/config/onboarding-config"
+import {
+  STEP_CONFIG,
+  getActiveMemberId,
+  isMemberScopedStep,
+} from "@/config/onboarding-config"
 
 import type { OnboardingStep } from "@/hooks/shared/use-onboarding-state"
 
 const CHECKLIST_STEPS: OnboardingStep[] = [
   "add-child",
-  "complete-profile",
   "book-assessment",
   "await-assessment",
+  "pay-membership",
   "enrol",
 ]
 
@@ -32,28 +34,24 @@ export function OnboardingChecklist() {
     return null
   }
 
-  const currentIndex = CHECKLIST_STEPS.indexOf(state.nextStep)
+  const rawIndex = CHECKLIST_STEPS.indexOf(state.nextStep)
+  const currentIndex = rawIndex === -1 ? 0 : rawIndex
   const currentStep = STEP_CONFIG[state.nextStep]
 
   if (!currentStep) {
     return null
   }
 
-  const memberId =
-    state.nextStep === "book-assessment" ||
-    state.nextStep === "await-assessment" ||
-    state.nextStep === "enrol"
-      ? getActiveMemberId(state.nextStep, state)
-      : undefined
+  const memberId = isMemberScopedStep(state.nextStep)
+    ? getActiveMemberId(state.nextStep, state)
+    : undefined
 
   const total = CHECKLIST_STEPS.length
   const completed = currentIndex
 
   return (
     <section className="relative overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
-      {/* Summary row — always visible */}
       <div className="flex items-center gap-3 p-4">
-        {/* Progress ring */}
         <div className="relative flex h-9 w-9 shrink-0 items-center justify-center">
           <svg viewBox="0 0 36 36" className="h-9 w-9 -rotate-90" aria-hidden>
             <circle
@@ -80,7 +78,6 @@ export function OnboardingChecklist() {
           </span>
         </div>
 
-        {/* Text */}
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="truncate text-sm font-semibold tracking-tight text-foreground">
             {expanded ? "Get started with TYGA" : currentStep.label}
@@ -92,9 +89,7 @@ export function OnboardingChecklist() {
           </span>
         </div>
 
-        {/* Actions */}
         <div className="flex shrink-0 items-center gap-1">
-          {/* Expand toggle */}
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
@@ -109,7 +104,6 @@ export function OnboardingChecklist() {
             />
           </button>
 
-          {/* Dismiss */}
           <button
             type="button"
             onClick={() => dismiss.mutate()}
@@ -122,7 +116,6 @@ export function OnboardingChecklist() {
         </div>
       </div>
 
-      {/* Expanded panel */}
       <div
         className={`grid overflow-hidden transition-[grid-template-rows] duration-300 ease-out ${
           expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
@@ -130,7 +123,6 @@ export function OnboardingChecklist() {
       >
         <div className="min-h-0">
           <div className="flex flex-col border-t border-border/40 px-4 pt-3 pb-4">
-            {/* Steps */}
             <div className="flex flex-col">
               {CHECKLIST_STEPS.map((step, i) => {
                 const config = STEP_CONFIG[step]
@@ -185,7 +177,6 @@ export function OnboardingChecklist() {
               })}
             </div>
 
-            {/* CTA */}
             <Link
               href={currentStep.href(memberId)}
               className="group mt-4 inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-md bg-foreground px-4 text-xs font-medium text-background transition-opacity hover:opacity-90"

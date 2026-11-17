@@ -15,7 +15,7 @@ type UseAuthOptions = {
 
 const PORTAL_HOME: Record<Role, string> = {
   parent: "/dashboard",
-  coach: "/coach/overview",
+  coach: "/coach/dashboard",
   admin: "/admin/overview",
 }
 

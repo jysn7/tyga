@@ -103,7 +103,7 @@ export default function CoachSessionDetailPage() {
   return (
     <div className="flex flex-col gap-6">
       <Link
-        href="/coach/sessions"
+        href="/coach/dashboard"
         className="flex w-fit items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
       >
         <ChevronLeft className="h-3.5 w-3.5" strokeWidth={1.75} />

@@ -5,9 +5,9 @@ import { createClient } from "@/utils/supabase/client"
 
 export type OnboardingStep =
   | "add-child"
-  | "complete-profile"
   | "book-assessment"
   | "await-assessment"
+  | "pay-membership"
   | "enrol"
   | "done"
 
@@ -16,7 +16,6 @@ type OnboardingStateRow = {
   setup_completed_at: string | null
   checklist_dismissed_at: string | null
   has_children: boolean
-  has_incomplete_profile: boolean
   pending_assessment_member_ids: number[]
   awaiting_assessment_member_ids: number[]
   unenrolled_member_ids: number[]
@@ -27,7 +26,6 @@ export type OnboardingState = {
   setupCompletedAt: string | null
   checklistDismissedAt: string | null
   hasChildren: boolean
-  hasIncompleteProfile: boolean
   pendingAssessmentMemberIds: number[]
   awaitingAssessmentMemberIds: number[]
   unenrolledMemberIds: number[]
@@ -39,7 +37,6 @@ function toState(row: OnboardingStateRow): OnboardingState {
     setupCompletedAt: row.setup_completed_at,
     checklistDismissedAt: row.checklist_dismissed_at,
     hasChildren: row.has_children,
-    hasIncompleteProfile: row.has_incomplete_profile,
     pendingAssessmentMemberIds: row.pending_assessment_member_ids ?? [],
     awaitingAssessmentMemberIds: row.awaiting_assessment_member_ids ?? [],
     unenrolledMemberIds: row.unenrolled_member_ids ?? [],
@@ -128,7 +125,6 @@ export function useDismissChecklist() {
 
 // ---------------------------------------------------------------------------
 // Optional reset hook (for testing/admin tools only)
-// Remove if you don't create a matching SQL function
 // ---------------------------------------------------------------------------
 
 export function useResetChecklist() {

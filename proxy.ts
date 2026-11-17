@@ -6,7 +6,7 @@ type Portal = "client" | "coach" | "admin"
 
 const PORTAL_HOME: Record<Portal, string> = {
   client: "/dashboard",
-  coach: "/coach/overview",
+  coach: "/coach/dashboard",
   admin: "/admin/overview",
 }
 

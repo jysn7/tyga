@@ -8,6 +8,7 @@ import {
   Trophy,
   Receipt,
   GraduationCap,
+  ListOrdered,
 } from "lucide-react"
 import { PageHeader } from "@/components/portals/shared/page-header"
 import { Loader } from "@/components/portals/shared/loader"
@@ -33,6 +34,7 @@ const QUICK_LINKS = [
   { label: "Schedule", href: "/my-schedule", icon: Calendar },
   { label: "Members", href: "/members", icon: Users },
   { label: "Programmes", href: "/programmes", icon: GraduationCap },
+  { label: "Waiting lists", href: "/dashboard/waitlist", icon: ListOrdered },
   { label: "Billing", href: "/billing", icon: Receipt },
 ]
 

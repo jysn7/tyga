@@ -219,10 +219,10 @@ function SessionCard({
       }`}
     >
       {hero && (
-        <span className="flex items-center gap-1.5 text-[11px] font-medium text-primary">
+        <span className="flex items-center gap-1.5 text-[11px] font-medium text-destructive">
           <span className="relative flex h-1.5 w-1.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
-            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-destructive" />
           </span>
           Starting soon
         </span>
@@ -251,7 +251,7 @@ function SessionCard({
 
         <div className="flex shrink-0 items-center gap-1.5">
           {today && (
-            <span className="rounded-md bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+            <span className="rounded bg-green-light px-1.5 py-0.5 text-[10px] font-medium text-primary-foreground">
               Today
             </span>
           )}

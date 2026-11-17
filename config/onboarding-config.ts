@@ -2,9 +2,9 @@ import type { OnboardingStep } from "@/hooks/shared/use-onboarding-state"
 import type { LucideIcon } from "lucide-react"
 import {
   UserPlus,
-  ClipboardList,
   CalendarCheck,
   Clock,
+  CreditCard,
   GraduationCap,
 } from "lucide-react"
 
@@ -27,16 +27,6 @@ export const STEP_CONFIG: Record<OnboardingStep, StepConfig | null> = {
     icon: UserPlus,
   },
 
-  "complete-profile": {
-    step: "complete-profile",
-    label: "Complete registration",
-    description:
-      "Finish your child's registration details and required consents before assessment.",
-    ctaLabel: "Complete registration",
-    href: (id) => (id ? `/members/${id}` : "/members"),
-    icon: ClipboardList,
-  },
-
   "book-assessment": {
     step: "book-assessment",
     label: "Book a skills assessment",
@@ -56,6 +46,16 @@ export const STEP_CONFIG: Record<OnboardingStep, StepConfig | null> = {
     icon: Clock,
   },
 
+  "pay-membership": {
+    step: "pay-membership",
+    label: "Set up membership",
+    description:
+      "Membership unlocks enrolment in every programme. Takes a minute to set up.",
+    ctaLabel: "Set up membership",
+    href: () => "/billing/membership",
+    icon: CreditCard,
+  },
+
   enrol: {
     step: "enrol",
     label: "Enrol in a programme",
@@ -68,7 +68,17 @@ export const STEP_CONFIG: Record<OnboardingStep, StepConfig | null> = {
   done: null,
 }
 
-type MemberScopedStep = "book-assessment" | "await-assessment" | "enrol"
+export type MemberScopedStep = "book-assessment" | "await-assessment" | "enrol"
+
+export function isMemberScopedStep(
+  step: OnboardingStep
+): step is MemberScopedStep {
+  return (
+    step === "book-assessment" ||
+    step === "await-assessment" ||
+    step === "enrol"
+  )
+}
 
 export function getActiveMemberId(
   step: MemberScopedStep,
