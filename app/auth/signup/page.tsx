@@ -140,8 +140,7 @@ export default function SignupPage() {
     })
 
     try {
-      const payload = { ...values }
-      delete payload.confirmPassword
+      const { confirmPassword: _confirmPassword, ...payload } = values
       await signUp.mutateAsync(payload)
 
       toast.close(toastId)

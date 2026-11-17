@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import type { SyntheticEvent } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -33,6 +34,8 @@ export type NavLink = {
 
 export type NavEntry = NavGroup | NavLink
 
+type RailTip = { label: string; top: number; left: number }
+
 export function Sidebar({
   items,
   user,
@@ -44,6 +47,22 @@ export function Sidebar({
   const sidebarOpen = useAppStore((s) => s.sidebarOpen)
   const toggleSidebar = useAppStore((s) => s.toggleSidebar)
   const { resolvedTheme } = useTheme()
+
+  // Floating label for the collapsed desktop rail. Uses fixed positioning so
+  // the aside's overflow-hidden doesn't clip it.
+  const [tip, setTip] = useState<RailTip | null>(null)
+
+  const showTip = (label: string) => (e: SyntheticEvent<HTMLElement>) => {
+    const r = e.currentTarget.getBoundingClientRect()
+    setTip({ label, top: r.top + r.height / 2, left: r.right + 12 })
+  }
+  const hideTip = () => setTip(null)
+  const tipHandlers = (label: string) => ({
+    onMouseEnter: showTip(label),
+    onMouseLeave: hideTip,
+    onFocus: showTip(label),
+    onBlur: hideTip,
+  })
 
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
     () => {
@@ -67,6 +86,7 @@ export function Sidebar({
     // Clicking a group while collapsed should open the sidebar first,
     // then expand the group, so the user can see what opened.
     if (!sidebarOpen) {
+      hideTip()
       toggleSidebar()
       setExpandedGroups((prev) => ({ ...prev, [label]: true }))
       return
@@ -77,6 +97,13 @@ export function Sidebar({
     }))
   }
 
+  const handleToggleSidebar = () => {
+    hideTip()
+    toggleSidebar()
+  }
+
+  const avatarInitial = (user?.email?.[0] ?? "T").toUpperCase()
+
   return (
     <>
       {/* Mobile backdrop */}
@@ -85,6 +112,17 @@ export function Sidebar({
           onClick={toggleSidebar}
           className="fixed inset-0 z-30 bg-black/50 md:hidden"
         />
+      )}
+
+      {/* Collapsed-rail tooltip (desktop only) */}
+      {!sidebarOpen && tip && (
+        <div
+          role="tooltip"
+          style={{ top: tip.top, left: tip.left }}
+          className="pointer-events-none fixed z-50 hidden -translate-y-1/2 rounded-lg border border-border/80 bg-card px-2.5 py-1.5 text-xs font-medium whitespace-nowrap text-foreground shadow-lg md:block"
+        >
+          {tip.label}
+        </div>
       )}
 
       <aside
@@ -151,7 +189,8 @@ export function Sidebar({
             ) : (
               <>
                 {/* On mobile, keep the "close" button since the rail
-                    is a drawer; on desktop, show the "expand" button. */}
+                    is a drawer; on desktop, show the logo that morphs
+                    into the "expand" button on hover. */}
                 <div className="flex h-9 w-9 items-center justify-center md:hidden">
                   {resolvedTheme && (
                     <Image
@@ -174,13 +213,27 @@ export function Sidebar({
                   <PanelLeftClose className="h-4 w-4" />
                 </button>
 
+                {/* Desktop collapsed: logo ↔ expand icon crossfade */}
                 <button
                   type="button"
-                  onClick={toggleSidebar}
-                  className="hidden h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground md:flex"
-                  title="Expand sidebar"
+                  onClick={handleToggleSidebar}
+                  aria-label="Expand sidebar"
+                  {...tipHandlers("Expand sidebar")}
+                  className="group relative hidden h-11 w-11 items-center justify-center rounded-xl text-muted-foreground transition-all duration-200 hover:bg-secondary hover:text-foreground focus-visible:ring-1 focus-visible:ring-border focus-visible:outline-none md:flex"
                 >
-                  <PanelLeftOpen className="h-4 w-4" />
+                  <span className="absolute inset-0 flex items-center justify-center transition-all duration-200 group-hover:scale-75 group-hover:opacity-0 group-focus-visible:scale-75 group-focus-visible:opacity-0">
+                    {resolvedTheme && (
+                      <Image
+                        width={28}
+                        height={28}
+                        alt="TYGA Logo"
+                        src={logoSrc}
+                        className="h-7 w-7 object-contain"
+                        priority
+                      />
+                    )}
+                  </span>
+                  <PanelLeftOpen className="absolute h-4 w-4 scale-75 opacity-0 transition-all duration-200 group-hover:scale-100 group-hover:opacity-100 group-focus-visible:scale-100 group-focus-visible:opacity-100" />
                 </button>
               </>
             )}
@@ -190,9 +243,14 @@ export function Sidebar({
           <nav
             className={cn(
               "flex flex-1 flex-col gap-1 overflow-y-auto",
-              sidebarOpen ? "px-2 py-2" : "px-2 py-2 md:px-1.5"
+              sidebarOpen ? "px-2 py-2" : "px-2 py-2 md:gap-1.5 md:px-1.5"
             )}
           >
+            {/* Collapsed divider */}
+            {!sidebarOpen && (
+              <div className="mx-auto mb-1 hidden h-px w-6 bg-border/60 md:block" />
+            )}
+
             {items.map((entry) => {
               // ---------- Standalone link ----------
               if (entry.type === "link") {
@@ -201,28 +259,32 @@ export function Sidebar({
                   pathname.startsWith(entry.href + "/")
                 const Icon = entry.icon
 
-                // Collapsed on desktop: icon-only, centred, tooltip
+                // Collapsed on desktop: icon tile, centred, flyout label
                 if (!sidebarOpen) {
                   return (
                     <div key={entry.href} className="md:flex md:justify-center">
                       <Link
                         href={entry.href}
-                        title={entry.label}
+                        aria-label={entry.label}
+                        {...tipHandlers(entry.label)}
                         className={cn(
-                          "group relative hidden h-10 w-10 items-center justify-center rounded-md transition-colors md:flex",
+                          "group relative hidden h-10 w-10 items-center justify-center rounded-xl transition-all duration-200 focus-visible:ring-1 focus-visible:ring-border focus-visible:outline-none md:flex",
                           isActive
-                            ? "border border-border/80 bg-card text-foreground shadow"
+                            ? "bg-card text-foreground shadow ring-1 ring-border/80"
                             : "text-muted-foreground hover:bg-primary/5 hover:text-foreground"
                         )}
                       >
                         <Icon
                           className={cn(
-                            "h-4 w-4 shrink-0 transition-colors",
+                            "h-[18px] w-[18px] shrink-0 transition-all duration-200 group-hover:scale-110",
                             isActive
                               ? "text-primary"
                               : "text-muted-foreground group-hover:text-foreground"
                           )}
                         />
+                        {isActive && (
+                          <span className="absolute -left-3 h-5 w-1 rounded-r-full bg-primary" />
+                        )}
                       </Link>
 
                       {/* Mobile fallback: still render the full-width row
@@ -284,17 +346,45 @@ export function Sidebar({
               // ---------- Collapsible group ----------
               const isExpanded = expandedGroups[entry.label]
               const GroupIcon = entry.icon
+              const groupHasActive = entry.items.some((item) =>
+                pathname.startsWith(item.href)
+              )
 
-              // Collapsed on desktop: single icon button, centred, tooltip
+              // Collapsed on desktop: icon tile, centred, flyout label
               if (!sidebarOpen) {
                 return (
                   <div key={entry.label} className="md:flex md:justify-center">
                     <button
                       onClick={() => toggleGroup(entry.label)}
-                      title={entry.label}
-                      className="group hidden h-10 w-10 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-primary/5 hover:text-foreground md:flex"
+                      aria-label={entry.label}
+                      {...tipHandlers(entry.label)}
+                      className={cn(
+                        "group relative hidden h-10 w-10 items-center justify-center rounded-xl transition-all duration-200 focus-visible:ring-1 focus-visible:ring-border focus-visible:outline-none md:flex",
+                        groupHasActive
+                          ? "bg-card text-foreground shadow ring-1 ring-border/80"
+                          : "text-muted-foreground hover:bg-primary/5 hover:text-foreground"
+                      )}
                     >
-                      <GroupIcon className="h-4 w-4 shrink-0" />
+                      <GroupIcon
+                        className={cn(
+                          "h-[18px] w-[18px] shrink-0 transition-all duration-200 group-hover:scale-110",
+                          groupHasActive
+                            ? "text-primary"
+                            : "text-muted-foreground group-hover:text-foreground"
+                        )}
+                      />
+                      {/* Dot hints that this tile opens a group */}
+                      <span
+                        className={cn(
+                          "absolute right-1.5 bottom-1.5 h-1 w-1 rounded-full transition-colors",
+                          groupHasActive
+                            ? "bg-primary"
+                            : "bg-muted-foreground/50 group-hover:bg-foreground/70"
+                        )}
+                      />
+                      {groupHasActive && (
+                        <span className="absolute -left-3 h-5 w-1 rounded-r-full bg-primary" />
+                      )}
                     </button>
 
                     {/* Mobile fallback: full-width group button */}
@@ -382,6 +472,19 @@ export function Sidebar({
               )
             })}
           </nav>
+
+          {/* Collapsed footer: user avatar tile (desktop only) */}
+          {!sidebarOpen && (
+            <div className="hidden shrink-0 items-center justify-center pt-2 pb-4 md:flex">
+              <div
+                tabIndex={0}
+                {...tipHandlers(user ? user.email || "Member" : "Portal")}
+                className="flex h-9 w-9 items-center justify-center rounded-xl bg-secondary text-xs font-semibold text-foreground ring-1 ring-border/60 transition-all duration-200 hover:ring-border focus-visible:ring-border focus-visible:outline-none"
+              >
+                {avatarInitial}
+              </div>
+            </div>
+          )}
         </div>
       </aside>
     </>

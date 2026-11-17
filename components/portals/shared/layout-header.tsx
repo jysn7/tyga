@@ -1,13 +1,12 @@
 "use client"
 
-import { PanelLeftOpen, CircleHelp, MessageCircle } from "lucide-react"
+import { CircleHelp, MessageCircle } from "lucide-react"
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
 
 import { createClient } from "@/utils/supabase/client"
-import { useAppStore } from "@/stores/useAppStore"
 import { useRealtimeNotifications } from "@/hooks/use-notifications"
 import { useUnreadMessages } from "@/hooks/shared/use-support"
 
@@ -33,9 +32,6 @@ type Account = {
 }
 
 export function LayoutHeader({ user }: { user: SupabaseUser | null }) {
-  const sidebarOpen = useAppStore((s) => s.sidebarOpen)
-  const toggleSidebar = useAppStore((s) => s.toggleSidebar)
-
   const [account, setAccount] = useState<Account | null>(null)
   const [loading, setLoading] = useState(true)
   const [helpOpen, setHelpOpen] = useState(false)
@@ -137,17 +133,6 @@ export function LayoutHeader({ user }: { user: SupabaseUser | null }) {
     <>
       <header className="sticky top-0 z-20 flex shrink-0 flex-col gap-3 rounded-t-xl border-b border-border/50 bg-background px-4 py-3 sm:h-20 sm:flex-row sm:items-center sm:gap-3 sm:px-6 sm:py-0">
         <div className="flex w-full items-center gap-3">
-          {!sidebarOpen && (
-            <button
-              type="button"
-              onClick={toggleSidebar}
-              title="Open sidebar"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            >
-              <PanelLeftOpen className="h-4 w-4" strokeWidth={1.75} />
-            </button>
-          )}
-
           <div className="hidden min-w-0 flex-1 sm:block">
             {loading ? (
               <div className="h-9 w-full max-w-md animate-pulse rounded-md bg-muted/40" />
